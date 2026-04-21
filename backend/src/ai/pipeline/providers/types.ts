@@ -10,6 +10,9 @@ export type GenerateRequest = {
   prompt: string;
   temperature: number;
   maxTokens?: number;
+  /** Hint to provider that JSON output is expected. Providers that support
+   *  native JSON mode (e.g. Ollama `format: "json"`) should use it. */
+  format?: "json";
 };
 
 export type GenerateResponse = {

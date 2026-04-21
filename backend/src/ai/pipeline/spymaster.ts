@@ -8,6 +8,7 @@
  */
 
 import type { LLMService } from "./llm.service";
+import type { AppLogger } from "@backend/shared/logging";
 
 export type SpymasterInput = {
   currentTeam: string;
@@ -87,6 +88,7 @@ export const isWordFormOf = (clue: string, boardWords: string[]): boolean => {
  */
 export const runSpymasterPipeline = async (
   llm: LLMService,
+  logger: AppLogger,
   input: SpymasterInput,
 ): Promise<SpymasterOutput> => {
   const prompt = buildSpymasterPrompt(input);
@@ -114,38 +116,42 @@ export const runSpymasterPipeline = async (
       });
 
       if (!result.clue || typeof result.clue !== "string") {
-        console.log("[AI-DEBUG] Spymaster attempt", attempts, "- invalid structure");
+        logger.debug("spymaster: invalid structure", { attempt: attempts, result });
         continue;
       }
 
       if (!result.number || typeof result.number !== "number" || result.number < 1) {
-        console.log("[AI-DEBUG] Spymaster attempt", attempts, "- invalid number");
+        logger.debug("spymaster: invalid number", { attempt: attempts, number: result.number });
         continue;
       }
 
       const clueWordLower = result.clue.toLowerCase().trim();
 
       if (clueWordLower.includes(" ")) {
-        console.log("[AI-DEBUG] Spymaster attempt", attempts, "- multi-word:", result.clue);
+        logger.debug("spymaster: multi-word clue rejected", { attempt: attempts, clue: result.clue });
         continue;
       }
 
       if (allBoardWords.some((w) => w.toLowerCase() === clueWordLower)) {
-        console.log("[AI-DEBUG] Spymaster attempt", attempts, "- is board word:", result.clue);
+        logger.debug("spymaster: clue is a board word", { attempt: attempts, clue: result.clue });
         continue;
       }
 
       if (isWordFormOf(clueWordLower, allBoardWords)) {
-        console.log("[AI-DEBUG] Spymaster attempt", attempts, "- word-form of board word:", result.clue);
+        logger.debug("spymaster: clue is word-form of board word", { attempt: attempts, clue: result.clue });
         continue;
       }
 
       if (input.previousClues.some((c) => c.toLowerCase() === clueWordLower)) {
-        console.log("[AI-DEBUG] Spymaster attempt", attempts, "- previously used:", result.clue);
+        logger.debug("spymaster: clue previously used", { attempt: attempts, clue: result.clue });
         continue;
       }
 
-      console.log("[AI-DEBUG] Spymaster accepted:", result.clue, "for", result.number, "(attempt", attempts + ")");
+      logger.info("spymaster: clue accepted", {
+        clue: result.clue,
+        number: result.number,
+        attempt: attempts,
+      });
 
       return {
         clue: result.clue.trim(),
@@ -153,12 +159,30 @@ export const runSpymasterPipeline = async (
         explanation: result.explanation || "",
       };
     } catch (error) {
-      console.log("[AI-DEBUG] Spymaster attempt", attempts, "- parse error");
+      logger.warn("spymaster: attempt failed", {
+        attempt: attempts,
+        maxAttempts,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       if (attempts >= maxAttempts) {
+        logger.error("spymaster: exhausted attempts", {
+          attempts,
+          maxAttempts,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
         throw error;
       }
     }
   }
 
-  throw new Error(`Failed to get valid spymaster clue after ${maxAttempts} attempts`);
+  const exhaustionError = new Error(
+    `Failed to get valid spymaster clue after ${maxAttempts} attempts`,
+  );
+  logger.error("spymaster: exhausted validation attempts", {
+    maxAttempts,
+    error: exhaustionError.message,
+  });
+  throw exhaustionError;
 };

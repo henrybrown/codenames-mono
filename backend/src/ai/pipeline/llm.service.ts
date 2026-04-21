@@ -10,6 +10,7 @@
 
 import { createProvider } from "./providers";
 import type { LLMProvider } from "./providers";
+import type { AppLogger } from "@backend/shared/logging";
 
 export type LLMConfig = {
   provider: LLMProvider;
@@ -30,7 +31,7 @@ export type LLMGenerateOptions = {
 /**
  * Creates a universal LLM service for AI gameplay decisions
  */
-export const createLLMService = (config: LLMConfig) => {
+export const createLLMService = (config: LLMConfig, logger: AppLogger) => {
   const {
     provider,
     baseURL,
@@ -54,24 +55,43 @@ export const createLLMService = (config: LLMConfig) => {
     const effectiveMaxTokens = options.maxTokens ?? maxTokens;
     const promptLength = options.prompt.length;
 
-    console.log(
-      `[LLM #${requestId}] REQUEST: model=${model} temp=${effectiveTemp} prompt_chars=${promptLength}`,
-    );
-
-    const response = await client.generate({
-      prompt: options.prompt,
+    logger.debug("llm.generate request", {
+      requestId,
+      model,
       temperature: effectiveTemp,
-      maxTokens: effectiveMaxTokens,
+      promptChars: promptLength,
     });
 
-    const elapsed = Date.now() - startTime;
-    const content = response.content;
+    try {
+      const response = await client.generate({
+        prompt: options.prompt,
+        temperature: effectiveTemp,
+        maxTokens: effectiveMaxTokens,
+        format: options.format,
+      });
 
-    console.log(
-      `[LLM #${requestId}] SUCCESS: ${content.length} chars in ${elapsed}ms`,
-    );
+      const elapsed = Date.now() - startTime;
+      const content = response.content;
 
-    return content;
+      logger.debug("llm.generate success", {
+        requestId,
+        contentChars: content.length,
+        elapsedMs: elapsed,
+      });
+
+      return content;
+    } catch (error) {
+      const elapsed = Date.now() - startTime;
+      logger.error("llm.generate failed", {
+        requestId,
+        provider,
+        model,
+        elapsedMs: elapsed,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
+    }
   };
 
   /**
@@ -99,15 +119,28 @@ export const createLLMService = (config: LLMConfig) => {
     }
 
     if (!cleaned) {
+      logger.warn("llm.generateJSON empty after cleanup", {
+        rawPreview: raw.substring(0, 200),
+      });
       throw new Error("LLM returned empty response after cleanup");
     }
 
-    console.log(
-      "[AI-DEBUG] Parsing JSON:",
-      cleaned.substring(0, 200) + (cleaned.length > 200 ? "..." : ""),
-    );
+    logger.debug("llm.generateJSON parsing", {
+      preview: cleaned.substring(0, 200) + (cleaned.length > 200 ? "..." : ""),
+    });
 
-    return JSON.parse(cleaned) as T;
+    try {
+      return JSON.parse(cleaned) as T;
+    } catch (error) {
+      logger.error("llm.generateJSON parse failed", {
+        error: error instanceof Error ? error.message : String(error),
+        cleanedPreview: cleaned.substring(0, 500),
+        rawPreview: raw.substring(0, 500),
+      });
+      throw new Error(
+        `LLM returned unparseable JSON: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   };
 
   return {

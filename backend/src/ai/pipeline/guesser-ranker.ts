@@ -8,6 +8,7 @@
 
 import type { LLMService } from "./llm.service";
 import type { PreFilterOutput } from "./guesser-prefilter";
+import type { AppLogger } from "@backend/shared/logging";
 
 export type RankingInput = {
   currentTeam: string;
@@ -62,6 +63,7 @@ Answer:`;
  */
 export const runRanking = async (
   llm: LLMService,
+  logger: AppLogger,
   input: RankingInput,
   onPromptGenerated?: (prompt: string) => void | Promise<void>,
 ): Promise<RankedWord[]> => {
@@ -93,7 +95,7 @@ export const runRanking = async (
       });
 
       if (!result.ranked || !Array.isArray(result.ranked) || result.ranked.length === 0) {
-        console.log("[AI-DEBUG] Ranker attempt", attempts, "- empty ranked array");
+        logger.debug("ranker: empty ranked array", { attempt: attempts });
         continue;
       }
 
@@ -107,14 +109,14 @@ export const runRanking = async (
         }
         // CRITICAL: reject words that aren't on the board
         if (!validWords.has(r.word.toUpperCase())) {
-          console.log("[AI-DEBUG] Ranker filtered hallucinated word:", r.word);
+          logger.warn("ranker: filtered hallucinated word", { word: r.word, attempt: attempts });
           return false;
         }
         return true;
       });
 
       if (validEntries.length === 0) {
-        console.log("[AI-DEBUG] Ranker attempt", attempts, "- no valid board words in response");
+        logger.debug("ranker: no valid board words in response", { attempt: attempts });
         continue;
       }
 
@@ -125,16 +127,37 @@ export const runRanking = async (
 
       validEntries.sort((a, b) => b.score - a.score);
 
-      console.log("[AI-DEBUG] Ranker accepted:", validEntries.map(r => `${r.word}=${r.score}`).join(", "));
+      logger.info("ranker: accepted", {
+        results: validEntries.map((r) => ({ word: r.word, score: r.score })),
+        attempt: attempts,
+      });
 
       return validEntries;
     } catch (error) {
-      console.log("[AI-DEBUG] Ranker attempt", attempts, "- parse error");
+      logger.warn("ranker: attempt failed", {
+        attempt: attempts,
+        maxAttempts,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       if (attempts >= maxAttempts) {
+        logger.error("ranker: exhausted attempts", {
+          attempts,
+          maxAttempts,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
         throw error;
       }
     }
   }
 
-  throw new Error(`Failed to rank candidates after ${maxAttempts} attempts`);
+  const exhaustionError = new Error(
+    `Failed to rank candidates after ${maxAttempts} attempts`,
+  );
+  logger.error("ranker: exhausted validation attempts", {
+    maxAttempts,
+    error: exhaustionError.message,
+  });
+  throw exhaustionError;
 };

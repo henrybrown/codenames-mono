@@ -83,7 +83,7 @@ export const createAIPlayerService =
       findGameByPublicId,
     } = dependencies;
 
-    const pipeline = createCodenamesPipeline(llm);
+    const pipeline = createCodenamesPipeline(llm, logger);
 
     const emitNarration = async (context: AIDecisionContext, content: string): Promise<void> => {
       try {
@@ -346,9 +346,24 @@ export const createAIPlayerService =
         setTimeout(() => { emitNarration(context, `Waiting for the next prompt...`); }, 20000);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : "Unknown error";
-        logger.error("aiGiveClue failed", { error: errorMsg, stack: error instanceof Error ? error.stack : undefined, context });
-        await updatePipelineStatus(run.id, PIPELINE_STATUS.FAILED, errorMsg);
-        GameEventsEmitter.aiPipelineFailed(context.gameId, run.id, errorMsg);
+        logger.error("aiGiveClue failed", {
+          error: errorMsg,
+          stack: error instanceof Error ? error.stack : undefined,
+          context,
+          runId: run?.id,
+        });
+        if (run) {
+          try {
+            await updatePipelineStatus(run.id, PIPELINE_STATUS.FAILED, errorMsg);
+            GameEventsEmitter.aiPipelineFailed(context.gameId, run.id, errorMsg);
+          } catch (cleanupError) {
+            logger.error("aiGiveClue: failed to record pipeline failure", {
+              gameId: context.gameId,
+              runId: run.id,
+              error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
+            });
+          }
+        }
         await emitNarration(context, "Oops! Something went wrong while thinking of a clue.");
       } finally {
         activeDecisions.delete(decisionKey);
@@ -376,6 +391,12 @@ export const createAIPlayerService =
         run = await createPipelineRun({ gameId: game._id, playerId: context.playerInternalId, pipelineType: PIPELINE_TYPE.GUESSER });
         GameEventsEmitter.aiPipelineStarted(context.gameId, run.id, PIPELINE_TYPE.GUESSER);
       } catch (error) {
+        logger.error("aiMakeGuess: pipeline run creation failed", {
+          gameId: context.gameId,
+          playerId: context.playerId,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
         activeDecisions.delete(decisionKey);
         return;
       }
@@ -493,8 +514,24 @@ export const createAIPlayerService =
         setTimeout(() => { emitNarration(context, `Waiting for the next prompt...`); }, 20000);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : "Unknown error";
-        await updatePipelineStatus(run.id, PIPELINE_STATUS.FAILED, errorMsg);
-        GameEventsEmitter.aiPipelineFailed(context.gameId, run.id, errorMsg);
+        logger.error("aiMakeGuess failed", {
+          error: errorMsg,
+          stack: error instanceof Error ? error.stack : undefined,
+          context,
+          runId: run?.id,
+        });
+        if (run) {
+          try {
+            await updatePipelineStatus(run.id, PIPELINE_STATUS.FAILED, errorMsg);
+            GameEventsEmitter.aiPipelineFailed(context.gameId, run.id, errorMsg);
+          } catch (cleanupError) {
+            logger.error("aiMakeGuess: failed to record pipeline failure", {
+              gameId: context.gameId,
+              runId: run.id,
+              error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
+            });
+          }
+        }
         await emitNarration(context, "Oops! Something went wrong while making guesses.");
       } finally {
         activeDecisions.delete(decisionKey);

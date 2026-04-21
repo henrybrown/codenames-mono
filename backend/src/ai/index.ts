@@ -77,7 +77,7 @@ export const initialize = (dependencies: AIModuleDependencies) => {
   } = dependencies;
 
   const logger = appLogger.for({ feature: "ai" }).withMeta({ model: llmConfig.model }).create();
-  const llm = createLLMService(llmConfig);
+  const llm = createLLMService(llmConfig, logger);
 
   const aiPlayerService = createAIPlayerService(logger)({
     llm,

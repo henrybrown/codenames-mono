@@ -7,6 +7,7 @@
  */
 
 import type { LLMService } from "./llm.service";
+import type { AppLogger } from "@backend/shared/logging";
 import { runSpymasterPipeline, type SpymasterInput, type SpymasterOutput } from "./spymaster";
 import { runRanking, type RankingInput } from "./guesser-ranker";
 
@@ -44,9 +45,9 @@ export type GuesserDecision = {
 /**
  * Create the complete Codenames AI pipeline
  */
-export const createCodenamesPipeline = (llm: LLMService) => {
+export const createCodenamesPipeline = (llm: LLMService, logger: AppLogger) => {
   const runSpymaster = async (input: SpymasterInput): Promise<SpymasterOutput> => {
-    return runSpymasterPipeline(llm, input);
+    return runSpymasterPipeline(llm, logger, input);
   };
 
   /**
@@ -83,6 +84,7 @@ export const createCodenamesPipeline = (llm: LLMService) => {
     // Single LLM call: rank every remaining word against the clue
     const ranked = await runRanking(
       llm,
+      logger,
       {
         currentTeam: input.currentTeam,
         clueWord: input.clueWord,
@@ -94,7 +96,9 @@ export const createCodenamesPipeline = (llm: LLMService) => {
 
     const topChoice = ranked[0];
 
-    console.log("[AI-DEBUG] Ranker results:", ranked.map(r => `${r.word}=${r.score}`).join(", "));
+    logger.debug("guesser: ranker results", {
+      results: ranked.map((r) => ({ word: r.word, score: r.score })),
+    });
 
     // Always guess. The Spymaster gave a clue — there is always a best match.
     return {

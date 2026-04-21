@@ -9,6 +9,7 @@
  */
 
 import type { LLMService } from "./llm.service";
+import type { AppLogger } from "@backend/shared/logging";
 
 /**
  * Pre-filter Input/Output
@@ -108,6 +109,7 @@ export const isValidPreFilterResult = (r: unknown): r is PreFilterOutput => {
  */
 export const runPreFilter = async (
   llm: LLMService,
+  logger: AppLogger,
   clueWord: string,
   remainingWords: string[],
   onComplete?: (allResults: PreFilterOutput[]) => void | Promise<void>,
@@ -124,6 +126,7 @@ export const runPreFilter = async (
     if (batch.length === 1) {
       const singleResult = await evaluateSingleWord(
         llm,
+        logger,
         clueWord,
         batch[0],
         onPromptGenerated,
@@ -154,6 +157,7 @@ export const runPreFilter = async (
         });
 
         if (!Array.isArray(batchResults) || batchResults.length === 0) {
+          logger.debug("prefilter: empty batch response", { attempt: attempts, batchWords: batch });
           continue;
         }
 
@@ -172,6 +176,11 @@ export const runPreFilter = async (
         const resultWords = new Set(results.map((r) => r.word.toUpperCase()));
         for (const word of batch) {
           if (!resultWords.has(word.toUpperCase())) {
+            logger.warn("prefilter: word missing from batch response", {
+              word,
+              clueWord,
+              batchWords: batch,
+            });
             const missingResult: PreFilterOutput = {
               word,
               link_confidence: "no link",
@@ -186,7 +195,20 @@ export const runPreFilter = async (
 
         batchProcessed = true;
       } catch (error) {
+        logger.warn("prefilter: batch attempt failed", {
+          attempt: attempts,
+          maxAttempts,
+          clueWord,
+          batchWords: batch,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
         if (attempts >= maxAttempts) {
+          logger.error("prefilter: batch exhausted, falling back to no-link", {
+            clueWord,
+            batchWords: batch,
+            error: error instanceof Error ? error.message : String(error),
+          });
           // Fall back: mark all words in this batch as "no link"
           for (const word of batch) {
             const alreadyHasResult = results.some(
@@ -226,6 +248,7 @@ export const runPreFilter = async (
  */
 const evaluateSingleWord = async (
   llm: LLMService,
+  logger: AppLogger,
   clueWord: string,
   word: string,
   onPromptGenerated?: (prompt: string) => void | Promise<void>,
@@ -238,6 +261,7 @@ const evaluateSingleWord = async (
 
   let attempts = 0;
   const maxAttempts = 3;
+  let lastError: unknown;
 
   while (attempts < maxAttempts) {
     attempts++;
@@ -250,10 +274,26 @@ const evaluateSingleWord = async (
       if (isValidPreFilterResult(result)) {
         return result;
       }
-    } catch {
-      // retry
+      logger.debug("prefilter: single-word invalid result", { attempt: attempts, word, result });
+    } catch (error) {
+      lastError = error;
+      logger.warn("prefilter: single-word attempt failed", {
+        attempt: attempts,
+        maxAttempts,
+        word,
+        clueWord,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
     }
   }
+
+  logger.error("prefilter: single-word exhausted, falling back to no-link", {
+    word,
+    clueWord,
+    attempts,
+    error: lastError instanceof Error ? lastError.message : String(lastError),
+  });
 
   return {
     word,
