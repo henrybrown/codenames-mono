@@ -1,5 +1,5 @@
 import type { TurnStateProvider } from "@backend/game/gameplay/state/turn-state.provider";
-import type { GameplayHandler, GameplayOperations } from "../../gameplay-actions";
+import type { GameplayHandler } from "../../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
 import { CODEBREAKER_OUTCOME } from "@codenames/shared/types";
 import { complexProperties, computeTurnPhase } from "@backend/game/gameplay/state/gameplay-state.helpers";
@@ -7,7 +7,6 @@ import { TurnPhase, GameAggregate, Player } from "@backend/game/gameplay/state/g
 import { winningConditions } from "./make-guess.rules";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import { GameplayValidationError } from "../../errors/gameplay.errors";
-import { PLAYER_ROLE } from "@codenames/shared/types";
 
 /**
  * Input parameters for making a guess
@@ -146,28 +145,6 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
     };
   };
 
-  /**
-   * Auto-start next turn for the opposing team within the transaction.
-   * Returns the new turn's public ID and the next codemaster's public ID for WS events.
-   */
-  const autoStartNextTurn = async (
-    ops: GameplayOperations,
-    state: GameAggregate,
-    endedTurnTeamId: number,
-  ): Promise<{ publicId: string; activePlayerId?: string } | null> => {
-    const round = state.currentRound;
-    if (!round || round.status !== "IN_PROGRESS") return null;
-
-    const otherTeamId = complexProperties.getOtherTeamId(state, endedTurnTeamId);
-    const { newTurn } = await ops.startTurn(round._id, otherTeamId);
-
-    const nextCM = round.players.find(
-      (p) => p._teamId === otherTeamId && p.role === PLAYER_ROLE.CODEMASTER,
-    );
-
-    return { publicId: newTurn.publicId, activePlayerId: nextCM?.publicId };
-  };
-
   return async (input: MakeGuessInput): Promise<MakeGuessResult> => {
     const { gameState, cardWord } = input;
     const log = logger.for({}).withMeta({ gameId: gameState.public_id }).create();
@@ -185,8 +162,6 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
       // Execute within transaction — ops are game-scoped, no state passing needed
       const operationResult = await dependencies.gameplayHandler(gameState, async (ops) => {
         const { outcome, state, ...guessResult } = await ops.makeGuess(cardWord);
-
-        let autoStarted: { publicId: string; activePlayerId?: string } | null = null;
 
         switch (outcome) {
           case CODEBREAKER_OUTCOME.CORRECT_TEAM_CARD: {
@@ -206,8 +181,7 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
               );
               if (gameWinner) await ops.endGame(gameWinner);
             } else if (guessResult.turn.guessesRemaining === 0) {
-              const afterTurnEnd = await ops.endTurn(guessResult.turn._id);
-              autoStarted = await autoStartNextTurn(ops, afterTurnEnd, guessResult.turn._teamId);
+              await ops.endTurn(guessResult.turn._id);
             }
             break;
           }
@@ -227,14 +201,11 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
                 afterRoundEnd.game_format,
               );
               if (gameWinner) await ops.endGame(gameWinner);
-            } else {
-              autoStarted = await autoStartNextTurn(ops, afterTurnEnd, guessResult.turn._teamId);
             }
             break;
           }
           case CODEBREAKER_OUTCOME.BYSTANDER_CARD: {
-            const afterTurnEnd = await ops.endTurn(guessResult.turn._id);
-            autoStarted = await autoStartNextTurn(ops, afterTurnEnd, guessResult.turn._teamId);
+            await ops.endTurn(guessResult.turn._id);
             break;
           }
           case CODEBREAKER_OUTCOME.ASSASSIN_CARD: {
@@ -250,7 +221,7 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
           }
         }
 
-        return { guessResult: { ...guessResult, outcome }, autoStarted };
+        return { guessResult: { ...guessResult, outcome } };
       });
 
       const currentTurn = complexProperties.getCurrentTurnOrThrow(gameState);
@@ -267,14 +238,6 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
 
       if (completeTurnData.status === "COMPLETED") {
         GameEventsEmitter.turnEnded(gameState.public_id, gameState.currentRound!.number, currentTurn.publicId);
-      }
-      if (operationResult.autoStarted) {
-        GameEventsEmitter.turnStarted(
-          gameState.public_id,
-          gameState.currentRound!.number,
-          operationResult.autoStarted.publicId,
-          operationResult.autoStarted.activePlayerId,
-        );
       }
 
       log.info(`makeGuess success: cardWord=${cardWord}, outcome=${operationResult.guessResult.outcome}`);

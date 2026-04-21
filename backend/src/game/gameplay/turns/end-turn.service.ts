@@ -5,8 +5,6 @@
 
 import type { GameplayHandler } from "../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
-import { PLAYER_ROLE } from "@codenames/shared/types";
-import { complexProperties } from "@backend/game/gameplay/state/gameplay-state.helpers";
 import { GameplayValidationError } from "../errors/gameplay.errors";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import type { GameAggregate } from "@backend/game/gameplay/state/gameplay-state.types";
@@ -80,32 +78,16 @@ export const createEndTurnService = (logger: AppLogger) => (
         return { success: false, error: "Turn not found" };
       }
 
-      // End current turn and auto-start next turn
-      let newTurnPublicId: string | null = null;
-      let newTurnActivePlayerId: string | undefined;
+      // End the current turn. The next turn is started explicitly by the
+      // frontend (via the outcome panel countdown / NextTurnTrigger) — we
+      // never auto-start here.
       await gameplayHandler(gameState, async (ops) => {
-        const afterEnd = await ops.endTurn(turnWithInternalId._id);
-
-        const round = afterEnd.currentRound;
-        if (round && round.status === "IN_PROGRESS") {
-          const otherTeamId = complexProperties.getOtherTeamId(afterEnd, currentTurn._teamId);
-          const { newTurn } = await ops.startTurn(round._id, otherTeamId);
-          newTurnPublicId = newTurn.publicId;
-
-          const nextCM = round.players.find(
-            (p) => p._teamId === otherTeamId && p.role === PLAYER_ROLE.CODEMASTER,
-          );
-          newTurnActivePlayerId = nextCM?.publicId;
-        }
+        await ops.endTurn(turnWithInternalId._id);
       });
 
-      // Emit WebSocket events
       GameEventsEmitter.turnEnded(gameState.public_id, currentRound.number, currentTurn.publicId);
-      if (newTurnPublicId) {
-        GameEventsEmitter.turnStarted(gameState.public_id, currentRound.number, newTurnPublicId, newTurnActivePlayerId);
-      }
 
-      log.info(`endTurn success: turnId=${currentTurn.publicId}${newTurnPublicId ? `, autoStarted=${newTurnPublicId}` : ""}`);
+      log.info(`endTurn success: turnId=${currentTurn.publicId}`);
       return {
         success: true,
         data: {
