@@ -32,24 +32,39 @@ export const useIntelState = (): IntelState => {
   const { gameData } = useGameDataRequired();
   const { giveClue, actionState } = useGameActions();
 
-  const [selectedIndex, setSelectedIndex] = useState(
-    () => Math.max(0, historicTurns.length - 1)
-  );
+  /**
+   * Default view is always the latest turn, derived fresh on every render
+   * from the current historicTurns. The user can pin an earlier index via
+   * the nav arrows; that override is cleared when a brand-new latest turn
+   * arrives (so e.g. after a turn boundary we snap forward again).
+   *
+   * Done this way (instead of useState + useEffect) so refresh never
+   * flashes the first turn: there's no intermediate render where
+   * selectedIndex lags behind historicTurns.
+   */
+  const [overrideIndex, setOverrideIndex] = useState<number | null>(null);
+  const latestIndex = Math.max(0, historicTurns.length - 1);
+  const selectedIndex = overrideIndex ?? latestIndex;
 
-  /** Auto-advance to latest turn when new turns arrive */
+  const latestTurnId = historicTurns[historicTurns.length - 1]?.id;
   useEffect(() => {
-    if (historicTurns.length > 0) {
-      setSelectedIndex(historicTurns.length - 1);
-    }
-  }, [historicTurns.length]);
+    /** New latest turn arrived — clear any override so we track latest again. */
+    setOverrideIndex(null);
+  }, [latestTurnId]);
 
   const selectedTurn = historicTurns[selectedIndex];
-  const isViewingLatest = selectedIndex === historicTurns.length - 1;
+  const isViewingLatest = selectedIndex === latestIndex;
 
   const canGoBack = selectedIndex > 0;
-  const canGoForward = selectedIndex < historicTurns.length - 1;
-  const onGoBack = (): void => setSelectedIndex((i) => Math.max(0, i - 1));
-  const onGoForward = (): void => setSelectedIndex((i) => Math.min(historicTurns.length - 1, i + 1));
+  const canGoForward = selectedIndex < latestIndex;
+  const onGoBack = (): void => {
+    const next = Math.max(0, selectedIndex - 1);
+    setOverrideIndex(next === latestIndex ? null : next);
+  };
+  const onGoForward = (): void => {
+    const next = Math.min(latestIndex, selectedIndex + 1);
+    setOverrideIndex(next === latestIndex ? null : next);
+  };
 
   const teamName = selectedTurn?.teamName ?? "";
   const hasClue = !!selectedTurn?.clue;
