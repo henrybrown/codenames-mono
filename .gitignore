@@ -68,4 +68,5 @@ backend/test/manual/play-moves.ts
 # Misc
 .DS_Store
 .gitignore
+TODO.md
 
