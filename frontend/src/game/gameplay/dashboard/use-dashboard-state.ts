@@ -103,6 +103,7 @@ export const useDashboardState = () => {
     clueWord:         ctx.activeTurn?.clue?.word,
     clueNumber:       ctx.activeTurn?.clue?.number,
     guessesRemaining: ctx.guessesRemaining,
+    lastCompletedTurn: ctx.lastCompletedTurn,
 
     /** Fully encapsulated actions */
     lobbyAction,

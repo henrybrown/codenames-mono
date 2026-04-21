@@ -1,3 +1,4 @@
+import React from "react";
 import { PanelSlots } from "./types";
 import {
   hasRole,
@@ -10,6 +11,7 @@ import {
   canStartNextTurn,
   canUseArToggle,
 } from "./rules";
+import { useVisibilityContext } from "./context";
 import {
   TeamHeaderPanel,
   ARTogglePanel,
@@ -19,8 +21,31 @@ import {
   CodebreakerActionsPanel,
   LobbyActionsPanel,
   GameoverPanel,
-  StartTurnPanel,
 } from "../panels";
+import { TurnOutcomePanel } from "../panels/turn-outcome-panel";
+import { DotCountdown } from "../panels/dot-countdown";
+import { NextTurnTrigger } from "../panels/next-turn-trigger";
+import { TerminalSection } from "../shared";
+
+/**
+ * Stacked dashboard composition for the bottom slot when a turn just ended.
+ * Pure wiring — each piece is an independent concern:
+ *   - TurnOutcomePanel: presentational summary
+ *   - DotCountdown:     presentational timer UI
+ *   - NextTurnTrigger:  side-effect that fires startNextTurn after the delay
+ */
+const StackedTurnOutcomeSlot: React.FC = () => {
+  const ctx = useVisibilityContext();
+  if (!ctx.lastCompletedTurn) return null;
+
+  return (
+    <TerminalSection>
+      <TurnOutcomePanel completedTurn={ctx.lastCompletedTurn} variant="compact" />
+      <DotCountdown keyId={ctx.lastCompletedTurn.id} />
+      <NextTurnTrigger keyId={ctx.lastCompletedTurn.id} />
+    </TerminalSection>
+  );
+};
 
 /**
  * Panel configuration - reads like requirements.
@@ -47,8 +72,8 @@ export const GAME_PANELS: PanelSlots = {
       shouldRender: isCodebreakerGuessing,
     },
     {
-      id: "start-turn",
-      component: StartTurnPanel,
+      id: "turn-outcome",
+      component: StackedTurnOutcomeSlot,
       shouldRender: canStartNextTurn,
     },
   ],

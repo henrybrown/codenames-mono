@@ -25,4 +25,6 @@ export type { GameoverPanelViewProps } from "./gameover-panel";
 export { StartTurnPanel, StartTurnPanelView } from "./start-turn-panel";
 export type { StartTurnPanelViewProps } from "./start-turn-panel";
 
+export { TurnOutcomePanel } from "./turn-outcome-panel";
+
 export { ClueInputPanel } from "./clue-input-panel";
