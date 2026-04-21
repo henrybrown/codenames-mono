@@ -1,4 +1,4 @@
-import { useQuery, UseQueryResult } from "@tanstack/react-query";
+import { useQuery, keepPreviousData, UseQueryResult } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 import api from "@frontend/shared/api/api";
 import type { TurnData, TurnPhase } from "@frontend/shared/types";
@@ -126,6 +126,7 @@ export const useTurnDataQuery = (
       return await fetchTurn(turnId);
     },
     enabled: !!turnId,
+    placeholderData: keepPreviousData,
     staleTime: 0,
     refetchOnWindowFocus: true,
     retry: 2,
