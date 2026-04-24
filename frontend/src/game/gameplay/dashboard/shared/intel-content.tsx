@@ -1,6 +1,6 @@
 import React from "react";
 import { TeamSymbolIcon } from "@frontend/shared/components/team-symbol-icon";
-import { AwaitingLabel } from "@frontend/game/gameplay/shared/components";
+import { AttentionTextBox } from "@frontend/game/gameplay/shared/components";
 import { getOutcomeSymbol, type GuessDisplay } from "../panels/intel-panel";
 import styles from "./intel-content.module.css";
 
@@ -30,7 +30,7 @@ export const IntelContent: React.FC<IntelContentProps> = ({
   if (!hasClue) {
     return (
       <div className={styles.awaitingCenter}>
-        <AwaitingLabel>INTEL REQUIRED</AwaitingLabel>
+        <AttentionTextBox>INTEL REQUIRED</AttentionTextBox>
       </div>
     );
   }
@@ -68,7 +68,7 @@ export const IntelContent: React.FC<IntelContentProps> = ({
           ))}
 
           {showAwaitingGuesses && guesses.length === 0 && (
-            <AwaitingLabel>AWAITING INPUT</AwaitingLabel>
+            <AttentionTextBox>AWAITING INPUT</AttentionTextBox>
           )}
         </div>
       </div>

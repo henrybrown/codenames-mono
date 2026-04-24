@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { TeamSymbol } from "../shared/team-symbol";
 import { getTeamConfig, getOppositeTeam, type TeamName } from "@frontend/shared/types";
-import { AwaitingLabel } from "@frontend/game/gameplay/shared/components";
+import { AttentionTextBox } from "@frontend/game/gameplay/shared/components";
 import styles from "../layout/lobby.module.css";
 
 const BOX_ENTER_DURATION = 0.3;
@@ -57,7 +57,7 @@ export const MyTeamBoxView: React.FC<MyTeamBoxViewProps> = ({
         <div className={styles.playerLabel}>{playerName}</div>
         {!aiMode && (
           playersNeeded > 0 ? (
-            <AwaitingLabel>WAITING FOR OPERATIVES</AwaitingLabel>
+            <AttentionTextBox>WAITING FOR OPERATIVES</AttentionTextBox>
           ) : (
             <div className={styles.readyMessage}>Ready to start!</div>
           )

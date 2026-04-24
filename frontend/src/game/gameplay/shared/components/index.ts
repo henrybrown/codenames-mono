@@ -1,6 +1,6 @@
 export { ActionButton, BUTTON_VALIDATION } from './action-button';
 export type { ButtonValidation } from './action-button';
-export { AwaitingLabel } from './awaiting-label';
+export { AttentionTextBox } from './attention-text-box';
 export { CircleButton } from './circle-button';
 export { ErrorBox } from './error-box';
 export { PageContainer, pageContainerStyles } from './page-container';

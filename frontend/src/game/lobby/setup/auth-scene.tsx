@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useCreateGuestSession } from "@frontend/game/lobby/api/queries/use-guest-session";
-import { ActionButton, AwaitingLabel, ErrorBox } from "@frontend/game/gameplay/shared/components";
+import { ActionButton, AttentionTextBox, ErrorBox } from "@frontend/game/gameplay/shared/components";
 import styles from "./guest-auth-page-content.module.css";
 
 interface AuthSceneProps {
@@ -25,7 +25,7 @@ export const AuthScene: React.FC<AuthSceneProps> = ({ onComplete }) => {
       </div>
       <div className={styles.body}>
         <div className={styles.controlRow}>
-          <AwaitingLabel>SECURE CONNECTION REQUIRED</AwaitingLabel>
+          <AttentionTextBox>SECURE CONNECTION REQUIRED</AttentionTextBox>
         </div>
         <div className={styles.controlRow}>
           <ActionButton

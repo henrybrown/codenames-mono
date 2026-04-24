@@ -62,7 +62,7 @@ export const PlayerInfoLayout: React.FC<{ children?: React.ReactNode }> = ({ chi
 );
 
 /** Re-export from shared components for backward compatibility */
-export { AwaitingLabel } from "@frontend/game/gameplay/shared/components";
+export { AttentionTextBox } from "@frontend/game/gameplay/shared/components";
 
 /**
  * Wrapper for middle grid section - ensures it fills available space
