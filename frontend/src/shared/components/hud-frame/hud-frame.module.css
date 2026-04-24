@@ -1,0 +1,36 @@
+.frame {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--hud-frame-max-width, 340px);
+  margin: 0 auto;
+  flex: 1 1 auto;
+  min-height: var(--hud-frame-min-height, 30dvh);
+  box-sizing: border-box;
+  position: relative;
+}
+
+/**
+ * Takes all the space above the footer and vertically centers its children
+ * (header + body). Because this wrapper owns the "fill" behaviour, any
+ * inner `flex: 1` inside the body can't leak into the frame-level layout —
+ * the body sits at content size inside the centered group.
+ */
+.centerGroup {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.body {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--hud-frame-body-gap, 20px);
+}
+
+.footer {
+  flex-shrink: 0;
+}
