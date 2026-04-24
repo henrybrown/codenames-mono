@@ -1,0 +1,50 @@
+.header {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 2px 8px;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--dashboard-text-condensed);
+  font-weight: 700;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 7px rgba(0, 255, 136, 0.5);
+  flex-shrink: 0;
+}
+
+.teamSymbol {
+  font-size: var(--dashboard-text-condensed);
+  line-height: 1;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+  color: var(--symbol-color);
+}
+
+.navGroup {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.divider {
+  width: 100%;
+  border-bottom: var(--border-dim);
+}

@@ -53,11 +53,6 @@
   z-index: calc(var(--z-spymaster-ar-hud) + 1);
 }
 
-.compactArea {
-  --dot-size: var(--dot-size-lg);
-  --dot-offset: var(--dot-offset-lg);
-}
-
 /* Clue overlay */
 .clueOverlay {
   position: fixed;

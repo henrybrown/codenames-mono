@@ -3,23 +3,18 @@ import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useDashboardState } from "../use-dashboard-state";
 import { useIntelState } from "../panels/use-intel-state";
 import { useGameDataRequired } from "../../providers";
-import { useAiStatus, useTriggerAiMove } from "@frontend/ai/api";
 import { ChatFab, ChatPanel } from "@frontend/chat/components";
 import { useUnreadCount } from "@frontend/chat/api";
-import { getTeamStyle } from "../panels/intel-panel";
-import { TeamSymbolIcon } from "@frontend/shared/components/team-symbol-icon";
-import { StatusDot, CircleButton } from "../../shared/components";
 import { ActionButton } from "@frontend/game/gameplay/shared/components";
-import { AwaitingLabel, carouselVariants, CAROUSEL_TRANSITION, useCarouselSwipe, IntelContent, ScoreComparison } from "../shared";
+import { AttentionTextBox, carouselVariants, CAROUSEL_TRANSITION, useCarouselSwipe, IntelContent, ScoreComparison } from "../shared";
 import { TurnOutcomePanel } from "../panels/turn-outcome-panel";
-import { DotCountdown } from "../panels/dot-countdown";
 import { NextTurnTrigger } from "../panels/next-turn-trigger";
+import { HudFrame } from "@frontend/shared/components/hud-frame";
 import { CompactClueInput } from "./compact-clue-input";
 import { useClueInput } from "./use-clue-input";
+import { CompactDashboardHeader } from "./compact-dashboard-header";
+import { CompactDashboardFooter } from "./compact-dashboard-footer";
 import styles from "./compact-dashboard.module.css";
-
-const TEAM_SWITCH_DURATION = 0.3;
-const EASING = [0.4, 0, 0.2, 1] as const;
 
 /** Shared spring pop for intel-box-style content in the condensed dashboard. */
 const popVariants = {
@@ -41,11 +36,12 @@ interface CompactDashboardProps {
 /**
  * Compact vertical dashboard for constrained viewports.
  *
- * Four sections stacked vertically:
- * - Header: INTEL label + team symbol + score (round over) + nav arrows
- * - Intel box: clue + guesses
- * - AI section: trigger button or thinking status (only when AI active)
- * - Footer: single full-width primary action button
+ * Structure:
+ * - Intel row: INTEL label + team symbol + nav arrows + divider (sibling
+ *   of the HudFrame, sits full-bleed above it)
+ * - HudFrame (the control area):
+ *    - Body: intel swipe zone, turn outcome panel, score box
+ *    - Footer: dot countdown / primary action / AI row
  *
  * Used by DesktopScene (portrait), WindowedScene, and MobileScene.
  */
@@ -57,11 +53,6 @@ export const CompactDashboard: React.FC<CompactDashboardProps> = ({ onOpenClueIn
   const showOutcome = s.canStartNextTurn && !!s.lastCompletedTurn;
 
   const { gameData } = useGameDataRequired();
-  const { data: aiStatus } = useAiStatus(gameData.publicId);
-  const triggerAi = useTriggerAiMove(gameData.publicId);
-
-  const isAiThinking = (aiStatus?.thinking || triggerAi.isPending) ?? false;
-  const canTriggerAi = (aiStatus?.available && !isAiThinking) ?? false;
 
   const [chatOpen, setChatOpen] = useState(false);
   const unreadCount = useUnreadCount(gameData.publicId, chatOpen);
@@ -73,46 +64,6 @@ export const CompactDashboard: React.FC<CompactDashboardProps> = ({ onOpenClueIn
     s.giveClue(clue.word, clue.count);
     clue.reset();
   };
-
-  const { symbol, color, rotate } = getTeamStyle(intel.teamName);
-
-  /** Single primary action -- hidden when it's an AI turn (footer AI section takes over) */
-  const primaryButton = (() => {
-    if (s.isAiSession) return null;
-    if (s.isCodemasterGivingClue)
-      return (
-        <ActionButton id="submit-clue-btn" size="sm" fullWidth
-          text={s.isLoading ? "..." : "TRANSMIT"}
-          onClick={handleTransmit}
-          enabled={!!(clue.word.trim()) && !isAiThinking && !s.isLoading}
-        />
-      );
-    if (s.isInLobby && s.lobbyAction)
-      return (
-        <ActionButton id="lobby-action-btn" size="sm" fullWidth
-          text={s.isLoading ? "..." : s.lobbyAction.label}
-          onClick={s.lobbyAction.handler}
-          enabled={!s.isLoading}
-        />
-      );
-    if (s.isCodebreakerGuessing)
-      return (
-        <ActionButton id="end-turn-btn" size="sm" fullWidth
-          text={s.isLoading ? "..." : "END TURN"}
-          onClick={s.endTurn}
-          enabled={!s.isLoading}
-        />
-      );
-    if (s.isRoundComplete && s.gameOverData)
-      return (
-        <ActionButton size="sm" fullWidth
-          text={s.isLoading ? "..." : "NEW GAME"}
-          onClick={s.gameOverData.newGame}
-          enabled={!s.isLoading}
-        />
-      );
-    return null;
-  })();
 
   /** Carousel swipe navigation -- must be before any early returns */
   const { swipeDirection, handleDragEnd, handleGoBack, handleGoForward } = useCarouselSwipe({
@@ -131,7 +82,7 @@ export const CompactDashboard: React.FC<CompactDashboardProps> = ({ onOpenClueIn
     />
   );
 
-  const lobbyChatOverlay = (
+  const chatFabOverlay = (
     <>
       <div className={styles.chatFabSlot}>
         <ChatFab onClick={() => setChatOpen(true)} unreadCount={unreadCount} />
@@ -143,65 +94,47 @@ export const CompactDashboard: React.FC<CompactDashboardProps> = ({ onOpenClueIn
   if (s.isInLobby) {
     return (
       <div className={styles.panel}>
-        <div className={styles.content}>
-          <div className={styles.contentSpacer} />
-          <div className={styles.fixedWidthWrapper}>
-            <div className={styles.lobbyButtons}>
-              {s.lobbyAction && (
-                <ActionButton id="lobby-action-btn" size="sm" fullWidth
-                  text={s.lobbyAction.label}
-                  onClick={s.lobbyAction.handler}
-                  enabled={!s.isLoading}
-                />
-              )}
-              {s.lobbyAction?.canRedeal && (
-                <ActionButton id="redeal-btn" size="sm" fullWidth
-                  text="REDEAL"
-                  onClick={s.lobbyAction.redealHandler}
-                  enabled={!s.isLoading}
-                />
-              )}
-            </div>
+        <HudFrame>
+          <div className={styles.lobbyButtons}>
+            {s.lobbyAction && (
+              <ActionButton id="lobby-action-btn" size="sm" fullWidth
+                text={s.lobbyAction.label}
+                onClick={s.lobbyAction.handler}
+                enabled={!s.isLoading}
+              />
+            )}
+            {s.lobbyAction?.canRedeal && (
+              <ActionButton id="redeal-btn" size="sm" fullWidth
+                text="REDEAL"
+                onClick={s.lobbyAction.redealHandler}
+                enabled={!s.isLoading}
+              />
+            )}
           </div>
-          <div className={styles.contentSpacer} />
-        </div>
-        {lobbyChatOverlay}
+        </HudFrame>
+        {chatFabOverlay}
       </div>
     );
   }
 
   return (
     <LayoutGroup id="compact-dashboard">
-    <div className={styles.panel}>
-      <div className={styles.content}>
-        <motion.div layout="position" layoutId="compact-header" className={styles.header}>
-          <div className={styles.headerLeft}>
-            <span className={styles.headerLabel}>INTEL</span>
-
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={intel.teamName}
-                className={styles.teamSymbol}
-                style={{ "--symbol-color": color } as React.CSSProperties}
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                exit={{ scale: 0, rotate: 180 }}
-                transition={{ duration: TEAM_SWITCH_DURATION, ease: EASING }}
-              >
-                <TeamSymbolIcon symbol={symbol} rotate={rotate} />
-              </motion.span>
-            </AnimatePresence>
-
-            {/** Score now shown in scoreBox below intel, not in header */}
-          </div>
-
-          <div className={styles.navGroup}>
-            <CircleButton size="sm" onClick={handleGoBack} disabled={!intel.canGoBack} aria-label="Previous turn">{"<"}</CircleButton>
-            <CircleButton size="sm" onClick={handleGoForward} disabled={!intel.canGoForward} aria-label="Next turn">{">"}</CircleButton>
-          </div>
-        </motion.div>
-
-        <div className={styles.centerGroup}>
+      <div className={styles.panel}>
+        <CompactDashboardHeader
+          teamName={intel.teamName}
+          canGoBack={intel.canGoBack}
+          canGoForward={intel.canGoForward}
+          onGoBack={handleGoBack}
+          onGoForward={handleGoForward}
+        />
+        <HudFrame
+          footer={
+            <CompactDashboardFooter
+              canTransmit={!!clue.word.trim() && !s.isLoading}
+              onTransmit={handleTransmit}
+            />
+          }
+        >
           {/* Normal intel swipe zone — ALWAYS rendered, never swapped. */}
           <motion.div
             layout="position"
@@ -233,20 +166,16 @@ export const CompactDashboard: React.FC<CompactDashboardProps> = ({ onOpenClueIn
                     animate="animate"
                     transition={popTransition}
                   >
-                    <div className={styles.fixedWidthWrapper}>
-                      <AwaitingLabel>INTEL REQUIRED</AwaitingLabel>
-                    </div>
-                    <div className={styles.fixedWidthWrapper}>
-                      <CompactClueInput
-                        word={clue.word}
-                        count={clue.count}
-                        error={clue.error}
-                        isLoading={s.isLoading}
-                        onWordChange={clue.setWord}
-                        onCountChange={clue.setCount}
-                        onSubmit={handleTransmit}
-                      />
-                    </div>
+                    <AttentionTextBox>INTEL REQUIRED</AttentionTextBox>
+                    <CompactClueInput
+                      word={clue.word}
+                      count={clue.count}
+                      error={clue.error}
+                      isLoading={s.isLoading}
+                      onWordChange={clue.setWord}
+                      onCountChange={clue.setCount}
+                      onSubmit={handleTransmit}
+                    />
                   </motion.div>
                 ) : !intel.hasClue ? (
                   <motion.div
@@ -256,21 +185,19 @@ export const CompactDashboard: React.FC<CompactDashboardProps> = ({ onOpenClueIn
                     animate="animate"
                     transition={popTransition}
                   >
-                    <div className={styles.fixedWidthWrapper}>
-                      <IntelContent
-                        hasClue={intel.hasClue}
-                        clueWord={intel.clueWord}
-                        clueNumber={intel.clueNumber}
-                        guesses={intel.guesses}
-                        maxSlots={intel.maxSlots}
-                        teamName={intel.teamName}
-                        showGhostRows={false}
-                      />
-                    </div>
+                    <IntelContent
+                      hasClue={intel.hasClue}
+                      clueWord={intel.clueWord}
+                      clueNumber={intel.clueNumber}
+                      guesses={intel.guesses}
+                      maxSlots={intel.maxSlots}
+                      teamName={intel.teamName}
+                      showGhostRows={false}
+                    />
                   </motion.div>
                 ) : (
                   <motion.div
-                    className={`${styles.fixedWidthWrapper} ${styles.intelBox}`}
+                    className={styles.intelBox}
                     variants={popVariants}
                     initial="initial"
                     animate="animate"
@@ -299,7 +226,6 @@ export const CompactDashboard: React.FC<CompactDashboardProps> = ({ onOpenClueIn
                 key="turn-outcome"
                 layout="position"
                 layoutId="compact-turn-outcome"
-                className={styles.fixedWidthWrapper}
                 variants={popVariants}
                 initial="initial"
                 animate="animate"
@@ -336,83 +262,11 @@ export const CompactDashboard: React.FC<CompactDashboardProps> = ({ onOpenClueIn
               />
             </motion.div>
           )}
-
-          <motion.div layout="position" layoutId="compact-footer" className={styles.footer}>
-            <AnimatePresence mode="popLayout">
-              {showOutcome && s.lastCompletedTurn ? (
-                <motion.div
-                  key="dot-countdown"
-                  layout="position"
-                  layoutId="compact-footer-dots"
-                  className={styles.fixedWidthWrapper}
-                  variants={popVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={popTransition}
-                >
-                  <DotCountdown keyId={s.lastCompletedTurn.id} />
-                </motion.div>
-              ) : primaryButton ? (
-                <motion.div
-                  key="primary-button"
-                  layout="position"
-                  layoutId="compact-footer-primary"
-                  className={styles.fixedWidthWrapper}
-                  variants={popVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={popTransition}
-                >
-                  {primaryButton}
-                </motion.div>
-              ) : s.isAiActive ? (
-                <motion.div
-                  key="ai-active"
-                  layout="position"
-                  layoutId="compact-footer-ai"
-                  className={styles.fixedWidthWrapper}
-                  variants={popVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={popTransition}
-                >
-                  {isAiThinking ? (
-                    <>
-                      <button className={styles.triggerBtn} disabled>
-                        THINKING...
-                      </button>
-                      <span className={styles.controlRowDot}><StatusDot active thinking /></span>
-                    </>
-                  ) : canTriggerAi ? (
-                    <>
-                      <button className={styles.triggerBtn} onClick={() => triggerAi.mutate()}>
-                        TRIGGER AI
-                      </button>
-                      <span className={styles.controlRowDot}><StatusDot active thinking={false} /></span>
-                    </>
-                  ) : (
-                    <>
-                      <span className={styles.aiIdleText}>STANDING BY</span>
-                      <span className={styles.controlRowDot}><StatusDot active={false} thinking={false} /></span>
-                    </>
-                  )}
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          </motion.div>
-        </div>
-
+        </HudFrame>
+        {/** Chat FAB pinned bottom-right at the panel level — never moves,
+         *   never flexes, same position across all dashboard states. */}
+        {chatFabOverlay}
       </div>
-      {/** Chat FAB pinned bottom-right at the panel level — never moves,
-       *   never flexes, same position across all dashboard states. */}
-      <div className={styles.chatFabSlot}>
-        <ChatFab onClick={() => setChatOpen(true)} unreadCount={unreadCount} />
-      </div>
-      {chatPanelEl}
-    </div>
     </LayoutGroup>
   );
 };
