@@ -48,7 +48,7 @@ export const DotCountdown: React.FC<DotCountdownProps> = ({ keyId }) => {
         {Array.from({ length: DOT_COUNT }).map((_, i) => (
           <span
             key={i}
-            className={`${styles.dot} ${i < elapsed ? styles.dotActive : ""}`}
+            className={`${styles.dot} ${i < DOT_COUNT - elapsed ? styles.dotActive : ""}`}
           />
         ))}
       </div>
