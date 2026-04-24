@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { TerminalSection } from "../shared";
+import { AttentionTextBox } from "@frontend/game/gameplay/shared/components";
 import type { TurnData } from "@frontend/shared/types";
-import styles from "./turn-outcome-panel.module.css";
 
 export interface TurnOutcomePanelProps {
   /** The completed turn to display. Only `id` is used to key the animation. */
@@ -43,12 +43,11 @@ export const TurnOutcomePanel: React.FC<TurnOutcomePanelProps> = ({
   const content = (
     <motion.div
       key={completedTurn.id}
-      className={styles.completeTag}
       initial={{ scale: 0.6, opacity: 0 }}
       animate={showTag ? { scale: 1, opacity: 1 } : { scale: 0.6, opacity: 0 }}
       transition={{ type: "spring", stiffness: 420, damping: 16, mass: 0.8, delay: 0.15 }}
     >
-      <span className={styles.completeLabel}>TURN COMPLETE</span>
+      <AttentionTextBox>TURN COMPLETE</AttentionTextBox>
     </motion.div>
   );
 
