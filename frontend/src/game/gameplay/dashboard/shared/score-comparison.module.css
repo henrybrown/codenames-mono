@@ -33,7 +33,6 @@
 
 .score.winner {
   color: var(--color-primary);
-  text-shadow: 0 0 20px var(--color-primary);
 }
 
 .scoreDivider {

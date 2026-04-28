@@ -103,7 +103,7 @@
   background: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.45);
-  font-size: 1.2rem;
+  font-size: 19px;
   font-family: var(--font-mono);
   cursor: pointer;
   padding: 0;
@@ -209,8 +209,8 @@
 
 .hackerTitle {
   color: var(--color-primary);
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-uppercase);
   text-transform: uppercase;
   letter-spacing: 0.15em;
   margin: 0;

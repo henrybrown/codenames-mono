@@ -17,8 +17,8 @@
 .label {
   color: var(--color-primary, #00ff88);
   font-family: var(--font-mono);
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -32,7 +32,8 @@
 .value {
   color: rgba(255, 255, 255, 0.7);
   font-family: var(--font-mono);
-  font-size: 0.9rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-mixed);
   min-width: 35px;
   text-align: right;
 }

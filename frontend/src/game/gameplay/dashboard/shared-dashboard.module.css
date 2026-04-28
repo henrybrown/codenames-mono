@@ -46,14 +46,13 @@
  */
 .infoDisplay {
   background: var(--bg-panel);
-  border: var(--border-heavy);
+  border: var(--border-normal);
   border-radius: var(--radius-panel);
   padding: 0.75rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--glow-box-sm);
   width: 100%;
   box-sizing: border-box;
 }
@@ -75,7 +74,6 @@
   transition: all 0.2s;
   width: 100%;
   letter-spacing: 0.05em;
-  box-shadow: var(--glow-score);
   min-height: 44px; /* Touch target */
 }
 
@@ -143,8 +141,8 @@
 }
 
 .dashboardTitle {
-  font-size: var(--dashboard-text-h1);
-  font-weight: 700;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -152,16 +150,16 @@
 }
 
 .dashboardSubtitle {
-  font-size: var(--dashboard-text-p);
-  font-weight: 600;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
 
 .dashboardValue {
-  font-size: 1.4rem;
-  font-weight: 900;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-primary);
   letter-spacing: 0.1em;
 }
@@ -208,7 +206,7 @@
   .primaryAction,
   .secondaryAction {
     padding: 0.5rem 1rem;
-    font-size: 0.8rem;
+    font-size: 13px;
     min-height: 40px; /* Slightly smaller for landscape */
   }
 
@@ -218,7 +216,7 @@
   }
 
   .dashboardValue {
-    font-size: 1.2rem;
+    font-size: 19px;
   }
 }
 
@@ -248,12 +246,12 @@
 /* Game Over Dashboard Specific Styles */
 .terminalHeader {
   font-family: var(--font-mono);
-  font-size: 1rem;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 0.75rem;
-  font-weight: 700;
   text-align: center;
 }
 
@@ -276,25 +274,24 @@
 
 .teamName {
   font-family: var(--font-mono);
-  font-size: var(--dashboard-text-small);
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 0.75rem;
-  font-weight: 700;
 }
 
 .score {
   font-family: var(--font-mono);
-  font-size: 3rem;
-  font-weight: 900;
+  font-size: var(--font-victory-score);
+  font-variation-settings: var(--font-variation-uppercase);
   line-height: 1;
   color: var(--color-text-muted);
 }
 
 .score.winner {
   color: var(--color-primary);
-  text-shadow: 0 0 20px var(--color-primary);
 }
 
 .scoreDivider {

@@ -2,10 +2,10 @@
 
 .button {
   font-family: var(--font-mono);
-  font-size: clamp(0.9rem, 2.5vh, 1.2rem);
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   padding: 0.8rem 2rem;
-  font-weight: 700;
-  border: var(--border-strong);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
   color: var(--color-primary);
   background: transparent;
   border-radius: var(--radius-md);
@@ -34,8 +34,9 @@
 }
 
 .button:hover:not(:disabled) {
-  background-color: var(--color-primary);
-  color: var(--color-background);
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
   transform: translateY(-2px);
 }
 
@@ -45,7 +46,7 @@
 
 /* Compact size variant */
 .sm {
-  font-size: 0.85rem;
+  font-size: var(--font-text);
   padding: 0.65rem 1rem;
   min-height: 42px;
   border-radius: 6px;
@@ -87,7 +88,6 @@
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .button {
-    font-size: clamp(0.85rem, 2vh, 1rem);
     padding: 0.6rem 1.5rem;
     min-height: 44px;
   }
@@ -96,7 +96,6 @@
 /* Mobile landscape optimizations */
 @media (max-width: 768px) and (orientation: landscape) {
   .button {
-    font-size: clamp(0.75rem, 1.8vh, 0.9rem);
     padding: 0.4rem 1rem;
     min-height: 36px;
   }

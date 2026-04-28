@@ -9,8 +9,8 @@
 }
 
 .title {
-  font-size: 2.5rem;
-  font-weight: bold;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 8px;
@@ -34,8 +34,8 @@
 
 .sectionTitle {
   color: var(--color-primary);
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-uppercase);
   letter-spacing: 2px;
   font-family: var(--font-mono);
   text-transform: uppercase;
@@ -57,14 +57,16 @@
 
 .aiDesc {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-mixed);
   color: rgba(255, 255, 255, 0.4);
   margin-top: 4px;
 }
 
 .optionButton {
-  background: var(--bg-highlight);
-  border: var(--border-subtle);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
+  color: var(--color-primary);
   border-radius: 4px;
   padding: 18px 15px;
   cursor: pointer;
@@ -76,21 +78,22 @@
   text-align: left;
 }
 
-.optionButton:hover {
-  background: rgba(var(--primary-rgb), 0.1);
+.optionButton:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
   border-color: var(--color-primary);
   transform: translateY(-2px);
 }
 
 .optionButton.selected {
-  background: rgba(var(--primary-rgb), 0.15);
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
   border-color: var(--color-primary);
 }
 
 .buttonLabel {
   color: var(--color-primary);
-  font-size: 1.05rem;
-  font-weight: bold;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   letter-spacing: 1px;
   font-family: var(--font-mono);
   text-transform: uppercase;
@@ -98,7 +101,8 @@
 
 .buttonDesc {
   color: rgba(255, 255, 255, 0.6);
-  font-size: 0.85rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-mixed);
   font-family: var(--font-mono);
 }
 
@@ -117,12 +121,7 @@
 
 @media (max-width: 768px) {
   .title {
-    font-size: 1.8rem;
     letter-spacing: 4px;
-  }
-
-  .sectionTitle {
-    font-size: 1rem;
   }
 
   .buttonGroup {
@@ -131,13 +130,5 @@
 
   .optionButton {
     padding: 15px;
-  }
-
-  .buttonLabel {
-    font-size: 1rem;
-  }
-
-  .buttonDesc {
-    font-size: 0.85rem;
   }
 }

@@ -19,7 +19,8 @@
 .aiIdleText {
   width: 100%;
   font-family: var(--font-mono);
-  font-size: var(--dashboard-text-condensed);
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   color: rgba(0, 255, 136, 0.3);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -29,30 +30,50 @@
 .triggerBtn {
   width: 100%;
   font-family: var(--font-mono);
-  font-size: var(--dashboard-text-btn);
-  font-weight: 700;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   padding: 0.4rem 0.9rem;
-  border: var(--border-normal);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
   border-radius: 5px;
   background: transparent;
   color: var(--color-primary);
-  opacity: 0.7;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s, opacity 0.15s;
+  transition: all 0.2s ease;
   white-space: nowrap;
   text-align: center;
 }
 
 .triggerBtn:hover:not(:disabled) {
-  border-color: var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
   color: var(--color-primary);
-  background: var(--bg-highlight);
-  opacity: 1;
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+.triggerBtn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .triggerBtn:disabled {
   opacity: 0.45;
   cursor: default;
+}
+
+.healthWarning {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
+  color: rgba(255, 180, 0, 0.75);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+.aiActionRow {
+  position: relative;
+  width: 100%;
 }

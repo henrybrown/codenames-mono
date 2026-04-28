@@ -18,17 +18,17 @@
 }
 
 .flashStatus {
-  font-size: 1.2rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   color: rgba(255, 255, 255, 0.9);
   text-transform: uppercase;
   letter-spacing: 0.3em;
   margin-bottom: 1rem;
-  font-weight: 400;
 }
 
 .flashWinner {
-  font-size: 4rem;
-  font-weight: 900;
+  font-size: var(--font-victory-headline);
+  font-variation-settings: var(--font-variation-uppercase);
   color: white;
   text-transform: uppercase;
   letter-spacing: 0.2em;
@@ -38,7 +38,8 @@
 }
 
 .flashSubtext {
-  font-size: 1.2rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   color: rgba(255, 255, 255, 0.8);
   text-transform: uppercase;
   letter-spacing: 0.2em;

@@ -27,8 +27,8 @@
 }
 
 .title {
-  font-size: 2.2rem;
-  font-weight: bold;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 6px;
@@ -38,7 +38,8 @@
 
 .gameInfo {
   color: var(--color-text-muted);
-  font-size: 1.2rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   opacity: 0.7;
   letter-spacing: 2px;
   font-family: var(--font-mono);
@@ -59,27 +60,28 @@
 .teamSwitchButton {
   flex: 1;
   padding: 12px;
-  background: var(--bg-section);
-  border: var(--border-dim);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
   border-radius: var(--radius-sm);
-  color: var(--color-text-muted);
+  color: var(--color-primary);
   font-family: var(--font-mono);
-  font-size: 1rem;
-  font-weight: bold;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   letter-spacing: 2px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .teamSwitchButton[data-active="true"] {
-  background: var(--color-primary);
-  color: var(--color-background);
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
   border-color: var(--color-primary);
 }
 
 .teamSwitchButton:hover:not([data-active="true"]) {
-  background: var(--bg-highlight);
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
   border-color: var(--color-primary);
+  transform: translateY(-2px);
 }
 
 .teamsGrid {
@@ -141,8 +143,8 @@
 }
 
 .teamName {
-  font-size: 1.1rem;
-  font-weight: bold;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-uppercase);
   text-transform: uppercase;
   letter-spacing: 3px;
   opacity: 0.9;
@@ -155,8 +157,8 @@
 
 .playerCount {
   color: var(--color-text-muted);
-  font-size: 0.75rem;
-  font-weight: normal;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   opacity: 0.7;
   letter-spacing: 1px;
 }
@@ -167,7 +169,8 @@
   gap: 4px;
   margin-top: 0.5rem;
   font-family: var(--font-mono);
-  font-size: 1rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-mixed);
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
@@ -232,8 +235,8 @@
 
 .playerName {
   color: white;
-  font-weight: 500;
-  font-size: 1rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-mixed);
   flex: 1;
   letter-spacing: 0.5px;
 }
@@ -242,8 +245,8 @@
   background: transparent;
   border: 1px solid var(--color-primary, #00ff88);
   color: white;
-  font-weight: 500;
-  font-size: 1rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-mixed);
   padding: 0.25rem 0.5rem;
   border-radius: 2px;
   flex: 1;
@@ -269,12 +272,11 @@
 
 .editButton {
   background: transparent;
-  border: var(--border-subtle);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
   color: var(--color-primary);
   padding: 4px 6px;
   border-radius: 2px;
   cursor: pointer;
-  opacity: 0.7;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -282,9 +284,10 @@
 }
 
 .editButton:hover:not(:disabled) {
-  opacity: 1;
-  background: var(--bg-highlight);
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
   border-color: var(--color-primary);
+  transform: translateY(-2px);
 }
 
 .editButton:disabled {
@@ -337,7 +340,7 @@
   border: none;
   padding: 0.5rem 1rem;
   font-family: var(--font-mono);
-  font-size: 0.875rem;
+  font-size: 14px;
   font-weight: bold;
   cursor: pointer;
   border-radius: 3px;
@@ -368,7 +371,8 @@
 .errorMessage {
   color: var(--color-error);
   margin-top: 1rem;
-  font-size: 1.1rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-mixed);
   text-align: center;
   padding: 1rem;
   background: rgba(255, 68, 68, 0.1);
@@ -442,7 +446,8 @@
 }
 
 .youJoinedMessage {
-  font-size: 1.3rem;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-mixed);
   color: var(--color-primary);
   text-align: center;
   padding: 1rem;
@@ -474,7 +479,8 @@
 }
 
 .shareMessage {
-  font-size: 0.9rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-mixed);
   color: var(--color-primary, #00ff88);
   animation: fadeIn 0.3s ease;
 }
@@ -489,7 +495,8 @@
 }
 
 .waitingMessage {
-  font-size: 1.1rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-mixed);
   color: var(--color-text-muted);
   text-align: center;
 }
@@ -497,7 +504,8 @@
 .youBadge {
   margin-left: 0.5rem;
   padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-primary);
   background: var(--bg-highlight);
   border-radius: var(--radius-sm);
@@ -507,7 +515,8 @@
 .emptyTeamMessage {
   color: var(--color-text-muted);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-mixed);
   text-align: center;
   padding: 1rem;
   opacity: 0.4;
@@ -516,8 +525,8 @@
 
 .readyMessage {
   font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -551,18 +560,18 @@
 }
 
 .teamLabel {
-  font-size: 0.75rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--team-color);
-  font-weight: 700;
   letter-spacing: 0.1em;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .playerLabel {
-  font-size: var(--dashboard-text-h1);
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-mixed);
   color: var(--color-text);
-  font-weight: 500;
 }
 
 /* Change team button */

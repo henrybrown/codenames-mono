@@ -13,7 +13,8 @@
 
 .aiStatusText {
   color: #b5dbcc;
-  font-size: var(--dashboard-text-p);
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-mixed);
   text-align: left;
   line-height: 1.4;
   min-width: 0;
@@ -22,14 +23,14 @@
 .triggerButton {
   flex: 1;
   padding: 0.5rem 1rem;
-  font-size: var(--dashboard-text-btn-sm);
+  font-size: var(--font-text);
   font-family: var(--font-mono);
-  font-weight: 600;
+  font-variation-settings: var(--font-variation-uppercase);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-primary);
-  background: var(--bg-highlight);
-  border: 1.5px solid rgba(82, 214, 138, 0.6);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -37,8 +38,9 @@
 }
 
 .thinkingText {
-  font-size: var(--dashboard-text-p);
+  font-size: var(--font-text);
   font-family: var(--font-mono);
+  font-variation-settings: var(--font-variation-uppercase);
   color: rgba(255, 255, 255, 0.6);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -47,13 +49,14 @@
 }
 
 .triggerButton:hover:not(:disabled) {
-  background: rgba(82, 214, 138, 0.15);
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
   border-color: var(--color-primary);
-  box-shadow: 0 0 12px rgba(82, 214, 138, 0.3);
+  transform: translateY(-2px);
 }
 
 .triggerButton:active:not(:disabled) {
-  transform: scale(0.98);
+  transform: translateY(0);
 }
 
 .triggerButton:disabled {

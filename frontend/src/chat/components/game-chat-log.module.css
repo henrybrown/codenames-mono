@@ -11,7 +11,8 @@
 
 .message {
   padding: 0.5rem 0;
-  font-size: var(--dashboard-text-p);
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-mixed);
   line-height: 1.4;
   font-family: var(--font-mono);
 }
@@ -51,7 +52,8 @@
 }
 
 .messageTeam {
-  font-size: var(--dashboard-text-small);
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   opacity: 0.6;
   text-transform: uppercase;
 }

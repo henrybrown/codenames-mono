@@ -2,12 +2,12 @@
 
 .terminalHeader {
   font-family: var(--font-mono);
-  font-size: 1rem;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 0.75rem;
-  font-weight: 700;
   text-align: center;
   width: 100%;
 }
@@ -23,14 +23,14 @@
   border: 1px solid color-mix(in srgb, var(--color-assassin) 40%, black);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: var(--dashboard-text-small);
-  font-weight: 700;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   color: color-mix(in srgb, var(--color-assassin) 50%, black);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 
 .assassinIcon {
-  font-size: 1.2rem;
+  font-size: 19px;
 }
 

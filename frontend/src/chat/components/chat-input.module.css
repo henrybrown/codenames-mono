@@ -14,7 +14,8 @@
   border-radius: var(--radius-sm);
   color: var(--color-primary);
   font-family: var(--font-mono);
-  font-size: var(--chat-input-font-size);
+  font-size: var(--font-xs);
+  font-variation-settings: var(--font-variation-mixed);
   padding: 6px 8px;
   outline: none;
 }
@@ -25,22 +26,28 @@
 
 .sendBtn {
   font-family: var(--font-mono);
-  font-size: var(--chat-input-font-size);
-  font-weight: 700;
+  font-size: var(--font-xs);
+  font-variation-settings: var(--font-variation-uppercase);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   padding: 0 12px;
-  border: 1px solid rgba(82, 214, 138, 0.4);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--color-primary);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: all 0.2s ease;
 }
 
 .sendBtn:hover:not(:disabled) {
-  background: rgba(82, 214, 138, 0.1);
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
   border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+.sendBtn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .sendBtn:disabled {

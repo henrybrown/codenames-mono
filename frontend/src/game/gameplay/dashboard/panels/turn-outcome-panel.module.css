@@ -3,7 +3,7 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1.75rem;
   width: 100%;
 }
 
@@ -19,11 +19,10 @@
 
 .completeLabel {
   font-family: var(--font-mono);
-  font-size: var(--dashboard-text-condensed);
-  font-weight: 700;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-uppercase);
   letter-spacing: 0.15em;
   color: var(--color-primary);
-  text-shadow: var(--glow-score);
 }
 
 /* ── Team row ──────────────────────────────────────────────────────── */
@@ -38,8 +37,8 @@
 
 .teamName {
   font-family: var(--font-mono);
-  font-size: var(--dashboard-text-condensed);
-  font-weight: 600;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--symbol-color, var(--color-text-muted));
@@ -56,8 +55,8 @@
 .reason {
   text-align: center;
   font-family: var(--font-mono);
-  font-size: var(--dashboard-text-small, 0.75rem);
-  font-weight: 600;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(var(--primary-rgb), 0.45);
@@ -98,10 +97,9 @@
 
 .dotLabel {
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--font-xs);
+  font-variation-settings: var(--font-variation-uppercase);
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(var(--primary-rgb), 0.75);
-  text-shadow: 0 0 6px rgba(var(--primary-rgb), 0.35);
+  color: var(--color-text-muted);
 }

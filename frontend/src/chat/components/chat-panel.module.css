@@ -20,12 +20,11 @@
 
 .title {
   font-family: var(--font-mono);
-  font-size: var(--chat-header-font-size);
-  font-weight: 700;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  text-shadow: 0 0 7px rgba(0, 255, 136, 0.5);
 }
 
 .closeBtn {
@@ -77,7 +76,7 @@
   text-align: center;
   color: var(--color-text-muted);
   font-family: var(--font-mono);
-  font-size: var(--chat-msg-font-size);
+  font-size: var(--font-xs);
+  font-variation-settings: var(--font-variation-mixed);
   padding: 16px 0;
-  font-style: italic;
 }

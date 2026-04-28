@@ -34,8 +34,8 @@
   border-radius: 8px;
   background: var(--color-team-red);
   font-family: var(--font-mono);
-  font-size: 0.55rem;
-  font-weight: 700;
+  font-size: var(--font-xs);
+  font-variation-settings: var(--font-variation-uppercase);
   color: white;
   display: flex;
   align-items: center;

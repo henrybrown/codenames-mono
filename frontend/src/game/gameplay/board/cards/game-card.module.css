@@ -414,10 +414,6 @@
   font-weight: 900;
   color: color-mix(in srgb, var(--team-color) 70%, black);
   z-index: 2;
-  text-shadow:
-    0 0 20px var(--team-color),
-    0 0 40px var(--team-color);
-  filter: drop-shadow(0 0 10px var(--team-color));
   pointer-events: none;
 }
 
@@ -539,9 +535,7 @@
   font-size: 3rem;
   font-weight: 900;
   color: transparent;
-  text-shadow: 0 0 6px var(--team-color);
   -webkit-text-stroke: none;
-  filter: blur(0.3px);
   line-height: 1;
   z-index: 9;
   opacity: 0.3;
@@ -621,6 +615,6 @@
 
 @media (min-width: 1025px) {
   .normalCard {
-    font-size: 1.6rem;
+    font-size: 26px;
   }
 }

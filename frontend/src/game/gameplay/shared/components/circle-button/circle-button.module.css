@@ -3,11 +3,12 @@
 .circleBtn {
   width: 40px;
   height: 40px;
-  border: var(--border-subtle);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
   background: transparent;
   color: var(--color-primary);
-  font-size: 1.25rem;
+  font-size: var(--font-h1);
   font-family: var(--font-mono);
+  font-variation-settings: var(--font-variation-uppercase);
   cursor: pointer;
   border-radius: 50%;
   display: flex;
@@ -18,12 +19,14 @@
 }
 
 .circleBtn:hover:not(:disabled) {
-  background: var(--bg-highlight);
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
   border-color: var(--color-primary);
+  transform: translateY(-2px);
 }
 
 .circleBtn:active:not(:disabled) {
-  transform: scale(0.95);
+  transform: translateY(0);
 }
 
 .circleBtn:disabled {
@@ -35,13 +38,13 @@
 .sm {
   width: 28px;
   height: 28px;
-  font-size: var(--dashboard-text-btn);
+  font-size: var(--font-text);
 }
 
 @media (max-height: 720px) {
-  .sm { width: 24px; height: 24px; font-size: var(--dashboard-text-small); }
+  .sm { width: 24px; height: 24px; }
 }
 
 @media (max-height: 660px) {
-  .sm { width: 22px; height: 22px; font-size: var(--dashboard-text-btn-sm); }
+  .sm { width: 22px; height: 22px; }
 }

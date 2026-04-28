@@ -66,7 +66,8 @@
 
 .statusLine {
   font-family: var(--font-mono);
-  font-size: 0.9rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-mixed);
   color: rgba(255, 255, 255, 0.7);
   margin-bottom: 1rem;
   letter-spacing: 0.1em;
@@ -74,21 +75,17 @@
 
 .complete {
   color: var(--winning-color, #00ff88);
-  font-weight: 700;
-  text-shadow: 0 0 10px var(--winning-color, #00ff88);
+  font-variation-settings: var(--font-variation-uppercase);
 }
 
 .winner {
   font-family: var(--font-mono);
-  font-size: clamp(1.5rem, 5vw, 2.5rem);
-  font-weight: 900;
+  font-size: var(--font-victory-headline);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--winning-color, #00ff88);
   text-transform: uppercase;
   letter-spacing: 0.15em;
   margin: 0;
-  text-shadow: 
-    0 0 20px var(--winning-color, #00ff88),
-    0 0 40px var(--winning-color, #00ff88);
   line-height: 1.2;
 }
 
@@ -102,12 +99,12 @@
 
 .debriefHeader {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--winning-color, #00ff88);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 1rem;
-  font-weight: 700;
 }
 
 .stats {
@@ -121,31 +118,32 @@
   justify-content: space-between;
   align-items: center;
   font-family: var(--font-mono);
-  font-size: 0.9rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-mixed);
 }
 
 .statLabel {
   color: rgba(255, 255, 255, 0.6);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-size: 0.8rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
 }
 
 .statValue {
   color: var(--winning-color, #00ff88);
-  font-weight: 700;
-  text-shadow: 0 0 10px var(--winning-color, #00ff88);
+  font-variation-settings: var(--font-variation-uppercase);
 }
 
 /* Terminal Header */
 .terminalHeader {
   font-family: var(--font-mono);
-  font-size: 1rem;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--winning-color, #00ff88);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 1.5rem;
-  font-weight: 700;
   text-align: center;
 }
 
@@ -169,25 +167,24 @@
 
 .teamName {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   color: rgba(255, 255, 255, 0.6);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 0.75rem;
-  font-weight: 700;
 }
 
 .score {
   font-family: var(--font-mono);
-  font-size: 3rem;
-  font-weight: 900;
+  font-size: var(--font-victory-score);
+  font-variation-settings: var(--font-variation-uppercase);
   line-height: 1;
   color: rgba(255, 255, 255, 0.5);
 }
 
 .score.winner {
   color: var(--winning-color, #00ff88);
-  text-shadow: 0 0 20px var(--winning-color, #00ff88);
 }
 
 .scoreDivider {
@@ -211,7 +208,8 @@
   border: var(--border-subtle);
   border-radius: 4px;
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   color: rgba(255, 255, 255, 0.7);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -220,7 +218,6 @@
 
 .miniStat span {
   color: var(--winning-color, #00ff88);
-  font-weight: 700;
   margin-right: 0.25rem;
 }
 
@@ -271,7 +268,7 @@
   }
 
   .statRow {
-    font-size: 0.8rem;
+    font-size: 13px;
   }
 
   .score {

@@ -33,7 +33,7 @@
 .playerName {
   font-family: var(--font-mono);
   font-size: var(--dashboard-text-banner);
-  font-weight: 700;
+  font-variation-settings: var(--font-variation-uppercase);
   color: rgba(255, 255, 255, 0.9);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -45,7 +45,7 @@
 .roleBadge {
   font-family: var(--font-mono);
   font-size: var(--dashboard-text-badge);
-  font-weight: 700;
+  font-variation-settings: var(--font-variation-uppercase);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   padding: 3px 8px;

@@ -21,12 +21,11 @@
 
 .label {
   font-family: var(--font-mono);
-  font-size: var(--dashboard-text-condensed);
-  font-weight: 700;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  text-shadow: 0 0 7px rgba(0, 255, 136, 0.5);
   flex-shrink: 0;
 }
 

@@ -12,12 +12,11 @@
 }
 
 .title {
-  font-weight: 700;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   text-transform: uppercase;
   letter-spacing: 2px;
   color: var(--color-primary);
-  font-size: var(--dashboard-text-p);
-  text-shadow: var(--glow-score);
 }
 
 .body {
@@ -28,25 +27,26 @@
 
 .triggerButton {
   padding: 0.5rem 1rem;
-  font-size: var(--dashboard-text-btn-sm);
+  font-size: var(--font-text);
   font-family: var(--font-mono);
-  font-weight: 600;
+  font-variation-settings: var(--font-variation-uppercase);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-primary);
-  background: var(--bg-highlight);
-  border: var(--border-normal);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.triggerButton:hover {
-  background: var(--bg-highlight);
+.triggerButton:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
   border-color: var(--color-primary);
-  box-shadow: var(--glow-box-sm);
+  transform: translateY(-2px);
 }
 
-.triggerButton:active {
-  transform: scale(0.98);
+.triggerButton:active:not(:disabled) {
+  transform: translateY(0);
 }

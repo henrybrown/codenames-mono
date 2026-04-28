@@ -12,11 +12,11 @@
 }
 
 .title {
-  font-weight: 700;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   text-transform: uppercase;
   letter-spacing: 2px;
   color: var(--color-primary);
-  font-size: var(--dashboard-text-h1);
 }
 
 /* Navigation group with arrows - centered at bottom */
@@ -31,7 +31,7 @@
 
 /* Team symbol in header */
 .teamSymbol {
-  font-size: 1.1rem;
+  font-size: 18px;
   color: var(--symbol-color);
 }
 

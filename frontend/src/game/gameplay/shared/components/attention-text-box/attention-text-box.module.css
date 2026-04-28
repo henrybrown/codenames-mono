@@ -3,8 +3,8 @@
 .attentionTextBox {
   width: 100%;
   font-family: var(--font-mono);
-  font-size: var(--dashboard-text-btn);
-  font-weight: 700;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-warning);
   text-transform: uppercase;
   letter-spacing: 0.1em;

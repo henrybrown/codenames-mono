@@ -7,8 +7,8 @@
   border: none;
   border-bottom: var(--border-normal);
   font-family: var(--font-mono);
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -21,7 +21,7 @@
 .input::placeholder {
   color: var(--color-primary);
   opacity: 0.3;
-  font-weight: 400;
+  font-variation-settings: var(--font-variation-uppercase);
   text-transform: uppercase;
 }
 
@@ -36,6 +36,7 @@
 
 .input[data-preserve-case] {
   text-transform: none;
+  font-variation-settings: var(--font-variation-mixed);
 }
 
 .input[data-preserve-case]::placeholder {

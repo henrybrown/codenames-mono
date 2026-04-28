@@ -39,13 +39,12 @@
 }
 
 .terminalCommand {
-  font-weight: 700;
+  font-size: var(--font-text);
+  font-variation-settings: var(--font-variation-uppercase);
   text-transform: uppercase;
   letter-spacing: 2px;
   margin-bottom: var(--panel-header-gap);
   color: var(--color-primary);
-  font-size: var(--dashboard-text-h1);
-  text-shadow: var(--glow-score);
   border-bottom: var(--border-dim);
   padding-bottom: var(--panel-header-gap);
 }
@@ -59,7 +58,7 @@
   min-height: 50%;   /* ensure panels spread across at least half the dashboard */
   min-width: 0;
   width: 100%;
-  gap: 12px;
+  gap: 20px;
   overflow-y: auto;
   overflow-x: hidden;
 }

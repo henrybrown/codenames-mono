@@ -17,10 +17,10 @@
 }
 
 .title {
-  color: var(--color-text);
-  font-size: var(--dashboard-text-h1);
-  font-family: var(--font-mono);
-  font-variation-settings: var(--font-variation-heavy);
+  color: white;
+  font-size: 1.5rem;
+  font-family: "Doto", monospace;
+  font-variation-settings: "ROND" 100, "wght" 300;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   margin: 0 0 1.5rem;
@@ -29,7 +29,7 @@
 
 .playerInfo {
   background: var(--bg-highlight);
-  border: 1px solid var(--team-color);
+  border: 1px solid color-mix(in srgb, var(--team-color) 50%, transparent);
   border-radius: var(--radius-md);
   padding: 1.25rem;
   margin-bottom: 1.5rem;
@@ -41,24 +41,36 @@
 }
 
 .playerName {
-  color: var(--color-text);
-  font-size: 1.4rem;
-  font-family: var(--font-mono);
-  font-variation-settings: var(--font-variation-heavy);
+  color: white;
+  font-size: 1.5rem;
+  font-family: "Doto", monospace;
+  font-variation-settings: "ROND" 100, "wght" 300;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .roleLabel {
   color: var(--team-color);
-  font-size: var(--dashboard-text-small);
-  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-family: "Doto", monospace;
+  font-variation-settings: "ROND" 100, "wght" 300;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-@media (max-width: 768px) {
-  .playerName {
-    font-size: 1.2rem;
-  }
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1rem;
+  font-family: "Doto", monospace;
+  font-variation-settings: "ROND" 100, "wght" 200;
+  line-height: 1.7;
+  text-align: center;
+  margin: 0 0 1.5rem;
 }
+
+.passButton {
+  font-family: "Doto", monospace;
+  font-variation-settings: "ROND" 100, "wght" 300;
+}
+

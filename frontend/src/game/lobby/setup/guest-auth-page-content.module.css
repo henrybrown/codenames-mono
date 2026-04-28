@@ -8,8 +8,8 @@
 }
 
 .title {
-  font-size: 1.6rem;
-  font-weight: bold;
+  font-size: var(--font-h1);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 6px;
@@ -37,7 +37,6 @@
 
 @media (max-width: 768px) {
   .title {
-    font-size: 1.3rem;
     letter-spacing: 4px;
   }
 }

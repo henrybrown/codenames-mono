@@ -23,15 +23,14 @@
   border: none;
   border-bottom: var(--border-subtle);
   color: var(--color-primary);
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: var(--font-clue-input);
   text-align: left;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   padding: 0.3rem 0.5rem;
   width: 100%;
   font-family: var(--font-mono);
-  font-variation-settings: var(--font-variation-heavy);
+  font-variation-settings: var(--font-variation-uppercase);
   text-shadow: none;
   outline: none;
   transition: border-color 0.15s;
@@ -41,7 +40,6 @@
 .codeWordInputField::placeholder {
   color: var(--color-primary);
   opacity: 0.3;
-  font-weight: 400;
   letter-spacing: 0.05em;
 }
 
@@ -60,19 +58,18 @@
   justify-content: center;
   gap: 0.75rem;
   font-family: var(--font-mono);
-  font-variation-settings: var(--font-variation-heavy);
+  font-variation-settings: var(--font-variation-uppercase);
   color: var(--color-primary);
 }
 
 
 .numberDisplay {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: var(--font-clue-input);
   min-width: 40px;
   text-align: center;
   color: var(--color-primary);
   font-family: var(--font-mono);
-  font-variation-settings: var(--font-variation-heavy);
+  font-variation-settings: var(--font-variation-uppercase);
   text-shadow: none;
 }
 
