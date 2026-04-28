@@ -2,6 +2,7 @@ import type { AIPlayerService } from "../ai-player.service";
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
 import type { DbContext } from "@backend/shared/data-access/transaction-handler";
 import type { AppLogger } from "@backend/shared/logging";
+import type { LLMService } from "../pipeline/llm.service";
 
 import * as aiPipelineRunsRepository from "@backend/shared/data-access/repositories/ai-pipeline-runs.repository";
 import * as gamesRepository from "@backend/shared/data-access/repositories/games.repository";
@@ -15,6 +16,7 @@ export interface AiMoveDependencies {
   aiPlayerService: AIPlayerService;
   getGameState: GameplayStateProvider;
   db: DbContext;
+  llm: LLMService;
 }
 
 export const aiMove = (logger: AppLogger) => (deps: AiMoveDependencies) => {
@@ -30,6 +32,7 @@ export const aiMove = (logger: AppLogger) => (deps: AiMoveDependencies) => {
     findRunningPipeline: aiPipelineRunsRepository.findRunningByGameId(deps.db),
     findGameByPublicId: gamesRepository.findGameByPublicId(deps.db),
     getGameState: deps.getGameState,
+    llm: deps.llm,
   });
   const statusController = getStatusController({ getStatus: statusService });
 

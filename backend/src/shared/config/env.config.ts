@@ -69,6 +69,9 @@ export const loadEnvFromPackageDir = () => {
     envLoadLogger.info(`    - Port: ${parsedEnv.PORT}`);
     envLoadLogger.info(`    - Database: ${parsedEnv.DATABASE_URL}`);
     envLoadLogger.info(`    - LLM: ${parsedEnv.LLM_PROVIDER}/${parsedEnv.LLM_MODEL} @ ${parsedEnv.LLM_URL}`);
+    envLoadLogger.info(
+      `    - LLM Health Check: ${parsedEnv.LLM_HEALTH_CHECK_ENABLED} (throttle=${parsedEnv.LLM_HEALTH_THROTTLE_MS}ms, threshold=${parsedEnv.LLM_HEALTH_GPU_THRESHOLD})`
+    );
     envLoadLogger.info(`    - Log Console Level: ${parsedEnv.LOG_CONSOLE_LEVEL}`);
   }
 
@@ -88,6 +91,17 @@ const EnvSchema = z.object({
   LLM_MODEL: z.string().min(1, "LLM_MODEL must not be empty").default("gemini-2.5-flash"),
   LLM_TEMPERATURE: z.string().transform(Number).default("0.7"),
   LLM_NUM_CTX: z.string().transform(Number).default("4096"),
+  LLM_HEALTH_CHECK_ENABLED: z.string()
+    .transform((v) => v !== "false")
+    .default("true"),
+  LLM_HEALTH_THROTTLE_MS: z.string()
+    .transform(Number)
+    .pipe(z.number().int().min(1000))
+    .default("30000"),
+  LLM_HEALTH_GPU_THRESHOLD: z.string()
+    .transform(Number)
+    .pipe(z.number().min(0).max(1))
+    .default("0.99"),
   LOG_FILE_LEVEL: z.enum(["debug", "info", "warn", "error", "http"]).default("info"),
   LOG_CONSOLE_LEVEL: z.enum(["debug", "info", "warn", "error", "http", "silent"]).default("info"),
   LOG_FILE_PATH: z.string().default("./logs/app.info"),

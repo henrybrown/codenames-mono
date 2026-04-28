@@ -2,6 +2,13 @@ import type { RunFinderByGame } from "@backend/shared/data-access/repositories/a
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
 import type { GameFinder } from "@backend/shared/data-access/repositories/games.repository";
 
+export type HealthPlacement = "gpu" | "partial" | "cpu" | "not-loaded" | "unknown";
+
+export interface AiHealth {
+  placement: HealthPlacement;
+  gpuPercent: number;
+}
+
 /**
  * AI status response
  */
@@ -9,6 +16,19 @@ export interface AiStatus {
   available: boolean; // Is it AI's turn and can trigger?
   thinking: boolean; // Is pipeline currently running?
   runId?: string; // Current run ID if thinking
+  /** Inference engine health. Present when using a local provider (Ollama). */
+  health?: AiHealth;
+}
+
+/**
+ * Narrow interface for the LLM dependency — only the methods we need here.
+ */
+export interface HealthAwareLLM {
+  probeHealth: () => Promise<void>;
+  getHealthState: () => {
+    placement: HealthPlacement;
+    gpuPercent: number;
+  } | undefined;
 }
 
 /**
@@ -18,6 +38,7 @@ export interface GetStatusServiceDeps {
   findRunningPipeline: RunFinderByGame;
   findGameByPublicId: GameFinder<string>;
   getGameState: GameplayStateProvider;
+  llm: HealthAwareLLM;
 }
 
 /**
@@ -33,6 +54,9 @@ export type GetStatusResult =
  */
 export const getStatusService = (deps: GetStatusServiceDeps) =>
   async (gameId: string, userId: number): Promise<GetStatusResult> => {
+    // Fire-and-forget health probe. Throttled internally; failures are logged at debug.
+    deps.llm.probeHealth().catch(() => { /* swallow — already logged at debug */ });
+
     // Verify user has access to this game
     const gameState = await deps.getGameState(gameId, userId);
 
@@ -50,6 +74,12 @@ export const getStatusService = (deps: GetStatusServiceDeps) =>
       return { status: "game-not-found", gameId };
     }
 
+    const rawHealth = deps.llm.getHealthState();
+    const health: AiHealth | undefined =
+      rawHealth && rawHealth.placement !== "unknown"
+        ? { placement: rawHealth.placement, gpuPercent: rawHealth.gpuPercent }
+        : undefined;
+
     // Check for running pipeline
     const runningPipeline = await deps.findRunningPipeline(game._id);
 
@@ -60,6 +90,7 @@ export const getStatusService = (deps: GetStatusServiceDeps) =>
           available: false,
           thinking: true,
           runId: runningPipeline.id,
+          health,
         },
       };
     }
@@ -71,6 +102,7 @@ export const getStatusService = (deps: GetStatusServiceDeps) =>
         aiStatus: {
           available: false,
           thinking: false,
+          health,
         },
       };
     }
@@ -87,6 +119,7 @@ export const getStatusService = (deps: GetStatusServiceDeps) =>
         aiStatus: {
           available: false,
           thinking: false,
+          health,
         },
       };
     }
@@ -111,6 +144,7 @@ export const getStatusService = (deps: GetStatusServiceDeps) =>
       aiStatus: {
         available: aiCanAct,
         thinking: false,
+        health,
       },
     };
   };

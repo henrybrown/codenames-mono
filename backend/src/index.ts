@@ -144,6 +144,11 @@ const ai = initializeAI({
     model: env.LLM_MODEL,
     temperature: env.LLM_TEMPERATURE,
     maxTokens: env.LLM_NUM_CTX,
+    healthCheck: {
+      enabled: env.LLM_HEALTH_CHECK_ENABLED,
+      throttleMs: env.LLM_HEALTH_THROTTLE_MS,
+      gpuThreshold: env.LLM_HEALTH_GPU_THRESHOLD,
+    },
   },
   giveClue: giveClueService,
   makeGuess: makeGuessService,

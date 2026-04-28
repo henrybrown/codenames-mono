@@ -1,0 +1,161 @@
+/**
+ * Ollama health monitor
+ *
+ * Detects whether the configured model is running on GPU, partial CPU offload,
+ * or 100% CPU by inspecting `GET /api/ps`. Logs transitions and keeps reminding
+ * when in a degraded state. Throttled so it can be triggered freely from the
+ * status endpoint without hammering Ollama.
+ */
+
+import type { AppLogger } from "@backend/shared/logging";
+
+export type HealthPlacement = "gpu" | "partial" | "cpu" | "not-loaded" | "unknown";
+
+export interface HealthState {
+  placement: HealthPlacement;
+  gpuFraction: number; // 0..1
+  gpuPercent: number; // 0..100, rounded
+  sizeBytes: number;
+  sizeVramBytes: number;
+  lastCheckedAt: number | null;
+}
+
+export interface OllamaHealthConfig {
+  baseURL: string;
+  model: string;
+  throttleMs: number;
+  gpuThreshold: number;
+}
+
+export interface OllamaHealthMonitor {
+  probe: () => Promise<void>;
+  getState: () => HealthState;
+}
+
+interface OllamaPsEntry {
+  model?: string;
+  name?: string;
+  size?: number;
+  size_vram?: number;
+}
+
+interface OllamaPsResponse {
+  models?: OllamaPsEntry[];
+}
+
+const modelsMatch = (entryModel: string, target: string): boolean => {
+  if (entryModel === target) return true;
+  if (entryModel.startsWith(`${target}:`)) return true;
+  if (target.startsWith(`${entryModel}:`)) return true;
+  return false;
+};
+
+export const createOllamaHealthMonitor = (
+  config: OllamaHealthConfig,
+  logger: AppLogger
+): OllamaHealthMonitor => {
+  const { baseURL, model, throttleMs, gpuThreshold } = config;
+
+  const state: HealthState = {
+    placement: "unknown",
+    gpuFraction: 0,
+    gpuPercent: 0,
+    sizeBytes: 0,
+    sizeVramBytes: 0,
+    lastCheckedAt: null,
+  };
+
+  const getState = (): HealthState => ({ ...state });
+
+  const probe = async (): Promise<void> => {
+    const now = Date.now();
+    if (state.lastCheckedAt !== null && now - state.lastCheckedAt < throttleMs) {
+      return;
+    }
+
+    let response: Response;
+    try {
+      response = await fetch(`${baseURL}/api/ps`);
+    } catch (error) {
+      logger.debug("ollama.health probe error", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return;
+    }
+
+    if (!response.ok) {
+      logger.debug("ollama.health probe non-ok response", {
+        status: response.status,
+      });
+      return;
+    }
+
+    let body: OllamaPsResponse;
+    try {
+      body = (await response.json()) as OllamaPsResponse;
+    } catch (error) {
+      logger.debug("ollama.health probe error", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return;
+    }
+
+    const previousPlacement = state.placement;
+
+    const entries = body.models ?? [];
+    const entry = entries.find((m) => {
+      const entryModel = m.model ?? m.name;
+      return entryModel ? modelsMatch(entryModel, model) : false;
+    });
+
+    if (!entry) {
+      state.placement = "not-loaded";
+      state.gpuFraction = 0;
+      state.gpuPercent = 0;
+      state.sizeBytes = 0;
+      state.sizeVramBytes = 0;
+    } else {
+      const size = entry.size ?? 0;
+      const sizeVram = entry.size_vram ?? 0;
+      const fraction = size > 0 ? sizeVram / size : 0;
+
+      let placement: HealthPlacement;
+      if (fraction >= gpuThreshold) {
+        placement = "gpu";
+      } else if (fraction > 0) {
+        placement = "partial";
+      } else {
+        placement = "cpu";
+      }
+
+      state.placement = placement;
+      state.gpuFraction = fraction;
+      state.gpuPercent = Math.round(fraction * 100);
+      state.sizeBytes = size;
+      state.sizeVramBytes = sizeVram;
+    }
+
+    state.lastCheckedAt = Date.now();
+
+    const changed = previousPlacement !== state.placement;
+    const meta = {
+      model,
+      placement: state.placement,
+      gpuPercent: state.gpuPercent,
+      sizeMB: Math.round(state.sizeBytes / 1_048_576),
+      sizeVramMB: Math.round(state.sizeVramBytes / 1_048_576),
+    };
+
+    if (state.placement === "cpu") {
+      logger.warn("⚠️  OLLAMA RUNNING ON CPU — inference will be slow", meta);
+    } else if (state.placement === "partial") {
+      logger.warn("⚠️  OLLAMA PARTIAL CPU OFFLOAD — performance degraded", meta);
+    } else if (state.placement === "gpu" && changed) {
+      logger.info("✅ ollama running on GPU", meta);
+    } else if (state.placement === "not-loaded" && changed) {
+      logger.debug("ollama model not currently loaded (will load on next call)", { model });
+    }
+  };
+
+  return { probe, getState };
+};

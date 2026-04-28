@@ -2,12 +2,20 @@ import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 import api from "@frontend/shared/api/api";
 
+export type HealthPlacement = "gpu" | "partial" | "cpu" | "not-loaded" | "unknown";
+
+export interface AiHealth {
+  placement: HealthPlacement;
+  gpuPercent: number;
+}
+
 interface AiStatusApiResponse {
   success: boolean;
   data: {
     available: boolean;  // Is it AI's turn and can trigger?
     thinking: boolean;   // Is pipeline currently running?
     runId?: string;      // Current run ID if thinking
+    health?: AiHealth;
   };
 }
 
@@ -15,6 +23,7 @@ export interface AiStatus {
   available: boolean;
   thinking: boolean;
   runId?: string;
+  health?: AiHealth;
 }
 
 /**

@@ -11,6 +11,7 @@
 import { createProvider } from "./providers";
 import type { LLMProvider } from "./providers";
 import type { AppLogger } from "@backend/shared/logging";
+import { createOllamaHealthMonitor, type OllamaHealthMonitor } from "./ollama-health";
 
 export type LLMConfig = {
   provider: LLMProvider;
@@ -19,6 +20,11 @@ export type LLMConfig = {
   model: string;
   temperature?: number;
   maxTokens?: number;
+  healthCheck?: {
+    enabled: boolean;
+    throttleMs: number;
+    gpuThreshold: number;
+  };
 };
 
 export type LLMGenerateOptions = {
@@ -42,6 +48,19 @@ export const createLLMService = (config: LLMConfig, logger: AppLogger) => {
   } = config;
 
   const client = createProvider(provider, { apiKey, model, baseURL });
+
+  const monitor: OllamaHealthMonitor | null =
+    provider === "ollama" && config.healthCheck?.enabled
+      ? createOllamaHealthMonitor(
+          {
+            baseURL,
+            model,
+            throttleMs: config.healthCheck.throttleMs,
+            gpuThreshold: config.healthCheck.gpuThreshold,
+          },
+          logger
+        )
+      : null;
 
   let requestCount = 0;
 
@@ -147,6 +166,10 @@ export const createLLMService = (config: LLMConfig, logger: AppLogger) => {
     model,
     generate,
     generateJSON,
+    probeHealth: async () => {
+      if (monitor) await monitor.probe();
+    },
+    getHealthState: () => monitor?.getState(),
   };
 };
 

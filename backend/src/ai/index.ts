@@ -50,6 +50,11 @@ export type AIModuleDependencies = {
     model: string;
     temperature: number;
     maxTokens: number;
+    healthCheck?: {
+      enabled: boolean;
+      throttleMs: number;
+      gpuThreshold: number;
+    };
   };
   giveClue: GiveClueService;
   makeGuess: MakeGuessService;
@@ -102,6 +107,7 @@ export const initialize = (dependencies: AIModuleDependencies) => {
     aiPlayerService,
     getGameState,
     db,
+    llm,
   });
 
   const router = Router();
