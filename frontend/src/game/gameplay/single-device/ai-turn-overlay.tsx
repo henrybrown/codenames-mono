@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getTeamConfig } from "@frontend/shared/types";
 import type { TurnPhase } from "@frontend/shared/types";
 import { ActionButton, pageContainerStyles } from "@frontend/game/gameplay/shared/components";
+import { TeamSymbolIcon } from "@frontend/shared/components/team-symbol-icon";
 import styles from "./device-handoff-overlay.module.css";
 
 /**
@@ -50,7 +51,13 @@ export const AiTurnOverlay: React.FC<AiTurnOverlayProps> = ({ active, onPass }) 
             >
               <div className={styles.playerName}>{active.teamName}</div>
               <div className={styles.roleLabel}>
-                {teamConfig.symbol} {roleLabel} · AI Agent
+                <TeamSymbolIcon
+                  symbol={teamConfig.symbol}
+                  rotate={teamConfig.symbolRotate}
+                  color={teamConfig.cssVar}
+                  filled
+                />
+                {" "}{roleLabel} · AI Agent
               </div>
             </div>
 
@@ -63,6 +70,7 @@ export const AiTurnOverlay: React.FC<AiTurnOverlayProps> = ({ active, onPass }) 
               enabled={true}
               onClick={() => { onPass(); setVisible(false); }}
               fullWidth
+              className={styles.passButton}
             />
           </motion.div>
         </motion.div>
