@@ -5,9 +5,9 @@ import { GameData } from "@frontend/shared/types";
 import { usePlayerSession } from "../providers/active-game-session-provider";
 import { useTurn } from "../providers";
 import { useViewMode } from "../board/view-mode/view-mode-context";
+import { deriveHandoffView } from "./handoff.rules";
 import { DeviceHandoffOverlay } from "./device-handoff-overlay";
 import { AiTurnOverlay } from "./ai-turn-overlay";
-import { needsHandoff } from "./device-mode.logic";
 
 interface DeviceModeManagerProps {
   children: ReactNode;
@@ -47,17 +47,13 @@ export const DeviceModeManager: React.FC<DeviceModeManagerProps> = ({
     }
   }, [isMultiDevice, active?.teamName, active?.role, setViewMode]);
 
-  /**
-   * Derive what to show.
-   * AI overlay only appears when the AI is playing for a DIFFERENT team —
-   * same-team AI turns (e.g. human codemaster → AI codebreakers) are silent.
-   */
+  // Handoff is single-device only. Multi-device skips it entirely.
+  const handoffView = isMultiDevice
+    ? "none"
+    : deriveHandoffView(active, claimedPhase);
 
-  const handoffRequired = needsHandoff(active, claimedPhase, isMultiDevice);
-  const isAiTurn =
-    !isMultiDevice &&
-    active?.isAi === true &&
-    active.teamName !== claimedPhase?.teamName;
+  const showHandoff = handoffView === "handoff";
+  const showAiOverlay = handoffView === "ai-turn";
 
   /** Handoff accept — claim the active role+team, reset view */
 
@@ -85,7 +81,7 @@ export const DeviceModeManager: React.FC<DeviceModeManagerProps> = ({
     <>
       {children}
       <AnimatePresence>
-        {handoffRequired && active && (
+        {showHandoff && active && (
           <DeviceHandoffOverlay
             key="handoff"
             active={active}
@@ -93,7 +89,7 @@ export const DeviceModeManager: React.FC<DeviceModeManagerProps> = ({
           />
         )}
       </AnimatePresence>
-      {isAiTurn && active && (
+      {showAiOverlay && active && (
         <AiTurnOverlay key={activeTurn?.id} active={active} onPass={handleAiPass} />
       )}
     </>

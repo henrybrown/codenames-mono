@@ -51,12 +51,6 @@ export const canRedeal = (ctx: VisibilityContext): boolean => isInLobby(ctx) && 
 export const isAiActive = (ctx: VisibilityContext): boolean =>
   isRoundInProgress(ctx) && ctx.hasActiveTurn && (ctx.aiAvailable || ctx.aiThinking);
 
-export const canStartNextTurn = (ctx: VisibilityContext): boolean =>
-  isRoundInProgress(ctx) &&
-  hasRole(ctx) &&
-  !ctx.hasActiveTurn &&
-  ctx.hasRound;        // guards against the loading gap where hasActiveTurn is momentarily false before first data resolves
-
 /**
  * AR (spymaster enhanced vision) toggle is only relevant for a human codemaster
  * during an active round. Hidden during AI turns — the AI doesn't need the lens,

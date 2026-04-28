@@ -47,7 +47,7 @@ export const CompactDashboardFooter: React.FC<CompactDashboardFooterProps> = ({
   const isAiThinking = (aiStatus?.thinking || triggerAi.isPending) ?? false;
   const canTriggerAi = (aiStatus?.available && !isAiThinking) ?? false;
 
-  const showOutcome = s.canStartNextTurn && !!s.lastCompletedTurn;
+  const showOutcome = s.isPostTurn && !!s.lastCompletedTurn;
 
   /** Single primary action -- hidden when it's an AI turn (AI row takes over) */
   const primaryButton = (() => {
@@ -123,33 +123,43 @@ export const CompactDashboardFooter: React.FC<CompactDashboardFooterProps> = ({
             key="ai-active"
             layout="position"
             layoutId="compact-footer-ai"
-            style={{ width: "100%" }}
+            style={{ position: "relative", width: "100%", display: "flex", flexDirection: "column", alignItems: "stretch", gap: 4 }}
             variants={popVariants}
             initial="initial"
             animate="animate"
             exit="exit"
             transition={popTransition}
           >
-            {isAiThinking ? (
-              <>
-                <button className={styles.triggerBtn} disabled>
-                  THINKING...
-                </button>
-                <span className={styles.controlRowDot}><StatusDot active thinking /></span>
-              </>
-            ) : canTriggerAi ? (
-              <>
-                <button className={styles.triggerBtn} onClick={() => triggerAi.mutate()}>
-                  TRIGGER AI
-                </button>
-                <span className={styles.controlRowDot}><StatusDot active thinking={false} /></span>
-              </>
-            ) : (
-              <>
-                <span className={styles.aiIdleText}>STANDING BY</span>
-                <span className={styles.controlRowDot}><StatusDot active={false} thinking={false} /></span>
-              </>
-            )}
+            {aiStatus?.health && (aiStatus.health.placement === "cpu" || aiStatus.health.placement === "partial") ? (
+              <div className={styles.healthWarning}>
+                {aiStatus.health.placement === "cpu"
+                  ? "Running on CPU — slower than normal"
+                  : `Partial GPU (${aiStatus.health.gpuPercent}%) — may be slower`}
+              </div>
+            ) : null}
+
+            <div className={styles.aiActionRow}>
+              {isAiThinking ? (
+                <>
+                  <button className={styles.triggerBtn} disabled>
+                    THINKING...
+                  </button>
+                  <span className={styles.controlRowDot}><StatusDot active thinking /></span>
+                </>
+              ) : canTriggerAi ? (
+                <>
+                  <button className={styles.triggerBtn} onClick={() => triggerAi.mutate()}>
+                    TRIGGER AI
+                  </button>
+                  <span className={styles.controlRowDot}><StatusDot active thinking={false} /></span>
+                </>
+              ) : (
+                <>
+                  <span className={styles.aiIdleText}>STANDING BY</span>
+                  <span className={styles.controlRowDot}><StatusDot active={false} thinking={false} /></span>
+                </>
+              )}
+            </div>
           </motion.div>
         ) : null}
       </AnimatePresence>

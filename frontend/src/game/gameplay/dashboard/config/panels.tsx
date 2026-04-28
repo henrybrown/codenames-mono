@@ -8,10 +8,11 @@ import {
   isInLobby,
   isAiActive,
   isRoundActive,
-  canStartNextTurn,
   canUseArToggle,
+  always,
 } from "./rules";
 import { useVisibilityContext } from "./context";
+import { isPostTurn } from "../../shared/post-turn.rules";
 import {
   TeamHeaderPanel,
   ARTogglePanel,
@@ -33,10 +34,15 @@ import { TerminalSection } from "../shared";
  *   - TurnOutcomePanel: presentational summary
  *   - DotCountdown:     presentational timer UI
  *   - NextTurnTrigger:  side-effect that fires startNextTurn after the delay
+ *
+ * Self-gates via `isPostTurn` so single- and multi-device share the
+ * exact same between-turns experience (see shared/post-turn.rules.ts).
  */
 const StackedTurnOutcomeSlot: React.FC = () => {
   const ctx = useVisibilityContext();
-  if (!ctx.lastCompletedTurn) return null;
+
+  if (!isPostTurn(ctx)) return null;
+  if (!ctx.lastCompletedTurn) return null; // defensive; isPostTurn already implies this
 
   return (
     <TerminalSection>
@@ -74,7 +80,7 @@ export const GAME_PANELS: PanelSlots = {
     {
       id: "turn-outcome",
       component: StackedTurnOutcomeSlot,
-      shouldRender: canStartNextTurn,
+      shouldRender: always,
     },
   ],
 };

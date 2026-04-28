@@ -13,9 +13,10 @@ import {
   canDealCards,
   canStartRound,
   isAiActive,
-  canStartNextTurn,
   canUseArToggle,
 } from "@frontend/game/gameplay/dashboard/config/rules";
+import { isPostTurn } from "@frontend/game/gameplay/shared/post-turn.rules";
+import type { TurnData } from "@frontend/shared/types";
 import type { VisibilityContext } from "@frontend/game/gameplay/dashboard/config/context";
 
 /** Factory */
@@ -288,38 +289,54 @@ describe("canUseArToggle", () => {
   });
 });
 
-/** canStartNextTurn */
+/** isPostTurn — universal post-turn window detector */
 
-describe("canStartNextTurn", () => {
-  const betweenTurnsCtx = ctx({
-    role: "CODEMASTER",
+describe("isPostTurn", () => {
+  const completedTurn = (id: string): TurnData => ({
+    id,
     teamName: "Red",
+    status: "COMPLETED",
+    guessesRemaining: 0,
+    createdAt: new Date(),
+    completedAt: new Date(),
+    clue: null,
+    hasGuesses: false,
+    lastGuess: null,
+    prevGuesses: [],
+    active: null,
+  });
+
+  const betweenTurnsCtx = ctx({
     roundStatus: "IN_PROGRESS",
     hasRound: true,
     hasActiveTurn: false,
+    lastCompletedTurn: completedTurn("t1"),
   });
 
-  it("true between turns when player has a role and round is in progress", () => {
-    expect(canStartNextTurn(betweenTurnsCtx)).toBe(true);
+  it("true between turns regardless of role (single-device often has role NONE here)", () => {
+    expect(isPostTurn(betweenTurnsCtx)).toBe(true);
+    expect(
+      isPostTurn({ ...betweenTurnsCtx, role: "NONE", teamName: undefined }),
+    ).toBe(true);
   });
 
   it("false when there is an active turn", () => {
-    expect(canStartNextTurn({ ...betweenTurnsCtx, hasActiveTurn: true })).toBe(false);
+    expect(isPostTurn({ ...betweenTurnsCtx, hasActiveTurn: true })).toBe(false);
   });
 
-  it("false when role is NONE (spectator)", () => {
-    expect(canStartNextTurn({ ...betweenTurnsCtx, role: "NONE", teamName: undefined })).toBe(false);
+  it("false on the very first turn of a round (no completed turn yet)", () => {
+    expect(isPostTurn({ ...betweenTurnsCtx, lastCompletedTurn: null })).toBe(false);
   });
 
   it("false when round is SETUP (lobby)", () => {
-    expect(canStartNextTurn({ ...betweenTurnsCtx, roundStatus: "SETUP" })).toBe(false);
+    expect(isPostTurn({ ...betweenTurnsCtx, roundStatus: "SETUP" })).toBe(false);
   });
 
-  it("false when round is COMPLETED", () => {
-    expect(canStartNextTurn({ ...betweenTurnsCtx, roundStatus: "COMPLETED" })).toBe(false);
+  it("false when round is COMPLETED (game over owns that UI)", () => {
+    expect(isPostTurn({ ...betweenTurnsCtx, roundStatus: "COMPLETED" })).toBe(false);
   });
 
   it("false when there is no round", () => {
-    expect(canStartNextTurn({ ...betweenTurnsCtx, hasRound: false })).toBe(false);
+    expect(isPostTurn({ ...betweenTurnsCtx, hasRound: false })).toBe(false);
   });
 });

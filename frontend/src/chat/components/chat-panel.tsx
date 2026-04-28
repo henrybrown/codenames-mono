@@ -13,6 +13,8 @@ interface ChatPanelProps {
   viewerPlayerId: string | null;
   open: boolean;
   onClose: () => void;
+  /** When true, hide the input box (single-device mode = read-only chat). */
+  readOnly?: boolean;
 }
 
 const panelVariants = {
@@ -31,6 +33,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   viewerPlayerId,
   open,
   onClose,
+  readOnly = false,
 }) => {
   const { data: messages } = useGameMessages(gameId);
   const postMessage = usePostMessage(gameId);
@@ -87,7 +90,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         )}
       </div>
 
-      <ChatInput onSend={handleSend} isLoading={postMessage.isPending} />
+      {!readOnly && <ChatInput onSend={handleSend} isLoading={postMessage.isPending} />}
     </motion.div>
   );
 };

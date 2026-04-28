@@ -5,6 +5,7 @@ import { MiddleSection } from "../shared";
 import { useGameDataRequired } from "../../providers";
 import { ChatFab, ChatPanel } from "@frontend/chat/components";
 import { useUnreadCount } from "@frontend/chat/api";
+import { GAME_TYPE } from "@codenames/shared/types";
 import type { PanelSlots } from "../config";
 import styles from "./stacked-dashboard.module.css";
 
@@ -65,6 +66,7 @@ export const StackedDashboard: React.FC<StackedDashboardProps> = ({
         viewerPlayerId={gameData.playerContext?.publicId ?? null}
         open={chatOpen}
         onClose={() => setChatOpen(false)}
+        readOnly={gameData.gameType === GAME_TYPE.SINGLE_DEVICE}
       />
     </aside>
   );

@@ -127,7 +127,12 @@ export const TurnActionsProvider = ({ children }: TurnActionsProviderProps) => {
         onSuccess: () => {
           setActionState({ name: "endTurn", status: "success", error: null });
           invalidateGameData();
-          /** Backend auto-starts the next turn -- no manual startTurn call needed */
+          /**
+           * Do NOT start the next turn here. The between-turns window
+           * (TurnOutcomePanel + DotCountdown + NextTurnTrigger) owns that
+           * transition for BOTH single- and multi-device games. See
+           * shared/post-turn.rules.ts.
+           */
         },
         onError: (error) => {
           console.error("Failed to end turn:", error);

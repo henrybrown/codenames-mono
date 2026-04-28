@@ -5,6 +5,7 @@ import { useIntelState } from "../panels/use-intel-state";
 import { useGameDataRequired } from "../../providers";
 import { ChatFab, ChatPanel } from "@frontend/chat/components";
 import { useUnreadCount } from "@frontend/chat/api";
+import { GAME_TYPE } from "@codenames/shared/types";
 import { ActionButton } from "@frontend/game/gameplay/shared/components";
 import { AttentionTextBox, carouselVariants, CAROUSEL_TRANSITION, useCarouselSwipe, IntelContent, ScoreComparison } from "../shared";
 import { TurnOutcomePanel } from "../panels/turn-outcome-panel";
@@ -50,7 +51,7 @@ export const CompactDashboard: React.FC<CompactDashboardProps> = ({ onOpenClueIn
   const intel = useIntelState();
 
   /** Outcome mode: turn just ended, not yet advanced. */
-  const showOutcome = s.canStartNextTurn && !!s.lastCompletedTurn;
+  const showOutcome = s.isPostTurn && !!s.lastCompletedTurn;
 
   const { gameData } = useGameDataRequired();
 
@@ -79,6 +80,7 @@ export const CompactDashboard: React.FC<CompactDashboardProps> = ({ onOpenClueIn
       viewerPlayerId={gameData.playerContext?.publicId ?? null}
       open={chatOpen}
       onClose={() => setChatOpen(false)}
+      readOnly={gameData.gameType === GAME_TYPE.SINGLE_DEVICE}
     />
   );
 
@@ -236,9 +238,8 @@ export const CompactDashboard: React.FC<CompactDashboardProps> = ({ onOpenClueIn
                   completedTurn={s.lastCompletedTurn}
                   variant="compact"
                 />
-                {/* Side effect: fire startNextTurn after the countdown.
-                    Noop in multi-device mode since backend already auto-started
-                    (mutation would just error and we don't care). */}
+                {/* Side effect: fires startTurn after the countdown.
+                    Same behaviour in both modes. */}
                 <NextTurnTrigger keyId={s.lastCompletedTurn.id} />
               </motion.div>
             ) : null}

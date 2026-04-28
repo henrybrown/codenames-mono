@@ -1,10 +1,10 @@
 import { useVisibilityContext } from "./config/context";
+import { isPostTurn } from "../shared/post-turn.rules";
 import {
   isInLobby,
   isRoundComplete,
   isCodemasterGivingClue,
   isCodebreakerGuessing,
-  canStartNextTurn,
   isCodemaster,
   isAiActive,
 } from "./config/rules";
@@ -92,7 +92,7 @@ export const useDashboardState = () => {
     isRoundComplete:        isRoundComplete(ctx),
     isCodemasterGivingClue: isCodemasterGivingClue(ctx),
     isCodebreakerGuessing:  isCodebreakerGuessing(ctx),
-    canStartNextTurn:       canStartNextTurn(ctx),
+    isPostTurn:             isPostTurn(ctx),
     isCodemaster:           isCodemaster(ctx),
     isAiActive:             isAiActive(ctx),
     isAiSession:            ctx.isAiSession,
