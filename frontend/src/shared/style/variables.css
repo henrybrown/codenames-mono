@@ -1,8 +1,21 @@
 :root {
   /* ── Typography ── */
   --font-mono:            "Doto", "JetBrains Mono", "Courier New", monospace;
-  --font-variation:       "ROND" 80, "wght" 500;   /* default body weight */
-  --font-variation-heavy: "ROND" 80, "wght" 700;   /* labels, headings, buttons */
+  --font-variation:       "ROND" 80, "wght" 500;   /* default body weight (legacy) */
+  --font-variation-heavy: "ROND" 80, "wght" 700;   /* labels, headings, buttons (legacy) */
+
+  /* ── Typography tiers — h1 (large uppercase), caps (small uppercase), text (mixed body), xs (chat/badges/labels) ── */
+  --font-h1:   1.5rem;
+  --font-text: 1rem;
+  --font-xs:   0.75rem;
+  --font-variation-uppercase: "ROND" 100, "wght" 300;  /* h1 + caps */
+  --font-variation-mixed:     "ROND" 100, "wght" 200;  /* text */
+
+  /* ── Decorative size exceptions (escape hatches; everything else uses h1/text) ── */
+  --font-card-word:        clamp(0.8rem, 2.5vw, 1.1rem);  /* board cards (sans-serif font, exempt from Doto) */
+  --font-victory-headline: clamp(1.5rem, 5vw, 2.5rem);    /* end-game winner */
+  --font-victory-score:    3rem;                           /* winning score number */
+  --font-clue-input:       2rem;                           /* codemaster word entry */
 
   /* ── Primary theme — user-overridable at runtime via JS ── */
   --color-primary:    #52d68a;
@@ -40,18 +53,18 @@
   --bg-overlay:       rgba(8, 10, 8, 0.98);     /* near-opaque overlay (clue input, drawers) */
   --bg-scrollbar:     rgba(82, 214, 138, 0.35); /* scrollbar thumb — tracks primary */
 
-  /* Dashboard typography */
-  --dashboard-text-h1: 1.1rem;
-  --dashboard-text-clue: 1.15rem;
-  --dashboard-text-condensed: 1.15rem;
-  --dashboard-text-player-header: 1.15rem;
-  --dashboard-text-p: 1rem;
-  --dashboard-text-p-sm: 0.75rem;
-  --dashboard-text-small: 0.8rem;
-  --dashboard-text-btn: 0.875rem;
-  --dashboard-text-btn-sm: 0.75rem;
-  --dashboard-text-banner: 0.9rem;
-  --dashboard-text-badge: 0.65rem;
+  /* Dashboard typography — integer px for pixel-aligned Doto rendering */
+  --dashboard-text-h1: 18px;
+  --dashboard-text-clue: 18px;
+  --dashboard-text-condensed: 18px;
+  --dashboard-text-player-header: 18px;
+  --dashboard-text-p: 16px;
+  --dashboard-text-p-sm: 12px;
+  --dashboard-text-small: 13px;
+  --dashboard-text-btn: 14px;
+  --dashboard-text-btn-sm: 12px;
+  --dashboard-text-banner: 14px;
+  --dashboard-text-badge: 10px;
 
   /* ── Status dot tokens ── */
   --dot-size-sm: 10px;
@@ -89,8 +102,8 @@
   /* ── Chat tokens ── */
   --chat-fab-size: 40px;
   --chat-badge-size: 16px;
-  --chat-msg-font-size: 0.75rem;
-  --chat-input-font-size: 0.8rem;
+  --chat-msg-font-size: 12px;
+  --chat-input-font-size: 13px;
   --chat-header-font-size: var(--dashboard-text-condensed);
 
   /* Z-index scale */
@@ -106,18 +119,22 @@
 
 @media (max-height: 720px) {
   :root {
-    --dashboard-text-condensed: 0.95rem;
-    --dashboard-text-player-header: 0.95rem;
-    --dashboard-text-banner: 0.78rem;
-    --dashboard-text-badge: 0.58rem;
+    --dashboard-text-condensed: 15px;
+    --dashboard-text-player-header: 15px;
+    --dashboard-text-banner: 12px;
+    --dashboard-text-badge: 9px;
+    --font-h1:   1.25rem;
+    --font-text: 0.9375rem;
   }
 }
 
 @media (max-height: 660px) {
   :root {
-    --dashboard-text-condensed: 0.85rem;
-    --dashboard-text-player-header: 0.85rem;
-    --dashboard-text-banner: 0.72rem;
-    --dashboard-text-badge: 0.55rem;
+    --dashboard-text-condensed: 14px;
+    --dashboard-text-player-header: 14px;
+    --dashboard-text-banner: 12px;
+    --dashboard-text-badge: 9px;
+    --font-h1:   1.125rem;
+    --font-text: 0.875rem;
   }
 }

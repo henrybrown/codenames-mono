@@ -24,7 +24,7 @@ body {
   color: var(--color-text);
   background: var(--color-background);
   position: relative;
-  font-variation-settings: var(--font-variation);
+  font-variation-settings: var(--font-variation-mixed);
 }
 
 /* Force mobile browsers to respect viewport */
