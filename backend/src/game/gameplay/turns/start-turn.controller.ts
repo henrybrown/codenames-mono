@@ -1,6 +1,10 @@
 /**
  * Start Turn Controller
- * API endpoint to manually start the next turn
+ * API endpoint to manually start the next turn.
+ *
+ * Note: this endpoint is called between turns (no active turn exists yet),
+ * so it does NOT resolve a player-specific context. It only verifies that
+ * the requesting user is a player in the game.
  */
 
 import type { Response, NextFunction } from "express";
@@ -10,7 +14,6 @@ import type { AppLogger } from "@backend/shared/logging";
 import type { ResolveGameplayContext } from "../shared/resolve-gameplay-context";
 import { contextErrorToHttp } from "../shared/resolve-gameplay-context";
 import type { GameDataLoader } from "@backend/game/gameplay/state/game-data-loader";
-import { PLAYER_ROLE, GAME_TYPE } from "@codenames/shared/types";
 import { z } from "zod";
 
 const paramsSchema = z.object({
@@ -20,14 +23,6 @@ const paramsSchema = z.object({
 
 const authSchema = z.object({
   userId: z.number().int().positive(),
-});
-
-const singleDeviceBody = z.object({
-  role: z.enum([PLAYER_ROLE.CODEMASTER, PLAYER_ROLE.CODEBREAKER]),
-});
-
-const multiDeviceBody = z.object({
-  playerId: z.string().min(1),
 });
 
 export type StartTurnControllerDeps = {
@@ -62,22 +57,7 @@ export const createStartTurnController =
           return;
         }
 
-        let contextResult;
-        if (rawGameState.game_type === GAME_TYPE.SINGLE_DEVICE) {
-          const bodyResult = singleDeviceBody.safeParse(req.body);
-          if (!bodyResult.success) {
-            res.status(400).json({ success: false, error: "Invalid request body" });
-            return;
-          }
-          contextResult = await deps.resolveContext.fromRole(gameId, userId, bodyResult.data.role);
-        } else {
-          const bodyResult = multiDeviceBody.safeParse(req.body);
-          if (!bodyResult.success) {
-            res.status(400).json({ success: false, error: "playerId is required" });
-            return;
-          }
-          contextResult = await deps.resolveContext.fromPlayerId(gameId, userId, bodyResult.data.playerId);
-        }
+        const contextResult = await deps.resolveContext.fromUser(gameId, userId);
 
         if (!contextResult.success) {
           const httpError = contextErrorToHttp(contextResult.error);

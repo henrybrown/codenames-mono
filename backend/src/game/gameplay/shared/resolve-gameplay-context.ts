@@ -2,9 +2,13 @@
  * Shared controller helper for resolving gameplay context.
  * Handles the auth boundary and identity resolution before services are called.
  *
- * Two resolution paths:
+ * Three resolution paths:
  *  - fromPlayerId: multi-device — delegates to the auth-aware GameplayStateProvider
- *  - fromRole: single-device — loads via GameDataLoader, resolves role → player
+ *  - fromRole:     single-device — loads via GameDataLoader, resolves role → player
+ *  - fromUser:     mode-agnostic — verifies user is in the game, returns gameState
+ *                  with `playerContext: null`. Used by endpoints that don't act as
+ *                  a specific player (e.g. start-turn, which is called between
+ *                  turns when there is no active turn yet).
  */
 
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
@@ -117,7 +121,30 @@ export const createResolveGameplayContext = (deps: ResolveGameplayContextDeps) =
     };
   };
 
-  return { fromPlayerId, fromRole };
+  /**
+   * Mode-agnostic path: verify user is in the game; no specific player context.
+   * Used for endpoints that operate on the game as a whole (start-turn) where
+   * we cannot — and need not — resolve a player from an active turn.
+   */
+  const fromUser = async (
+    gameId: string,
+    userId: number,
+  ): Promise<ContextResult> => {
+    const gameState = await loadGameData(gameId);
+    if (!gameState) {
+      return { success: false, error: { code: "game-not-found", gameId } };
+    }
+
+    const allPlayers = gameState.teams.flatMap((t) => t.players ?? []);
+    const userIsPlayer = allPlayers.some((p) => p._userId === userId);
+    if (!userIsPlayer) {
+      return { success: false, error: { code: "user-not-in-game", gameId, userId } };
+    }
+
+    return { success: true, gameState: { ...gameState, playerContext: null } };
+  };
+
+  return { fromPlayerId, fromRole, fromUser };
 };
 
 /**
