@@ -18,17 +18,14 @@ import {
   RoundId,
   RoundFinderAll,
 } from "@backend/shared/data-access/repositories/rounds.repository";
-
 import { CardsFinder, CardResult } from "@backend/shared/data-access/repositories/cards.repository";
-
 import { TurnsFinder } from "@backend/shared/data-access/repositories/turns.repository";
-
 import { PlayerRole, PLAYER_ROLE, GAME_TYPE, GAME_STATE } from "@codenames/shared/types";
-
 import { GameAggregate } from "./gameplay-state.types";
 
 /**
  * Player context information for the current user
+ * todo: review this type (seemd duplicated and other types across gameplay feature for re-usability)
  */
 export type PlayerContext = {
   _id: number;
@@ -119,6 +116,8 @@ const determinePlayerContext = (
  * @param findPlayerByPublicId - Function to find player by public ID
  * @returns Function that provides the complete game state for a given game ID and user
  */
+
+// todo: difference between game-data-loader and provider?
 export const gameplayStateProvider = (
   getGameById: GameFinder<PublicId>,
   getTeams: TeamsFinder<InternalId>,

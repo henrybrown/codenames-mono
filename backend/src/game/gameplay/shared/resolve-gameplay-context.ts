@@ -9,6 +9,8 @@
  *                  with `playerContext: null`. Used by endpoints that don't act as
  *                  a specific player (e.g. start-turn, which is called between
  *                  turns when there is no active turn yet).
+ * 
+ * todo: review/clean this file
  */
 
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";

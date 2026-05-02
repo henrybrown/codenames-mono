@@ -4,6 +4,8 @@ import type { GameplayStateProvider } from "@backend/game/gameplay/state/gamepla
 import type { DbContext } from "@backend/shared/data-access/transaction-handler";
 import type { AuthMiddleware } from "@backend/shared/http-middleware/auth.middleware";
 
+// todo: clean chat feature
+
 import getMessages from "./get-messages";
 import submitMessage from "./submit-message";
 

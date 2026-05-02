@@ -44,6 +44,7 @@ export type GameDataLoaderDeps = {
   getAllRounds: RoundFinderAll<InternalId>;
 };
 
+// todo: split this function up bit..
 export const createGameDataLoader = (deps: GameDataLoaderDeps): GameDataLoader => {
   const {
     getGameById,

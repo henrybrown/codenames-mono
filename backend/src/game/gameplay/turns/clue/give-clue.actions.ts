@@ -22,6 +22,7 @@ export const giveClueToTurn = (
     word: string,
     targetCardCount: number,
   ) => {
+    // todo: remove numbered steps its nasty .... review across app for numbered steps
     // 1. Validate clue word against board
     const clueWordResult = validateClueWordFn(gameState, word);
     if (!clueWordResult.valid) {
