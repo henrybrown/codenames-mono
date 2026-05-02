@@ -84,65 +84,67 @@ jobs:
       - name: Build backend
         run: npm run build --workspace=backend
 
-      # ── E2E tests (temporarily skipped) ──
+      # ── E2E tests ──
+      # Sets up the database schema, starts the backend, serves the frontend,
+      # then runs Playwright against the running app
 
-      # - name: Setup test database
-      #   run: psql -h localhost -U codenames -d codenames_test -f backend/deploy/sql.sql
-      #   env:
-      #     PGPASSWORD: test_password
+      - name: Setup test database
+        run: psql -h localhost -U codenames -d codenames_test -f backend/deploy/sql.sql
+        env:
+          PGPASSWORD: test_password
 
-      # - name: Install Playwright browsers
-      #   run: npx playwright install --with-deps chromium
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
 
-      # - name: Start backend for e2e
-      #   run: |
-      #     cd backend
-      #     touch .env
-      #     node dist/src/index.js &
-      #     echo $! > /tmp/backend.pid
-      #     for i in $(seq 1 30); do
-      #       if curl -s http://localhost:3000/api/health > /dev/null 2>&1; then
-      #         echo "Backend is ready"
-      #         break
-      #       fi
-      #       if [ $i -eq 30 ]; then
-      #         echo "Backend failed to start within 15 seconds"
-      #         exit 1
-      #       fi
-      #       sleep 0.5
-      #     done
-      #   env:
-      #     DATABASE_URL: postgresql://codenames:test_password@localhost:5432/codenames_test
-      #     JWT_SECRET: test-jwt-secret-for-ci-only-not-real
-      #     NODE_ENV: test
-      #     LLM_URL: http://localhost:11434
-      #     LLM_MODEL: test
-      #     LLM_TEMPERATURE: "0.5"
-      #     LLM_NUM_CTX: "4096"
-      #     LOG_FILE_LEVEL: error
-      #     LOG_CONSOLE_LEVEL: error
-      #     LOG_HTTP_REQUESTS: "false"
-      #     LOG_HTTP_VERBOSE: "false"
-      #     LOG_HTTP_TO_CONSOLE: "false"
-      #     LOG_FILE_PATH: ./logs
-      #     PORT: "3000"
-      #     CORS_ORIGINS: "http://localhost:8000"
+      - name: Start backend for e2e
+        run: |
+          cd backend
+          touch .env
+          node dist/src/index.js &
+          echo $! > /tmp/backend.pid
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:3000/api/health > /dev/null 2>&1; then
+              echo "Backend is ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Backend failed to start within 15 seconds"
+              exit 1
+            fi
+            sleep 0.5
+          done
+        env:
+          DATABASE_URL: postgresql://codenames:test_password@localhost:5432/codenames_test
+          JWT_SECRET: test-jwt-secret-for-ci-only-not-real
+          NODE_ENV: test
+          LLM_URL: http://localhost:11434
+          LLM_MODEL: test
+          LLM_TEMPERATURE: "0.5"
+          LLM_NUM_CTX: "4096"
+          LOG_FILE_LEVEL: error
+          LOG_CONSOLE_LEVEL: error
+          LOG_HTTP_REQUESTS: "false"
+          LOG_HTTP_VERBOSE: "false"
+          LOG_HTTP_TO_CONSOLE: "false"
+          LOG_FILE_PATH: ./logs
+          PORT: "3000"
+          CORS_ORIGINS: "http://localhost:8000"
 
-      # - name: Start frontend for e2e
-      #   run: |
-      #     cd frontend
-      #     npx vite --port 8000 &
-      #     echo $! > /tmp/frontend.pid
-      #     sleep 3
+      - name: Start frontend for e2e
+        run: |
+          cd frontend
+          npx vite --port 8000 &
+          echo $! > /tmp/frontend.pid
+          sleep 3
 
-      # - name: Run e2e tests
-      #   run: npx playwright test --config=frontend/test/e2e/playwright.config.ts
+      - name: Run e2e tests
+        run: npx playwright test --config=frontend/test/e2e/playwright.config.ts
 
-      # - name: Stop background services
-      #   if: always()
-      #   run: |
-      #     kill $(cat /tmp/backend.pid) 2>/dev/null || true
-      #     kill $(cat /tmp/frontend.pid) 2>/dev/null || true
+      - name: Stop background services
+        if: always()
+        run: |
+          kill $(cat /tmp/backend.pid) 2>/dev/null || true
+          kill $(cat /tmp/frontend.pid) 2>/dev/null || true
 
       # ── Upload frontend build for deploy job ──
 
