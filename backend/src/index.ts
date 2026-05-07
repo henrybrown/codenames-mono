@@ -150,11 +150,13 @@ const ai = initializeAI({
       gpuThreshold: env.LLM_HEALTH_GPU_THRESHOLD,
     },
   },
-  giveClue: giveClueService,
-  makeGuess: makeGuessService,
-  endTurn: endTurnService,
-  getGameState,
-  loadGameData,
+  gameplay: {
+    giveClue:     giveClueService,
+    makeGuess:    makeGuessService,
+    endTurn:      endTurnService,
+    getGameState,
+    loadGameData,
+  },
 });
 
 // Initialize chat feature

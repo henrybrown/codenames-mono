@@ -1,6 +1,14 @@
 /**
- * AI Module - Initializes AI-related services following the repository pattern
- * todo: clean whole feature....
+ * AI Module
+ *
+ * Composes the AI feature from four sub-features:
+ *   - models/    Infra: builds the LLM client from config (provider-agnostic boundary)
+ *   - pipeline/  Domain: spymaster + guesser orchestration over an opaque LLM
+ *   - player/    Event-driven decision loop for AI players
+ *   - move/      HTTP routes for triggering a move + checking status
+ *
+ * This file is the single place that touches `db` — repositories are bound
+ * here once and passed down to sub-features as typed function dependencies.
  */
 
 import type { Express } from "express";
@@ -11,52 +19,38 @@ import type { AuthMiddleware } from "@backend/shared/http-middleware/auth.middle
 import type { HttpLoggerHandler } from "@backend/shared/http-middleware/http-logger.middleware";
 import { blockingGameAction } from "@backend/shared/http-middleware/blocking-game-action.middleware";
 import type { AppLogger } from "@backend/shared/logging";
+
+import * as aiPipelineRunsRepo from "@backend/shared/data-access/repositories/ai-pipeline-runs.repository";
+import * as gameMessagesRepo from "@backend/shared/data-access/repositories/game-messages.repository";
+import * as gamesRepo from "@backend/shared/data-access/repositories/games.repository";
+
 import { createModels } from "./models";
-import type { LLMService, LLMProvider } from "./models";
+import type { LLMConfig, LLMService, LLMProvider } from "./models";
 import { createPipeline } from "./pipeline";
 import { createPlayer } from "./player";
-import type { AIPlayerService } from "./player";
+import aiMove from "./move";
+
 import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clue.service";
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import type { EndTurnService } from "@backend/game/gameplay/turns/end-turn.service";
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
 import type { GameDataLoader } from "@backend/game/gameplay/state/game-data-loader";
-import {
-  createRun,
-  findRunningByGameId,
-  updateRunStatus,
-  updateSpymasterResponse,
-  updatePrefilterResponse,
-  updateRankerResponse,
-  appendPrompt,
-} from "@backend/shared/data-access/repositories/ai-pipeline-runs.repository";
-import { createMessage } from "@backend/shared/data-access/repositories/game-messages.repository";
-import { findGameByPublicId } from "@backend/shared/data-access/repositories/games.repository";
-import aiMove from "./move";
 
+// Public re-exports
 export { createPipeline } from "./pipeline";
 export type { CodenamesPipeline } from "./pipeline";
-export type { LLMService, AIPlayerService };
+export type { LLMService, LLMProvider } from "./models";
+export type { AIPlayerService } from "./player";
 
-export type AIModuleDependencies = {
-  app: Express;
-  db: Kysely<DB>;
-  auth: AuthMiddleware;
-  httpLogger: HttpLoggerHandler;
-  appLogger: AppLogger;
-  llmConfig: {
-    provider: LLMProvider;
-    baseURL: string;
-    apiKey: string;
-    model: string;
-    temperature: number;
-    maxTokens: number;
-    healthCheck?: {
-      enabled: boolean;
-      throttleMs: number;
-      gpuThreshold: number;
-    };
-  };
+/**
+ * The slice of the gameplay feature that AI consumes.
+ *
+ * Defined here (rather than in `game/gameplay/`) so the cross-feature
+ * contract is owned by AI: gameplay can grow new exports without
+ * widening AI's contract, and renames in gameplay produce type errors
+ * exactly at the AI boundary.
+ */
+export type GameplayFeature = {
   giveClue: GiveClueService;
   makeGuess: MakeGuessService;
   endTurn: EndTurnService;
@@ -64,60 +58,89 @@ export type AIModuleDependencies = {
   loadGameData: GameDataLoader;
 };
 
-/**
- * Initializes the AI feature module with all dependencies and registers routes
- */
-export const initialize = (dependencies: AIModuleDependencies) => {
-  const {
-    app,
-    db,
-    auth,
-    httpLogger,
-    appLogger,
-    llmConfig,
-    giveClue,
-    makeGuess,
-    endTurn,
-    getGameState,
-    loadGameData,
-  } = dependencies;
+export type AIModuleDependencies = {
+  // Infra
+  app: Express;
+  db: Kysely<DB>;
+  auth: AuthMiddleware;
+  httpLogger: HttpLoggerHandler;
+  appLogger: AppLogger;
+  llmConfig: LLMConfig & {
+    // The wiring layer accepts a slightly wider type than LLMConfig itself
+    // (provider is required at boot — config-loaded), keeping this here
+    // makes the contract obvious at the call site.
+    provider: LLMProvider;
+  };
+  // Cross-feature
+  gameplay: GameplayFeature;
+};
 
-  const logger = appLogger.for({ feature: "ai" }).withMeta({ model: llmConfig.model }).create();
+export const initialize = (deps: AIModuleDependencies) => {
+  const { app, db, auth, httpLogger, appLogger, llmConfig, gameplay } = deps;
+
+  const logger = appLogger
+    .for({ feature: "ai" })
+    .withMeta({ model: llmConfig.model })
+    .create();
+
+  /** Repositories — bound once from db, threaded down as typed functions */
+  const repositories = {
+    createPipelineRun:       aiPipelineRunsRepo.createRun(db),
+    findRunningPipeline:     aiPipelineRunsRepo.findRunningByGameId(db),
+    updatePipelineStatus:    aiPipelineRunsRepo.updateRunStatus(db),
+    updateSpymasterResponse: aiPipelineRunsRepo.updateSpymasterResponse(db),
+    updatePrefilterResponse: aiPipelineRunsRepo.updatePrefilterResponse(db),
+    updateRankerResponse:    aiPipelineRunsRepo.updateRankerResponse(db),
+    appendPrompt:            aiPipelineRunsRepo.appendPrompt(db),
+    createGameMessage:       gameMessagesRepo.createMessage(db),
+    findGameByPublicId:      gamesRepo.findGameByPublicId(db),
+  };
+
+  /** Models (LLM client + health monitor) */
   const { llm } = createModels(logger)({ config: llmConfig });
+
+  /** Pipeline (spymaster + guesser orchestration) */
   const pipeline = createPipeline(logger)({ llm });
 
-  const aiPlayerService = createPlayer(logger)({
+  /** AI player (event-driven decision loop) */
+  const player = createPlayer(logger)({
     pipeline,
-    giveClue,
-    makeGuess,
-    endTurn,
-    loadGameData,
-    createPipelineRun: createRun(db),
-    findRunningPipeline: findRunningByGameId(db),
-    updatePipelineStatus: updateRunStatus(db),
-    updateSpymasterResponse: updateSpymasterResponse(db),
-    updatePrefilterResponse: updatePrefilterResponse(db),
-    updateRankerResponse: updateRankerResponse(db),
-    appendPrompt: appendPrompt(db),
-    createGameMessage: createMessage(db),
-    findGameByPublicId: findGameByPublicId(db),
+    // gameplay services
+    giveClue:     gameplay.giveClue,
+    makeGuess:    gameplay.makeGuess,
+    endTurn:      gameplay.endTurn,
+    loadGameData: gameplay.loadGameData,
+    // ai feature repositories
+    createPipelineRun:       repositories.createPipelineRun,
+    findRunningPipeline:     repositories.findRunningPipeline,
+    updatePipelineStatus:    repositories.updatePipelineStatus,
+    updateSpymasterResponse: repositories.updateSpymasterResponse,
+    updatePrefilterResponse: repositories.updatePrefilterResponse,
+    updateRankerResponse:    repositories.updateRankerResponse,
+    appendPrompt:            repositories.appendPrompt,
+    createGameMessage:       repositories.createGameMessage,
+    findGameByPublicId:      repositories.findGameByPublicId,
   });
 
-  aiPlayerService.initialize();
+  player.initialize();
 
+  /** Move feature (HTTP) */
   const aiMoveFeature = aiMove(logger)({
-    aiPlayerService,
-    getGameState,
-    db,
-    llm,
+    aiPlayerService: player,
+    getGameState: gameplay.getGameState,
+    db,   // move/ still takes db internally — separate clean-up pass
+    llm,  // move/get-status reads health off llm — separate clean-up pass
   });
 
+  /** Routes */
   const router = Router();
-
-  // HTTP request/response logging
   router.use(httpLogger(logger));
-
-  router.post("/games/:gameId/ai/move", auth, blockingGameAction("ai-move"), aiMoveFeature.triggerMove.controller);
+  router.post(
+    "/games/:gameId/ai/move",
+    auth,
+    blockingGameAction("ai-move"),
+    aiMoveFeature.triggerMove.controller,
+  );
   router.get("/games/:gameId/ai/status", auth, aiMoveFeature.getStatus.controller);
 
   app.use("/api", router);
@@ -125,7 +148,7 @@ export const initialize = (dependencies: AIModuleDependencies) => {
   logger.info("AI module initialized");
 
   return {
-    aiPlayerService,
+    aiPlayerService: player,
     llm,
   };
 };
