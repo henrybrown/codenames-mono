@@ -33,8 +33,8 @@ import { createMessage } from "@backend/shared/data-access/repositories/game-mes
 import { findGameByPublicId } from "@backend/shared/data-access/repositories/games.repository";
 import aiMove from "./move";
 
-export { createCodenamesPipeline } from "./pipeline/codenames-pipeline";
-export type { CodenamesPipeline } from "./pipeline/codenames-pipeline";
+export { createPipeline } from "./pipeline";
+export type { CodenamesPipeline } from "./pipeline";
 export type { LLMService, AIPlayerService };
 
 export type AIModuleDependencies = {
