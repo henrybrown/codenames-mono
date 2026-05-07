@@ -23,24 +23,30 @@ async function dismissHandoff(page: import("@playwright/test").Page) {
  * Find a truly visible instance of a locator — checks both Playwright
  * visibility AND viewport bounds (multiple layouts render simultaneously
  * with CSS hiding one, so isVisible alone isn't enough).
+ *
+ * Polls until timeout because the dashboard layout settles asynchronously
+ * after the first paint (refetch on handoff, framer-motion entrances).
  */
 async function findVisible(page: import("@playwright/test").Page, selector: string, timeout = 5000) {
-  // Wait for at least one element to exist in DOM first
   await page.locator(selector).first().waitFor({ state: "attached", timeout }).catch(() => null);
 
-  const all = page.locator(selector);
-  const count = await all.count();
-  for (let i = count - 1; i >= 0; i--) {
-    const el = all.nth(i);
-    const visible = await el.isVisible({ timeout: 1000 }).catch(() => false);
-    if (!visible) continue;
-    const inViewport = await el.evaluate((node) => {
-      const rect = node.getBoundingClientRect();
-      return rect.width > 0 && rect.height > 0 &&
-        rect.top < window.innerHeight && rect.bottom > 0 &&
-        rect.left < window.innerWidth && rect.right > 0;
-    }).catch(() => false);
-    if (inViewport) return el;
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const all = page.locator(selector);
+    const count = await all.count();
+    for (let i = count - 1; i >= 0; i--) {
+      const el = all.nth(i);
+      const visible = await el.isVisible({ timeout: 250 }).catch(() => false);
+      if (!visible) continue;
+      const inViewport = await el.evaluate((node) => {
+        const rect = node.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0 &&
+          rect.top < window.innerHeight && rect.bottom > 0 &&
+          rect.left < window.innerWidth && rect.right > 0;
+      }).catch(() => false);
+      if (inViewport) return el;
+    }
+    await page.waitForTimeout(150);
   }
   return null;
 }

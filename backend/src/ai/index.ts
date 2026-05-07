@@ -71,7 +71,7 @@ export type AIModuleDependencies = {
     // makes the contract obvious at the call site.
     provider: LLMProvider;
   };
-  // Cross-feature
+  // game ops
   gameplay: GameplayFeature;
 };
 
