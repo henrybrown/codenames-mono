@@ -42,8 +42,10 @@ test("bystander guess ends turn and switches to other team", async ({ page, cont
   await expect(bystanderEl).toBeVisible({ timeout: 10_000 });
   await bystanderEl.click();
 
-  /** Wait for turn to end */
-  await page.waitForTimeout(3000);
+  /** Backend ends the turn but no longer auto-starts the next one — the
+   *  frontend's NextTurnTrigger fires startTurn after an 8s countdown.
+   *  Wait long enough for the countdown + mutation to complete. */
+  await page.waitForTimeout(11_000);
 
   /** Verify via API that turn switched */
   const updatedState = await getGameState(request, cookie, gameId);
@@ -93,7 +95,9 @@ test("other team card guess ends turn and switches teams", async ({ page, contex
   await expect(cardEl).toBeVisible({ timeout: 10_000 });
   await cardEl.click();
 
-  await page.waitForTimeout(3000);
+  /** Backend ends the turn but no longer auto-starts the next one — the
+   *  frontend's NextTurnTrigger fires startTurn after an 8s countdown. */
+  await page.waitForTimeout(11_000);
 
   const updatedState = await getGameState(request, cookie, gameId);
   const activeTurn = updatedState.currentRound.turns.find((t: any) => t.status === "ACTIVE");

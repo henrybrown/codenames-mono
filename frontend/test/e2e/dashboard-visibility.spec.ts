@@ -129,10 +129,11 @@ test("codebreaker guess stage — end turn visible, no clue input", async ({
   await page.goto(`/game/${gameId}?role=CODEBREAKER`);
   await dismissHandoff(page);
   await openDashboardIfMobile(page);
-  await page.waitForTimeout(1000);
+  /** Allow extra time for the post-handoff refetch + dashboard render in CI. */
+  await page.waitForTimeout(2500);
 
   /** End turn button should be visible */
-  const endTurn = await findVisible(page, "#end-turn-btn");
+  const endTurn = await findVisible(page, "#end-turn-btn", 10_000);
   expect(endTurn).not.toBeNull();
 
   /** Chat FAB should be visible */

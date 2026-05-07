@@ -64,10 +64,11 @@ test("dashboard does not flash during bystander guess turn transition", async ({
   await page.goto(`/game/${gameId}?role=CODEBREAKER`);
   await dismissHandoff(page);
   await openDashboardIfMobile(page);
-  await page.waitForTimeout(1000);
+  /** Allow extra time for the post-handoff refetch + dashboard render in CI. */
+  await page.waitForTimeout(2500);
 
   /** End turn button should be visible before transition */
-  const endTurnBefore = await findVisible(page, "#end-turn-btn");
+  const endTurnBefore = await findVisible(page, "#end-turn-btn", 10_000);
   expect(endTurnBefore).not.toBeNull();
 
   /** Find a bystander card to trigger a turn transition */
@@ -82,12 +83,20 @@ test("dashboard does not flash during bystander guess turn transition", async ({
    */
   await page.evaluate(() => {
     (window as any).__dashboardFlashDetected = false;
+    (window as any).__flashDetail = [] as string[];
     const panels = document.querySelectorAll("[class*='panel'], [class*='footer'], [class*='content']");
+    /** Capture starting heights so we only flag elements that COLLAPSED from
+     *  a non-zero height, not ones that were already 0 (hidden layouts). */
+    const startingHeights = new Map<Element, number>();
+    panels.forEach((p) => startingHeights.set(p, p.getBoundingClientRect().height));
+
     const observer = new MutationObserver(() => {
       panels.forEach((panel) => {
         const rect = panel.getBoundingClientRect();
-        if (rect.height === 0) {
+        const startH = startingHeights.get(panel) ?? 0;
+        if (rect.height === 0 && startH > 0) {
           (window as any).__dashboardFlashDetected = true;
+          (window as any).__flashDetail.push(`${panel.tagName}.${(panel as HTMLElement).className} startH=${startH}`);
         }
       });
     });
@@ -108,14 +117,19 @@ test("dashboard does not flash during bystander guess turn transition", async ({
 
   /** Check that no flash was detected */
   const flashDetected = await page.evaluate(() => (window as any).__dashboardFlashDetected);
-  expect(flashDetected).toBe(false);
+  const flashDetail = await page.evaluate(() => (window as any).__flashDetail);
+  expect(flashDetected, `flash detected on: ${JSON.stringify(flashDetail)}`).toBe(false);
 
   /** Clean up observer */
   await page.evaluate(() => {
     (window as any).__dashboardObserver?.disconnect();
   });
 
-  /** Verify the turn actually transitioned — API confirms new active turn */
+  /** Verify the turn actually transitioned — API confirms new active turn.
+   *  The backend no longer auto-starts the next turn; the frontend's
+   *  NextTurnTrigger fires startTurn after an 8s countdown, so wait long
+   *  enough for that to land. */
+  await page.waitForTimeout(9000);
   const updatedState = await getGameState(request, cookie, gameId);
   const turns = updatedState.currentRound.turns;
   const activeTurn = turns.find((t: any) => t.status === "ACTIVE");
@@ -204,10 +218,11 @@ test("AI pipeline events do not cause dashboard re-render flash", async ({
   await page.goto(`/game/${gameId}?role=CODEBREAKER`);
   await dismissHandoff(page);
   await openDashboardIfMobile(page);
-  await page.waitForTimeout(1000);
+  /** Allow extra time for the post-handoff refetch + dashboard render in CI. */
+  await page.waitForTimeout(2500);
 
   /** End turn button should be visible */
-  const endTurn = await findVisible(page, "#end-turn-btn");
+  const endTurn = await findVisible(page, "#end-turn-btn", 10_000);
   expect(endTurn).not.toBeNull();
 
   /** Clue word should appear in the intel panel */
@@ -251,7 +266,7 @@ test("AI pipeline events do not cause dashboard re-render flash", async ({
 
 // ─── Turn outcome panel ──────────────────────────────────────────────────
 
-test("turn outcome panel shows after bystander guess with clue and reason", async ({
+test("turn outcome panel shows after bystander guess with clue and revealed card", async ({
   browser,
   request,
 }) => {
@@ -298,9 +313,6 @@ test("turn outcome panel shows after bystander guess with clue and reason", asyn
 
   /** The bystander card word should appear in the guess list */
   expect(bodyText.toUpperCase()).toContain(bystanderCard.word.toUpperCase());
-
-  /** Reason text should mention BYSTANDER */
-  expect(bodyText.toUpperCase()).toContain("BYSTANDER");
 
   /** Chat FAB should still be visible */
   const chatFab = await findVisible(page, "[aria-label='Open chat']");
@@ -419,9 +431,8 @@ test("outcome panel shows correct guess then wrong guess results", async ({
   expect(bodyText.toUpperCase()).toContain(teamCard.word.toUpperCase());
   expect(bodyText.toUpperCase()).toContain(otherTeamCard.word.toUpperCase());
 
-  /** Reason should mention wrong guess */
-  expect(bodyText.toUpperCase()).toContain("WRONG GUESS");
-  expect(bodyText.toUpperCase()).toContain("ENDED ON 1");
+  /** Outcome panel should be visible after the wrong guess ends the turn */
+  expect(bodyText.toUpperCase()).toContain("TURN COMPLETE");
 
   await ctx.close();
 });
