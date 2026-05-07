@@ -226,7 +226,7 @@ describe("make-guess orchestration", () => {
     expect(ops.startTurn).not.toHaveBeenCalled();
   });
 
-  it("CORRECT_TEAM_CARD with 0 guesses remaining: ends turn and auto-starts next", async () => {
+  it("CORRECT_TEAM_CARD with 0 guesses remaining: ends turn (next turn started by frontend)", async () => {
     const gameState = buildGameWithBoard({ selectedRedCards: 5, guessesRemaining: 1 });
     const postState = {
       currentRound: {
@@ -242,7 +242,7 @@ describe("make-guess orchestration", () => {
     await service({ gameState, cardWord: "RED5" });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
-    expect(ops.startTurn).toHaveBeenCalledTimes(1);
+    expect(ops.startTurn).not.toHaveBeenCalled();
     expect(ops.endRound).not.toHaveBeenCalled();
     expect(ops.endGame).not.toHaveBeenCalled();
   });
@@ -306,7 +306,7 @@ describe("make-guess orchestration", () => {
     expect(ops.endGame).toHaveBeenCalledTimes(1);
   });
 
-  it("OTHER_TEAM_CARD: ends turn and auto-starts next", async () => {
+  it("OTHER_TEAM_CARD: ends turn (next turn started by frontend)", async () => {
     const gameState = buildGameWithBoard({ selectedBlueCards: 3, guessesRemaining: 2 });
     const postState = {
       currentRound: {
@@ -321,7 +321,7 @@ describe("make-guess orchestration", () => {
     await service({ gameState, cardWord: "BLUE3" });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
-    expect(ops.startTurn).toHaveBeenCalledTimes(1);
+    expect(ops.startTurn).not.toHaveBeenCalled();
     expect(ops.endRound).not.toHaveBeenCalled();
   });
 
@@ -345,14 +345,14 @@ describe("make-guess orchestration", () => {
     expect(ops.startTurn).not.toHaveBeenCalled();
   });
 
-  it("BYSTANDER_CARD: ends turn and auto-starts next", async () => {
+  it("BYSTANDER_CARD: ends turn (next turn started by frontend)", async () => {
     const gameState = buildGameWithBoard({ guessesRemaining: 2 });
 
     const { service, ops } = createServiceWithTracking(gameState, "BYSTANDER_CARD");
     await service({ gameState, cardWord: "NEUTRAL0" });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
-    expect(ops.startTurn).toHaveBeenCalledTimes(1);
+    expect(ops.startTurn).not.toHaveBeenCalled();
     expect(ops.endRound).not.toHaveBeenCalled();
     expect(ops.endGame).not.toHaveBeenCalled();
   });
