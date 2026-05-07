@@ -3,7 +3,7 @@
  * Listens to game events and makes intelligent decisions for AI players
  */
 
-import type { LLMService } from "./pipeline/llm.service";
+import type { LLMService } from "./models";
 import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clue.service";
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import type { EndTurnService } from "@backend/game/gameplay/turns/end-turn.service";

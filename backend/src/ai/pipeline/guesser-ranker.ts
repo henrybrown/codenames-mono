@@ -6,7 +6,7 @@
  * returned words are actually on the board (prevents hallucination).
  */
 
-import type { LLMService } from "./llm.service";
+import type { LLMService } from "../models";
 import type { PreFilterOutput } from "./guesser-prefilter";
 import type { AppLogger } from "@backend/shared/logging";
 

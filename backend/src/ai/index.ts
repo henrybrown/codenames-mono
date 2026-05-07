@@ -11,10 +11,9 @@ import type { AuthMiddleware } from "@backend/shared/http-middleware/auth.middle
 import type { HttpLoggerHandler } from "@backend/shared/http-middleware/http-logger.middleware";
 import { blockingGameAction } from "@backend/shared/http-middleware/blocking-game-action.middleware";
 import type { AppLogger } from "@backend/shared/logging";
-import { createLLMService } from "./pipeline/llm.service";
+import { createModels } from "./models";
+import type { LLMService, LLMProvider } from "./models";
 import { createAIPlayerService } from "./ai-player.service";
-import type { LLMService } from "./pipeline/llm.service";
-import type { LLMProvider } from "./pipeline/providers/types";
 import type { AIPlayerService } from "./ai-player.service";
 import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clue.service";
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
@@ -83,7 +82,7 @@ export const initialize = (dependencies: AIModuleDependencies) => {
   } = dependencies;
 
   const logger = appLogger.for({ feature: "ai" }).withMeta({ model: llmConfig.model }).create();
-  const llm = createLLMService(llmConfig, logger);
+  const { llm } = createModels(logger)({ config: llmConfig });
 
   const aiPlayerService = createAIPlayerService(logger)({
     llm,

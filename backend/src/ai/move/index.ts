@@ -2,7 +2,7 @@ import type { AIPlayerService } from "../ai-player.service";
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
 import type { DbContext } from "@backend/shared/data-access/transaction-handler";
 import type { AppLogger } from "@backend/shared/logging";
-import type { LLMService } from "../pipeline/llm.service";
+import type { LLMService } from "../models";
 
 import * as aiPipelineRunsRepository from "@backend/shared/data-access/repositories/ai-pipeline-runs.repository";
 import * as gamesRepository from "@backend/shared/data-access/repositories/games.repository";

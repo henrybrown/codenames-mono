@@ -7,7 +7,7 @@
  * (board word check, word-form check) is handled in code.
  */
 
-import type { LLMService } from "./llm.service";
+import type { LLMService } from "../models";
 import type { AppLogger } from "@backend/shared/logging";
 
 export type SpymasterInput = {

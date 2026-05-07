@@ -8,7 +8,7 @@
  * cutting latency by ~5x while giving the model cross-word context.
  */
 
-import type { LLMService } from "./llm.service";
+import type { LLMService } from "../models";
 import type { AppLogger } from "@backend/shared/logging";
 
 /**

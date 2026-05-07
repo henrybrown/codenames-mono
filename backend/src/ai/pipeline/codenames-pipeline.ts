@@ -6,7 +6,7 @@
  * - Guesser: Ranks all remaining words against the clue in a single LLM call
  */
 
-import type { LLMService } from "./llm.service";
+import type { LLMService } from "../models";
 import type { AppLogger } from "@backend/shared/logging";
 import { runSpymasterPipeline, type SpymasterInput, type SpymasterOutput } from "./spymaster";
 import { runRanking, type RankingInput } from "./guesser-ranker";
