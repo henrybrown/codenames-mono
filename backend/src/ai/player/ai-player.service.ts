@@ -3,13 +3,11 @@
  * Listens to game events and makes intelligent decisions for AI players
  */
 
-import type { LLMService } from "./models";
 import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clue.service";
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import type { EndTurnService } from "@backend/game/gameplay/turns/end-turn.service";
 import type { GameDataLoader } from "@backend/game/gameplay/state/game-data-loader";
-import { createCodenamesPipeline } from "./pipeline/codenames-pipeline";
-import type { PreFilterOutput } from "./pipeline/guesser-prefilter";
+import type { CodenamesPipeline, PreFilterOutput } from "../pipeline";
 import type {
   RunCreator,
   RunFinderByGame,
@@ -30,7 +28,7 @@ import type { GameFinder } from "@backend/shared/data-access/repositories/games.
 import type { AppLogger } from "@backend/shared/logging";
 
 export type AIPlayerDependencies = {
-  llm: LLMService;
+  pipeline: CodenamesPipeline;
   giveClue: GiveClueService;
   makeGuess: MakeGuessService;
   endTurn: EndTurnService;
@@ -67,7 +65,7 @@ const delay = (ms: number): Promise<void> => {
 export const createAIPlayerService =
   (logger: AppLogger) => (dependencies: AIPlayerDependencies) => {
     const {
-      llm,
+      pipeline,
       giveClue,
       makeGuess,
       endTurn,
@@ -82,8 +80,6 @@ export const createAIPlayerService =
       createGameMessage,
       findGameByPublicId,
     } = dependencies;
-
-    const pipeline = createCodenamesPipeline(llm, logger);
 
     const emitNarration = async (context: AIDecisionContext, content: string): Promise<void> => {
       try {

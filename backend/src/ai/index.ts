@@ -13,8 +13,9 @@ import { blockingGameAction } from "@backend/shared/http-middleware/blocking-gam
 import type { AppLogger } from "@backend/shared/logging";
 import { createModels } from "./models";
 import type { LLMService, LLMProvider } from "./models";
-import { createAIPlayerService } from "./ai-player.service";
-import type { AIPlayerService } from "./ai-player.service";
+import { createPipeline } from "./pipeline";
+import { createPlayer } from "./player";
+import type { AIPlayerService } from "./player";
 import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clue.service";
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import type { EndTurnService } from "@backend/game/gameplay/turns/end-turn.service";
@@ -83,9 +84,10 @@ export const initialize = (dependencies: AIModuleDependencies) => {
 
   const logger = appLogger.for({ feature: "ai" }).withMeta({ model: llmConfig.model }).create();
   const { llm } = createModels(logger)({ config: llmConfig });
+  const pipeline = createPipeline(logger)({ llm });
 
-  const aiPlayerService = createAIPlayerService(logger)({
-    llm,
+  const aiPlayerService = createPlayer(logger)({
+    pipeline,
     giveClue,
     makeGuess,
     endTurn,

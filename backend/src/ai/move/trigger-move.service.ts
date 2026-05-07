@@ -1,4 +1,4 @@
-import type { AIPlayerService } from "@backend/ai/ai-player.service";
+import type { AIPlayerService } from "@backend/ai/player";
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
 import type { AppLogger } from "@backend/shared/logging";
 
