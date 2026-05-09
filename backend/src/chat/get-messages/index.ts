@@ -1,35 +1,33 @@
+import type { AppLogger } from "@backend/shared/logging";
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
-import type { DbContext } from "@backend/shared/data-access/transaction-handler";
+import type {
+  GameMessageData,
+  MessageQueryParams,
+} from "@backend/shared/data-access/repositories/game-messages.repository";
 
-import * as gameMessagesRepository from "@backend/shared/data-access/repositories/game-messages.repository";
 import { getMessagesService } from "./get-messages.service";
 import { getMessagesController } from "./get-messages.controller";
 
-/**
- * Dependencies required by the get messages feature
- */
 export interface GetMessagesDependencies {
   getGameState: GameplayStateProvider;
-  db: DbContext;
+  findMessagesByGame: (params: MessageQueryParams) => Promise<GameMessageData[]>;
 }
 
-/**
- * Initializes the get messages feature with all dependencies
- */
-export const getMessages = (dependencies: GetMessagesDependencies) => {
-  const service = getMessagesService({
-    findMessagesByGame: gameMessagesRepository.findMessagesByGame(dependencies.db),
-    getGameState: dependencies.getGameState,
-  });
+export const createGetMessages =
+  (logger: AppLogger) => (deps: GetMessagesDependencies) => {
+    const service = getMessagesService({
+      findMessagesByGame: deps.findMessagesByGame,
+      getGameState: deps.getGameState,
+    });
 
-  const controller = getMessagesController({
-    getMessages: service,
-  });
+    const controller = getMessagesController({
+      getMessages: service,
+    });
 
-  return {
-    controller,
-    service,
+    return {
+      controller,
+      service,
+    };
   };
-};
 
-export default getMessages;
+export type GetMessagesFeature = ReturnType<ReturnType<typeof createGetMessages>>;

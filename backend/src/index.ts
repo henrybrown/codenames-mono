@@ -167,7 +167,9 @@ const chat = initializeChat({
   app,
   db: dbInstance,
   auth: authHandlers,
-  getGameState,
+  httpLogger: httpLoggerHandler,
+  appLogger,
+  gameplay: { getGameState },
 });
 
 app.get("/api/health", (req, res) => {
