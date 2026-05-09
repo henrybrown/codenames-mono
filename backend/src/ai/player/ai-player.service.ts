@@ -62,6 +62,24 @@ const delay = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
+/**
+ * Confidence thresholds for guess decisions.
+ *
+ * The AI is generally permissive — codenames is a game of inference,
+ * not certainty — but should occasionally pass when nothing scores
+ * well. Thresholds:
+ *   - First guess of the turn: only guess if top score >= 0.55.
+ *     If the top score is in [0.45, 0.55) we still guess (to avoid
+ *     paralysis); below 0.45 we pass.
+ *   - Subsequent guesses on the same clue: higher bar (0.65) since
+ *     the clue's intended count has likely been satisfied already.
+ */
+const GUESS_THRESHOLDS = {
+  firstGuessConfident: 0.55,
+  firstGuessFloor: 0.45,
+  subsequentGuess: 0.65,
+} as const;
+
 export const createAIPlayerService =
   (logger: AppLogger) => (dependencies: AIPlayerDependencies) => {
     const {
@@ -452,14 +470,47 @@ export const createAIPlayerService =
         await emitNarration(context, `Ready to make up to ${maxGuesses} guess(es). Let's go!`);
 
         let correctGuesses = 0;
+        let stopReason: "completed" | "wrong" | "low-confidence" | null = null;
 
         for (let i = 0; i < Math.min(clueNumber, rankedList.length); i++) {
           const candidate = rankedList[i];
+          const isFirst = i === 0;
+
+          // Threshold check
+          if (isFirst) {
+            if (candidate.score < GUESS_THRESHOLDS.firstGuessFloor) {
+              await emitNarration(
+                context,
+                `Top word "${candidate.word}" only scores ${(candidate.score * 100).toFixed(0)}%. Nothing on this board is confident enough — passing.`,
+              );
+              stopReason = "low-confidence";
+              break;
+            }
+            if (candidate.score < GUESS_THRESHOLDS.firstGuessConfident) {
+              await emitNarration(
+                context,
+                `Top word "${candidate.word}" only scores ${(candidate.score * 100).toFixed(0)}% — taking it but cautiously.`,
+              );
+            }
+          } else {
+            if (candidate.score < GUESS_THRESHOLDS.subsequentGuess) {
+              await emitNarration(
+                context,
+                `Next-best "${candidate.word}" only scores ${(candidate.score * 100).toFixed(0)}%. Stopping while ahead.`,
+              );
+              stopReason = "low-confidence";
+              break;
+            }
+          }
+
           await emitNarration(context, `Closest association is "${candidate.word}"`);
           await delay(5000);
 
           if (candidate.score >= 0.6) {
-            await emitNarration(context, `Choosing "${candidate.word}" with ${(candidate.score * 100).toFixed(0)}% confidence. ${candidate.reason}`);
+            await emitNarration(
+              context,
+              `Choosing "${candidate.word}" with ${(candidate.score * 100).toFixed(0)}% confidence. ${candidate.reason}`,
+            );
           }
 
           // Re-load state for each guess (state changes after each guess)
@@ -478,19 +529,41 @@ export const createAIPlayerService =
           if (outcome === "CORRECT_TEAM_CARD") {
             correctGuesses++;
             if (correctGuesses >= clueNumber) {
-              const endState = await loadGameStateForAI(context.gameId, context.playerId);
-              if (!endState) throw new Error("Failed to load state for end turn");
-
-              const endTurnResult = await endTurn({ gameState: endState });
-              if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.error}`);
-              emitNarration(context, `Perfect! Found all ${correctGuesses} cards. Ending my turn.`);
+              stopReason = "completed";
               break;
             }
           } else {
-            emitNarration(context, `Wrong card! That was a ${outcome.toLowerCase().replace(/_/g, " ")}. My turn is over.`);
+            stopReason = "wrong";
+            await emitNarration(
+              context,
+              `Wrong card! That was a ${outcome.toLowerCase().replace(/_/g, " ")}. My turn is over.`,
+            );
             break;
           }
         }
+
+        // End-of-turn handling
+        if (stopReason === "completed") {
+          const endState = await loadGameStateForAI(context.gameId, context.playerId);
+          if (!endState) throw new Error("Failed to load state for end turn");
+
+          const endTurnResult = await endTurn({ gameState: endState });
+          if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.error}`);
+          await emitNarration(context, `Perfect! Found all ${correctGuesses} cards. Ending my turn.`);
+        } else if (stopReason === "low-confidence") {
+          const endState = await loadGameStateForAI(context.gameId, context.playerId);
+          if (!endState) throw new Error("Failed to load state for end turn");
+
+          const endTurnResult = await endTurn({ gameState: endState });
+          if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.error}`);
+          await emitNarration(
+            context,
+            correctGuesses > 0
+              ? `Stopped after ${correctGuesses} correct guess${correctGuesses === 1 ? "" : "es"}.`
+              : `Turn ended without a guess.`,
+          );
+        }
+        // stopReason === "wrong" → game engine ends the turn automatically
 
         await updatePipelineStatus(run.id, PIPELINE_STATUS.COMPLETE);
         GameEventsEmitter.aiPipelineComplete(context.gameId, run.id);
