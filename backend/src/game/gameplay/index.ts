@@ -26,7 +26,14 @@ export const initialize = (
   const logger = appLogger.for({ feature: "gameplay" }).create();
 
   /** State providers */
-  const { provider: getGameState, loader: loadGameData } = gameplayState(db);
+  const {
+    provider: getGameplayState,         // new — discriminated-union input
+    legacyProvider: getGameState,       // old — positional args; consumers migrate in steps 3-5
+    loader: loadGameData,
+    loadGameAggregate,
+    verifyMembership,
+    resolvePlayerContext,
+  } = gameplayState(db);
   const { provider: getTurnState, getTurnsByRoundId, findPlayersByRoundId } = turnState(db);
 
   /** Gameplay actions (transactional handler) */
