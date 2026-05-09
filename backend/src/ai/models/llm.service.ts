@@ -14,7 +14,7 @@ import type { AppLogger } from "@backend/shared/logging";
 import { createAiHealthMonitor, type AiHealthMonitor } from "./ai-health";
 
 export type LLMConfig = {
-  provider: LLMProvider;
+  providerName: LLMProvider;
   baseURL: string;
   apiKey: string;
   model: string;
@@ -39,7 +39,7 @@ export type LLMGenerateOptions = {
  */
 export const createLLMService = (config: LLMConfig, logger: AppLogger) => {
   const {
-    provider,
+    providerName: provider,
     baseURL,
     apiKey,
     model,

@@ -138,7 +138,7 @@ const ai = initializeAI({
   httpLogger: httpLoggerHandler,
   appLogger,
   llmConfig: {
-    provider: env.LLM_PROVIDER,
+    providerName: env.LLM_PROVIDER,
     baseURL: env.LLM_URL,
     apiKey: env.LLM_API_KEY,
     model: env.LLM_MODEL,

@@ -65,12 +65,7 @@ export type AIModuleDependencies = {
   auth: AuthMiddleware;
   httpLogger: HttpLoggerHandler;
   appLogger: AppLogger;
-  llmConfig: LLMConfig & {
-    // The wiring layer accepts a slightly wider type than LLMConfig itself
-    // (provider is required at boot — config-loaded), keeping this here
-    // makes the contract obvious at the call site.
-    provider: LLMProvider;
-  };
+  llmConfig: LLMConfig;
   // game ops
   gameplay: GameplayFeature;
 };
