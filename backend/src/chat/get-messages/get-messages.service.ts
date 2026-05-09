@@ -3,22 +3,8 @@ import type {
   MessageQueryParams,
 } from "@backend/shared/data-access/repositories/game-messages.repository";
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
-
-/**
- * Transformed message for API response
- */
-export interface GameMessage {
-  id: string;
-  gameId: string;
-  /** Player public ID (UUID). Null for SYSTEM/AI messages. */
-  playerId: string | null;
-  playerName: string | null;
-  teamName: string | null;
-  teamOnly: boolean;
-  messageType: "CHAT" | "AI_THINKING" | "SYSTEM";
-  content: string;
-  createdAt: string;
-}
+import type { GameMessage, MessageAuthorInfo } from "../game-message";
+import { toGameMessage } from "../game-message";
 
 /**
  * Dependencies required by the service
@@ -85,18 +71,17 @@ export const getMessagesService =
     // Transform to API format, enriching with player/team names from game state
     const messages: GameMessage[] = messageRows.map((row) => {
       const player = row.player_id != null ? playerById.get(row.player_id) : undefined;
-      return {
-        id: row.id,
-        gameId,
-        playerId: player?.publicId ?? null,
-        playerName: player?.publicName ?? null,
-        teamName: player?.teamName ?? null,
-        teamOnly: row.team_only,
-        messageType: row.message_type,
-        content: row.content,
-        createdAt: row.created_at.toISOString(),
-      };
+      const author: MessageAuthorInfo | null = player
+        ? {
+            publicId: player.publicId,
+            publicName: player.publicName,
+            teamName: player.teamName,
+          }
+        : null;
+      return toGameMessage(row, gameId, author);
     });
 
     return { status: "success", messages };
   };
+
+export type { GameMessage } from "../game-message";

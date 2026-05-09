@@ -2,22 +2,8 @@ import type { GameMessageData, CreateMessageInput } from "@backend/shared/data-a
 import { MESSAGE_TYPE } from "@backend/shared/data-access/repositories/game-messages.repository";
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
 import { GameEventsEmitter } from "@backend/shared/websocket";
-
-/**
- * Transformed message for API response
- */
-export interface GameMessage {
-  id: string;
-  gameId: string;
-  /** Player public ID (UUID). Null for SYSTEM/AI messages. */
-  playerId: string | null;
-  playerName: string | null;
-  teamName: string | null;
-  teamOnly: boolean;
-  messageType: "CHAT" | "AI_THINKING" | "SYSTEM";
-  content: string;
-  createdAt: string;
-}
+import type { GameMessage } from "../game-message";
+import { toGameMessage } from "../game-message";
 
 /**
  * Dependencies required by the service
@@ -100,17 +86,13 @@ export const submitMessageService = (deps: SubmitMessageServiceDeps) =>
     );
 
     // Transform to API format (enriched with player info from game state)
-    const message: GameMessage = {
-      id: messageData.id,
-      gameId,
-      playerId: userPlayer.publicId,
-      playerName: userPlayer.publicName,
+    const message: GameMessage = toGameMessage(messageData, gameId, {
+      publicId: userPlayer.publicId,
+      publicName: userPlayer.publicName,
       teamName: userPlayer.teamName,
-      teamOnly: messageData.team_only,
-      messageType: messageData.message_type,
-      content: messageData.content,
-      createdAt: messageData.created_at.toISOString(),
-    };
+    });
 
     return { status: "success", message };
   };
+
+export type { GameMessage } from "../game-message";
