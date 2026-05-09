@@ -1,34 +1,32 @@
 import type { ProviderConfig, LLMProviderClient, GenerateRequest } from "./types";
 
+type OpenAIChoice = {
+  message?: { content?: string };
+};
+
+type OpenAIResponse = {
+  choices?: OpenAIChoice[];
+};
+
 export const createOpenAIProvider = (config: ProviderConfig): LLMProviderClient => {
-  const { apiKey, model, baseURL } = config;
+  const { apiKey, model, baseURL, httpClient } = config;
 
   return {
     generate: async (request: GenerateRequest) => {
-      const url = `${baseURL}/v1/chat/completions`;
-
-      const body: Record<string, unknown> = {
-        model,
-        messages: [{ role: "user", content: request.prompt }],
-        temperature: request.temperature,
-        ...(request.maxTokens ? { max_tokens: request.maxTokens } : {}),
-      };
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
+      const data = await httpClient.postJson<OpenAIResponse>(
+        `${baseURL}/v1/chat/completions`,
+        {
+          model,
+          messages: [{ role: "user", content: request.prompt }],
+          temperature: request.temperature,
+          ...(request.maxTokens ? { max_tokens: request.maxTokens } : {}),
         },
-        body: JSON.stringify(body),
-      });
+        {
+          headers: { Authorization: `Bearer ${apiKey}` },
+          source: "OpenAI",
+        },
+      );
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`OpenAI API error ${response.status}: ${errorBody}`);
-      }
-
-      const data = await response.json();
       const content = data.choices?.[0]?.message?.content ?? "";
 
       return { content };

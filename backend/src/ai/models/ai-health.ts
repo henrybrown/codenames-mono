@@ -11,6 +11,8 @@
  */
 
 import type { AppLogger } from "@backend/shared/logging";
+import type { HttpClient } from "@backend/shared/http";
+import { HttpError } from "@backend/shared/http";
 
 export type HealthPlacement = "gpu" | "partial" | "cpu" | "not-loaded" | "unknown";
 
@@ -55,7 +57,8 @@ const modelsMatch = (entryModel: string, target: string): boolean => {
 
 export const createAiHealthMonitor = (
   config: AiHealthConfig,
-  logger: AppLogger
+  httpClient: HttpClient,
+  logger: AppLogger,
 ): AiHealthMonitor => {
   const { baseURL, model, throttleMs, gpuThreshold } = config;
 
@@ -76,30 +79,22 @@ export const createAiHealthMonitor = (
       return;
     }
 
-    let response: Response;
-    try {
-      response = await fetch(`${baseURL}/api/ps`);
-    } catch (error) {
-      logger.debug("ollama.health probe error", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return;
-    }
-
-    if (!response.ok) {
-      logger.debug("ollama.health probe non-ok response", {
-        status: response.status,
-      });
-      return;
-    }
-
     let body: OllamaPsResponse;
     try {
-      body = (await response.json()) as OllamaPsResponse;
+      body = await httpClient.getJson<OllamaPsResponse>(
+        `${baseURL}/api/ps`,
+        { source: "OllamaHealth" },
+      );
     } catch (error) {
-      logger.debug("ollama.health probe error", {
-        error: error instanceof Error ? error.message : String(error),
-      });
+      // Health probe failures are expected when Ollama isn't running locally —
+      // log at debug and move on, never let a probe error bubble up.
+      const message =
+        error instanceof HttpError
+          ? `${error.source} ${error.status === 0 ? "transport" : `HTTP ${error.status}`}`
+          : error instanceof Error
+          ? error.message
+          : String(error);
+      logger.debug("ollama.health probe error", { error: message });
       return;
     }
 

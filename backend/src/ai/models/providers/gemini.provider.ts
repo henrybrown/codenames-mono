@@ -1,35 +1,35 @@
 import type { ProviderConfig, LLMProviderClient, GenerateRequest } from "./types";
 
+type GeminiPart = { text?: string };
+
+type GeminiCandidate = {
+  content?: { parts?: GeminiPart[] };
+};
+
+type GeminiResponse = {
+  candidates?: GeminiCandidate[];
+};
+
 export const createGeminiProvider = (config: ProviderConfig): LLMProviderClient => {
-  const { apiKey, model, baseURL } = config;
+  const { apiKey, model, baseURL, httpClient } = config;
 
   return {
     generate: async (request: GenerateRequest) => {
-      const url = `${baseURL}/v1beta/models/${model}:generateContent`;
-
-      const body: Record<string, unknown> = {
-        contents: [{ parts: [{ text: request.prompt }] }],
-        generationConfig: {
-          temperature: request.temperature,
-          ...(request.maxTokens ? { maxOutputTokens: request.maxTokens } : {}),
+      const data = await httpClient.postJson<GeminiResponse>(
+        `${baseURL}/v1beta/models/${model}:generateContent`,
+        {
+          contents: [{ parts: [{ text: request.prompt }] }],
+          generationConfig: {
+            temperature: request.temperature,
+            ...(request.maxTokens ? { maxOutputTokens: request.maxTokens } : {}),
+          },
         },
-      };
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
+        {
+          headers: { "x-goog-api-key": apiKey },
+          source: "Gemini",
         },
-        body: JSON.stringify(body),
-      });
+      );
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`Gemini API error ${response.status}: ${errorBody}`);
-      }
-
-      const data = await response.json();
       const content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
       return { content };

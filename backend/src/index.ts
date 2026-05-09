@@ -4,6 +4,7 @@ import { createServer } from "http";
 import cookieParser from "cookie-parser";
 import { errorHandler, notFoundHandler } from "./shared/http-middleware/error-handler.middleware";
 import * as postgresDb from "./shared/db";
+import { createHttpClient } from "./shared/http";
 import { createOpenApiSpec } from "@codenames/shared/api";
 import { loadEnvFromPackageDir } from "./shared/config";
 import { createAppLogger } from "./shared/logging";
@@ -51,6 +52,7 @@ startupLogger.info("Server starting");
 
 const app = express();
 const dbInstance = await postgresDb.initializeDb(appLogger)(env.DATABASE_URL);
+const httpClient = createHttpClient(appLogger);
 
 /**
  * Refresh system data from json files.
@@ -134,6 +136,7 @@ const { giveClueService, makeGuessService, endTurnService, getGameState, loadGam
 const ai = initializeAI({
   app,
   db: dbInstance,
+  httpClient,
   auth: authHandlers,
   httpLogger: httpLoggerHandler,
   appLogger,

@@ -11,6 +11,7 @@
 import { createProvider } from "./providers";
 import type { LLMProvider } from "./providers";
 import type { AppLogger } from "@backend/shared/logging";
+import type { HttpClient } from "@backend/shared/http";
 import { createAiHealthMonitor, type AiHealthMonitor } from "./ai-health";
 
 export type LLMConfig = {
@@ -37,7 +38,11 @@ export type LLMGenerateOptions = {
 /**
  * Creates a universal LLM service for AI gameplay decisions
  */
-export const createLLMService = (config: LLMConfig, logger: AppLogger) => {
+export const createLLMService = (
+  config: LLMConfig,
+  httpClient: HttpClient,
+  logger: AppLogger,
+) => {
   const {
     providerName: provider,
     baseURL,
@@ -47,7 +52,7 @@ export const createLLMService = (config: LLMConfig, logger: AppLogger) => {
     maxTokens = 4096,
   } = config;
 
-  const client = createProvider(provider, { apiKey, model, baseURL });
+  const client = createProvider(provider, { apiKey, model, baseURL, httpClient });
 
   const monitor: AiHealthMonitor | null =
     provider === "ollama" && config.healthCheck?.enabled
@@ -58,7 +63,8 @@ export const createLLMService = (config: LLMConfig, logger: AppLogger) => {
             throttleMs: config.healthCheck.throttleMs,
             gpuThreshold: config.healthCheck.gpuThreshold,
           },
-          logger
+          httpClient,
+          logger,
         )
       : null;
 

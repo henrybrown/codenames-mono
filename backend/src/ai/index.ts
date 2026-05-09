@@ -15,6 +15,7 @@ import type { Express } from "express";
 import { Router } from "express";
 import type { Kysely } from "kysely";
 import type { DB } from "@backend/shared/db/db.types";
+import type { HttpClient } from "@backend/shared/http";
 import type { AuthMiddleware } from "@backend/shared/http-middleware/auth.middleware";
 import type { HttpLoggerHandler } from "@backend/shared/http-middleware/http-logger.middleware";
 import { blockingGameAction } from "@backend/shared/http-middleware/blocking-game-action.middleware";
@@ -62,6 +63,7 @@ export type AIModuleDependencies = {
   // Infra
   app: Express;
   db: Kysely<DB>;
+  httpClient: HttpClient;
   auth: AuthMiddleware;
   httpLogger: HttpLoggerHandler;
   appLogger: AppLogger;
@@ -71,7 +73,7 @@ export type AIModuleDependencies = {
 };
 
 export const initialize = (deps: AIModuleDependencies) => {
-  const { app, db, auth, httpLogger, appLogger, llmConfig, gameplay } = deps;
+  const { app, db, httpClient, auth, httpLogger, appLogger, llmConfig, gameplay } = deps;
 
   const logger = appLogger
     .for({ feature: "ai" })
@@ -92,7 +94,7 @@ export const initialize = (deps: AIModuleDependencies) => {
   };
 
   /** Models (LLM client + health monitor) */
-  const { llm } = createModels(logger)({ config: llmConfig });
+  const { llm } = createModels(logger)({ config: llmConfig, httpClient });
 
   /** Pipeline (spymaster + guesser orchestration) */
   const pipeline = createPipeline(logger)({ llm });
