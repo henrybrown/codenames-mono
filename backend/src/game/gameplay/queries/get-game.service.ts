@@ -1,7 +1,6 @@
 import { GameAggregate, TurnPhase } from "@backend/game/gameplay/state/gameplay-state.types";
 import { PLAYER_ROLE, PlayerRole, ROUND_STATE } from "@codenames/shared/types";
-import { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
-import { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import { computeTurnPhase } from "@backend/game/gameplay/state/gameplay-state.helpers";
 import type { AppLogger } from "@backend/shared/logging";
 
@@ -78,7 +77,6 @@ export const GAME_STATE_ERROR = {
   GAME_NOT_FOUND: "game-not-found",
   UNAUTHORIZED: "unauthorized",
   PLAYER_NOT_FOUND: "player-not-found",
-  PLAYER_NOT_IN_GAME: "player-not-in-game",
 } as const;
 
 /**
@@ -87,15 +85,13 @@ export const GAME_STATE_ERROR = {
 export type GetGameStateFailure =
   | { status: typeof GAME_STATE_ERROR.GAME_NOT_FOUND; gameId: string }
   | { status: typeof GAME_STATE_ERROR.UNAUTHORIZED; userId: number }
-  | { status: typeof GAME_STATE_ERROR.PLAYER_NOT_FOUND; playerId: string }
-  | { status: typeof GAME_STATE_ERROR.PLAYER_NOT_IN_GAME; playerId: string; gameId: string };
+  | { status: typeof GAME_STATE_ERROR.PLAYER_NOT_FOUND; playerId: string };
 
 /**
  * Dependencies required by the service
  */
 export type GetGameStateDependencies = {
-  getGameState: GameplayStateProvider;
-  loadGameData: GameDataLoader;
+  getGameplayState: GameplayStateProvider;
 };
 
 /**
@@ -103,70 +99,55 @@ export type GetGameStateDependencies = {
  */
 export const getGameStateService = (logger: AppLogger) => (dependencies: GetGameStateDependencies) => {
   return async (input: GetGameStateInput): Promise<GetGameStateResult> => {
-    // When role is provided (single-device), use the auth-free loader + role resolution
-    if (input.role) {
-      const gameState = await dependencies.loadGameData(input.gameId);
-      if (!gameState) {
-        return { success: false, error: { status: GAME_STATE_ERROR.GAME_NOT_FOUND, gameId: input.gameId } };
-      }
+    const result = await dependencies.getGameplayState(
+      input.role
+        ? { gameId: input.gameId, userId: input.userId, role: input.role }
+        : input.playerId
+        ? { gameId: input.gameId, userId: input.userId, playerId: input.playerId }
+        : { gameId: input.gameId, userId: input.userId },
+    );
 
-      // Verify userId is a player
-      const allPlayers = gameState.teams.flatMap((t) => t.players ?? []);
-      const userIsPlayer = allPlayers.some((p) => p._userId === input.userId);
-      if (!userIsPlayer) {
-        return { success: false, error: { status: GAME_STATE_ERROR.UNAUTHORIZED, userId: input.userId } };
-      }
-
-      // Find active turn to determine team, then find player with role
-      const activeTurn = gameState.currentRound?.turns?.find((t) => t.status === "ACTIVE");
-      if (activeTurn) {
-        const roundPlayers = gameState.currentRound?.players ?? [];
-        const matchingPlayer = roundPlayers.find(
-          (p) => p._teamId === activeTurn._teamId && p.role === input.role,
-        );
-        if (matchingPlayer) {
-          const stateWithContext = {
-            ...gameState,
-            playerContext: {
-              _id: matchingPlayer._id,
-              publicId: matchingPlayer.publicId,
-              _userId: matchingPlayer._userId,
-              _gameId: matchingPlayer._gameId,
-              _teamId: matchingPlayer._teamId,
-              teamName: matchingPlayer.teamName,
-              statusId: matchingPlayer.statusId,
-              publicName: matchingPlayer.publicName,
-              role: matchingPlayer.role as typeof PLAYER_ROLE.CODEMASTER | typeof PLAYER_ROLE.CODEBREAKER,
-            },
-          };
-          return { success: true, data: transformGameState(stateWithContext) };
+    switch (result.status) {
+      case "found":
+        return { success: true, data: transformGameState(result.data) };
+      case "game-not-found":
+        return {
+          success: false,
+          error: { status: GAME_STATE_ERROR.GAME_NOT_FOUND, gameId: input.gameId },
+        };
+      case "user-not-in-game":
+        return {
+          success: false,
+          error: { status: GAME_STATE_ERROR.UNAUTHORIZED, userId: input.userId },
+        };
+      case "player-not-found":
+        return {
+          success: false,
+          error: { status: GAME_STATE_ERROR.PLAYER_NOT_FOUND, playerId: input.playerId! },
+        };
+      case "user-not-authorized":
+        return {
+          success: false,
+          error: { status: GAME_STATE_ERROR.UNAUTHORIZED, userId: input.userId },
+        };
+      case "no-active-turn":
+      case "no-player-for-role": {
+        // Old behaviour returned the loaded state without playerContext when
+        // there was no active turn / no player for role on the role path.
+        // Re-fetch with byUser to surface the data without role-resolution.
+        const fallback = await dependencies.getGameplayState({
+          gameId: input.gameId,
+          userId: input.userId,
+        });
+        if (fallback.status === "found") {
+          return { success: true, data: transformGameState(fallback.data) };
         }
+        return {
+          success: false,
+          error: { status: GAME_STATE_ERROR.GAME_NOT_FOUND, gameId: input.gameId },
+        };
       }
-
-      // No active turn or no matching player — return without playerContext
-      return { success: true, data: transformGameState(gameState) };
     }
-
-    // Standard path: use the auth-aware provider
-    const result = await dependencies.getGameState(input.gameId, input.userId, input.playerId);
-
-    if (result.status === "game-not-found") {
-      return { success: false, error: { status: GAME_STATE_ERROR.GAME_NOT_FOUND, gameId: input.gameId } };
-    }
-    if (result.status === "user-not-player") {
-      return { success: false, error: { status: GAME_STATE_ERROR.UNAUTHORIZED, userId: input.userId } };
-    }
-    if (result.status === "player-not-found") {
-      return { success: false, error: { status: GAME_STATE_ERROR.PLAYER_NOT_FOUND, playerId: input.playerId! } };
-    }
-    if (result.status === "player-not-in-game") {
-      return { success: false, error: { status: GAME_STATE_ERROR.PLAYER_NOT_IN_GAME, playerId: input.playerId!, gameId: input.gameId } };
-    }
-    if (result.status === "user-not-authorized") {
-      return { success: false, error: { status: GAME_STATE_ERROR.UNAUTHORIZED, userId: input.userId } };
-    }
-
-    return { success: true, data: transformGameState(result.data) };
   };
 };
 

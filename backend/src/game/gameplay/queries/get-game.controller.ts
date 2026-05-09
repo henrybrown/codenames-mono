@@ -67,12 +67,6 @@ export const getGameStateController =
             error: "Player not found",
             details: { code: "player-not-found", playerId: result.error.playerId },
           });
-        } else if (result.error.status === "player-not-in-game") {
-          res.status(400).json({
-            success: false,
-            error: "Player is not in this game",
-            details: { code: "player-not-in-game", playerId: result.error.playerId, gameId: result.error.gameId },
-          });
         } else {
           res.status(500).json({ success: false, error: "An unexpected error occurred" });
         }

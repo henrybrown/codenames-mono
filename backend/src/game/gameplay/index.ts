@@ -42,6 +42,7 @@ export const initialize = (
   /** Queries */
   const queries = createQueries(logger)({
     getGameState,
+    getGameplayState,
     loadGameData,
     getTurnState,
     getTurnsByRoundId,

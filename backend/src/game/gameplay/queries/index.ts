@@ -1,4 +1,5 @@
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
+import type { GameplayStateProvider as NewGameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import type { TurnStateProvider } from "@backend/game/gameplay/state/turn-state.provider";
 import type { TurnsFinder, RoundId } from "@backend/shared/data-access/repositories/turns.repository";
@@ -18,7 +19,8 @@ import { getTurnService } from "./get-turn.service";
 import { controller as getTurnControllerFactory } from "./get-turn.controller";
 
 export interface QueriesDependencies {
-  getGameState: GameplayStateProvider;
+  getGameState: GameplayStateProvider;          // legacy — used by get-events / get-players
+  getGameplayState: NewGameplayStateProvider;   // new — used by get-game
   loadGameData: GameDataLoader;
   getTurnState: TurnStateProvider;
   getTurnsByRoundId: TurnsFinder<RoundId>;
@@ -31,8 +33,7 @@ export const createQueries = (logger: AppLogger) => (deps: QueriesDependencies) 
   const getGameService = getGameStateService(
     logger.for({ service: "get-game" }).create(),
   )({
-    getGameState: deps.getGameState,
-    loadGameData: deps.loadGameData,
+    getGameplayState: deps.getGameplayState,
   });
   const getGameController = getGameStateController({ getGameState: getGameService });
 
