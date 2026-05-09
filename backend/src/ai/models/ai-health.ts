@@ -145,11 +145,11 @@ export const createAiHealthMonitor = (
     };
 
     if (state.placement === "cpu") {
-      logger.warn("⚠️  OLLAMA RUNNING ON CPU — inference will be slow", meta);
+      logger.warn("ollama running on CPU — inference will be slow", meta);
     } else if (state.placement === "partial") {
-      logger.warn("⚠️  OLLAMA PARTIAL CPU OFFLOAD — performance degraded", meta);
+      logger.warn("ollama partial CPU offload — performance degraded", meta);
     } else if (state.placement === "gpu" && changed) {
-      logger.info("✅ ollama running on GPU", meta);
+      logger.info("ollama running on GPU", meta);
     } else if (state.placement === "not-loaded" && changed) {
       logger.debug("ollama model not currently loaded (will load on next call)", { model });
     }

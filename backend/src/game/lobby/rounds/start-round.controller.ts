@@ -130,7 +130,7 @@ export const startRoundController = ({ startRound }: Dependencies) => {
         return;
       }
 
-      // ✅ Fixed: Only expose round number and status, no internal IDs
+      // Only expose round number and status, no internal IDs
       const response: StartRoundResponse = {
         success: true,
         data: {
