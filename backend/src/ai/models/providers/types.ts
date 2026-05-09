@@ -1,4 +1,4 @@
-import type { HttpClient } from "@backend/shared/http";
+import type { HttpClient } from "@backend/shared/http-client";
 
 export type LLMProvider = "gemini" | "openai" | "anthropic" | "ollama";
 

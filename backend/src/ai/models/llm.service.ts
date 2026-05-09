@@ -11,7 +11,7 @@
 import { createProvider } from "./providers";
 import type { LLMProvider } from "./providers";
 import type { AppLogger } from "@backend/shared/logging";
-import type { HttpClient } from "@backend/shared/http";
+import type { HttpClient } from "@backend/shared/http-client";
 import { createAiHealthMonitor, type AiHealthMonitor } from "./ai-health";
 
 export type LLMConfig = {

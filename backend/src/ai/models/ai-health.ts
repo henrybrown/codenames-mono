@@ -11,8 +11,8 @@
  */
 
 import type { AppLogger } from "@backend/shared/logging";
-import type { HttpClient } from "@backend/shared/http";
-import { HttpError } from "@backend/shared/http";
+import type { HttpClient } from "@backend/shared/http-client";
+import { HttpError } from "@backend/shared/http-client";
 
 export type HealthPlacement = "gpu" | "partial" | "cpu" | "not-loaded" | "unknown";
 

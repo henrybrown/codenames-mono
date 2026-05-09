@@ -15,7 +15,7 @@ import type { Express } from "express";
 import { Router } from "express";
 import type { Kysely } from "kysely";
 import type { DB } from "@backend/shared/db/db.types";
-import type { HttpClient } from "@backend/shared/http";
+import type { HttpClient } from "@backend/shared/http-client";
 import type { AuthMiddleware } from "@backend/shared/http-middleware/auth.middleware";
 import type { HttpLoggerHandler } from "@backend/shared/http-middleware/http-logger.middleware";
 import { blockingGameAction } from "@backend/shared/http-middleware/blocking-game-action.middleware";

@@ -4,7 +4,7 @@ import { createServer } from "http";
 import cookieParser from "cookie-parser";
 import { errorHandler, notFoundHandler } from "./shared/http-middleware/error-handler.middleware";
 import * as postgresDb from "./shared/db";
-import { createHttpClient } from "./shared/http";
+import { createHttpClient } from "./shared/http-client";
 import { createOpenApiSpec } from "@codenames/shared/api";
 import { loadEnvFromPackageDir } from "./shared/config";
 import { createAppLogger } from "./shared/logging";

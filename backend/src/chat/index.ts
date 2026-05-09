@@ -26,8 +26,8 @@ import * as gameMessagesRepo from "@backend/shared/data-access/repositories/game
 
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
 
-import { createGetMessages } from "./get-messages";
-import { createSubmitMessage } from "./submit-message";
+import { createGetMessages } from "./queries";
+import { createSubmitMessage } from "./submit";
 
 export type { GameMessage } from "./game-message";
 
