@@ -1,5 +1,5 @@
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
-import type { GameDataLoader } from "@backend/game/gameplay/state/game-data-loader";
+import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import type { TurnStateProvider } from "@backend/game/gameplay/state/turn-state.provider";
 import type { TurnsFinder, RoundId } from "@backend/shared/data-access/repositories/turns.repository";
 import type { PlayerFinderAll, RoundId as PlayerRoundId } from "@backend/shared/data-access/repositories/players.repository";

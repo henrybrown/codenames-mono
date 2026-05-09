@@ -1,7 +1,7 @@
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
 import type { TurnStateProvider } from "@backend/game/gameplay/state/turn-state.provider";
 import type { GameplayHandler } from "../../gameplay-actions";
-import type { GameDataLoader } from "@backend/game/gameplay/state/game-data-loader";
+import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import type { AppLogger } from "@backend/shared/logging";
 import { createResolveGameplayContext } from "../../shared/resolve-gameplay-context";
 

@@ -4,7 +4,7 @@ import type { GiveClueService } from "./give-clue.service";
 import type { AppLogger } from "@backend/shared/logging";
 import type { ResolveGameplayContext } from "../../shared/resolve-gameplay-context";
 import { contextErrorToHttp } from "../../shared/resolve-gameplay-context";
-import type { GameDataLoader } from "@backend/game/gameplay/state/game-data-loader";
+import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import { PLAYER_ROLE, GAME_TYPE } from "@codenames/shared/types";
 import { z } from "zod";
 

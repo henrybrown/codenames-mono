@@ -12,7 +12,10 @@ import * as turnsRepository from "@backend/shared/data-access/repositories/turns
 
 import { turnStateProvider } from "./turn-state.provider";
 import { gameplayStateProvider } from "./gameplay-state.provider";
-import { createGameDataLoader, type GameDataLoader } from "./game-data-loader";
+import {
+  createGameAggregateLoader,
+  type GameAggregateLoader,
+} from "./load-game-aggregate";
 
 /**
  * Creates a turn state provider with the given database context
@@ -70,8 +73,8 @@ const createGameplayStateProvider = (
  */
 const createInternalGameDataLoader = (
   dbContext: DbContext | TransactionContext,
-): GameDataLoader => {
-  return createGameDataLoader({
+): GameAggregateLoader => {
+  return createGameAggregateLoader({
     getGameById: gameRepository.findGameByPublicId(dbContext),
     getTeams: teamsRepository.getTeamsByGameId(dbContext),
     getCardsByRoundId: cardsRepository.getCardsByRoundId(dbContext),
@@ -98,8 +101,8 @@ export const gameplayState = (dbContext: DbContext | TransactionContext) => {
 /**
  * Convenience: returns just the auth-free game data loader
  */
-export const gameDataLoader = (dbContext: DbContext | TransactionContext): GameDataLoader => {
+export const gameDataLoader = (dbContext: DbContext | TransactionContext): GameAggregateLoader => {
   return createInternalGameDataLoader(dbContext);
 };
 
-export type { GameDataLoader };
+export type { GameAggregateLoader, GameAggregateLoader as GameDataLoader };

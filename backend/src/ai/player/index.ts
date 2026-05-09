@@ -10,7 +10,7 @@ import type { CodenamesPipeline } from "../pipeline";
 import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clue.service";
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import type { EndTurnService } from "@backend/game/gameplay/turns/end-turn.service";
-import type { GameDataLoader } from "@backend/game/gameplay/state/game-data-loader";
+import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import type {
   RunCreator,
   RunFinderByGame,

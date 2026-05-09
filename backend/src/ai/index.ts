@@ -35,7 +35,7 @@ import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clu
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import type { EndTurnService } from "@backend/game/gameplay/turns/end-turn.service";
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
-import type { GameDataLoader } from "@backend/game/gameplay/state/game-data-loader";
+import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 
 // Public re-exports
 export { createPipeline } from "./pipeline";

@@ -1,10 +1,14 @@
 /**
- * Auth-free game data loader.
- * Loads the full GameAggregate for a game without any userId/auth checks.
- * Used by:
- *  - game-scoped ops (reload inside transactions)
- *  - single-device controllers (resolve role → player)
- *  - AI integration (no userId bypass needed)
+ * Load a complete GameAggregate from the database.
+ *
+ * Pure data assembly — no auth, no playerContext. The returned
+ * aggregate has playerContext === null. Callers that need
+ * playerContext should compose this with resolvePlayerContext.
+ *
+ * Used directly by:
+ *   - the AI player (no userId concept)
+ *   - transactional reloads inside actions (membership already verified)
+ *   - getGameplayState (composed with verifyMembership + resolvePlayerContext)
  */
 
 import {
@@ -32,9 +36,9 @@ import { TurnsFinder } from "@backend/shared/data-access/repositories/turns.repo
 
 import { GameAggregate } from "./gameplay-state.types";
 
-export type GameDataLoader = (gameId: string) => Promise<GameAggregate | null>;
+export type GameAggregateLoader = (gameId: string) => Promise<GameAggregate | null>;
 
-export type GameDataLoaderDeps = {
+export type GameAggregateLoaderDeps = {
   getGameById: GameFinder<PublicId>;
   getTeams: TeamsFinder<InternalId>;
   getCardsByRoundId: CardsFinder<RoundId>;
@@ -44,8 +48,7 @@ export type GameDataLoaderDeps = {
   getAllRounds: RoundFinderAll<InternalId>;
 };
 
-// todo: split this function up bit..
-export const createGameDataLoader = (deps: GameDataLoaderDeps): GameDataLoader => {
+export const createGameAggregateLoader = (deps: GameAggregateLoaderDeps): GameAggregateLoader => {
   const {
     getGameById,
     getTeams,
@@ -134,3 +137,8 @@ export const createGameDataLoader = (deps: GameDataLoaderDeps): GameDataLoader =
     } as GameAggregate;
   };
 };
+
+// Backwards-compat aliases. Removed in Step 6.
+export type GameDataLoader = GameAggregateLoader;
+export type GameDataLoaderDeps = GameAggregateLoaderDeps;
+export const createGameDataLoader = createGameAggregateLoader;

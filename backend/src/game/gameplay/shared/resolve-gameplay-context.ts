@@ -14,7 +14,7 @@
  */
 
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
-import type { GameDataLoader } from "@backend/game/gameplay/state/game-data-loader";
+import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import type { GameAggregate } from "@backend/game/gameplay/state/gameplay-state.types";
 import { PLAYER_ROLE } from "@codenames/shared/types";
 

@@ -13,7 +13,7 @@ import type { StartTurnService } from "./start-turn.service";
 import type { AppLogger } from "@backend/shared/logging";
 import type { ResolveGameplayContext } from "../shared/resolve-gameplay-context";
 import { contextErrorToHttp } from "../shared/resolve-gameplay-context";
-import type { GameDataLoader } from "@backend/game/gameplay/state/game-data-loader";
+import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import { z } from "zod";
 
 const paramsSchema = z.object({

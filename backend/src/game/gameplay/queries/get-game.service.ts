@@ -1,7 +1,7 @@
 import { GameAggregate, TurnPhase } from "@backend/game/gameplay/state/gameplay-state.types";
 import { PLAYER_ROLE, PlayerRole, ROUND_STATE } from "@codenames/shared/types";
 import { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
-import { GameDataLoader } from "@backend/game/gameplay/state/game-data-loader";
+import { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import { computeTurnPhase } from "@backend/game/gameplay/state/gameplay-state.helpers";
 import type { AppLogger } from "@backend/shared/logging";
 
