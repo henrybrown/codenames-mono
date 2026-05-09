@@ -31,9 +31,10 @@ export const buildSpymasterPromptLocal = (
 
   return `Codenames Spymaster. Give a one-word clue connecting AS MANY of your team's words as possible.${retryPreamble}
 
-Before answering, identify the 1-2 most dangerous opponent words (most theme-similar to your team's words) and the assassin. Your clue must NOT connect to those.
+Connecting 3+ team words is great, 2 is good, 1 is a last resort. Your clue must NOT be a board word or a word-form of one. 
 
-Connecting 3+ team words is great, 2 is good, 1 is a last resort. Your clue must NOT be a board word or a word-form of one.
+When you pick a them word idenfiy copponent "danger words" - those are words that are similar to the theme word so could be 
+mistaken.
 
 Example 1:
 Team: APPLE, PIE, CHERRY
