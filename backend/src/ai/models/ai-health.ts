@@ -1,10 +1,13 @@
 /**
- * Ollama health monitor
+ * AI runtime health monitor
  *
- * Detects whether the configured model is running on GPU, partial CPU offload,
- * or 100% CPU by inspecting `GET /api/ps`. Logs transitions and keeps reminding
- * when in a degraded state. Throttled so it can be triggered freely from the
- * status endpoint without hammering Ollama.
+ * Provider-agnostic surface for "is the configured model running on GPU,
+ * partial CPU offload, or 100% CPU?" Currently the only provider that
+ * exposes this is Ollama (via `GET /api/ps`); remote providers don't
+ * surface runtime placement, so the monitor is only instantiated for
+ * Ollama. Logs transitions and keeps reminding when in a degraded state.
+ * Throttled so it can be triggered freely from the status endpoint
+ * without hammering the inference server.
  */
 
 import type { AppLogger } from "@backend/shared/logging";
@@ -20,14 +23,14 @@ export interface HealthState {
   lastCheckedAt: number | null;
 }
 
-export interface OllamaHealthConfig {
+export interface AiHealthConfig {
   baseURL: string;
   model: string;
   throttleMs: number;
   gpuThreshold: number;
 }
 
-export interface OllamaHealthMonitor {
+export interface AiHealthMonitor {
   probe: () => Promise<void>;
   getState: () => HealthState;
 }
@@ -50,10 +53,10 @@ const modelsMatch = (entryModel: string, target: string): boolean => {
   return false;
 };
 
-export const createOllamaHealthMonitor = (
-  config: OllamaHealthConfig,
+export const createAiHealthMonitor = (
+  config: AiHealthConfig,
   logger: AppLogger
-): OllamaHealthMonitor => {
+): AiHealthMonitor => {
   const { baseURL, model, throttleMs, gpuThreshold } = config;
 
   const state: HealthState = {

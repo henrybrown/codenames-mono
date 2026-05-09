@@ -13,7 +13,7 @@ import type { LLMConfig } from "./llm.service";
 
 export type { LLMConfig, LLMService } from "./llm.service";
 export type { LLMProvider } from "./providers";
-export type { HealthState, HealthPlacement } from "./ollama-health";
+export type { HealthState, HealthPlacement } from "./ai-health";
 
 export interface ModelsDependencies {
   config: LLMConfig;

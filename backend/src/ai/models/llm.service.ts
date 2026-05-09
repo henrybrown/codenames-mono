@@ -11,7 +11,7 @@
 import { createProvider } from "./providers";
 import type { LLMProvider } from "./providers";
 import type { AppLogger } from "@backend/shared/logging";
-import { createOllamaHealthMonitor, type OllamaHealthMonitor } from "./ollama-health";
+import { createAiHealthMonitor, type AiHealthMonitor } from "./ai-health";
 
 export type LLMConfig = {
   provider: LLMProvider;
@@ -49,9 +49,9 @@ export const createLLMService = (config: LLMConfig, logger: AppLogger) => {
 
   const client = createProvider(provider, { apiKey, model, baseURL });
 
-  const monitor: OllamaHealthMonitor | null =
+  const monitor: AiHealthMonitor | null =
     provider === "ollama" && config.healthCheck?.enabled
-      ? createOllamaHealthMonitor(
+      ? createAiHealthMonitor(
           {
             baseURL,
             model,
