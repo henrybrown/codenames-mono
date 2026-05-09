@@ -1,4 +1,5 @@
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
+import type { GameplayStateProvider as NewGameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import type { GameplayHandler } from "../gameplay-actions";
 import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import type { TurnStateProvider } from "@backend/game/gameplay/state/turn-state.provider";
@@ -18,6 +19,7 @@ import { createStartTurnController } from "./start-turn.controller";
 
 export interface TurnsDependencies {
   getGameState: GameplayStateProvider;
+  getGameplayState: NewGameplayStateProvider;
   gameplayHandler: GameplayHandler;
   getTurnState: TurnStateProvider;
   loadGameData: GameDataLoader;
@@ -25,8 +27,7 @@ export interface TurnsDependencies {
 
 export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
   const resolveContext = createResolveGameplayContext({
-    getGameState: deps.getGameState,
-    loadGameData: deps.loadGameData,
+    getGameplayState: deps.getGameplayState,
   });
 
   /** Give clue */

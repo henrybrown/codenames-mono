@@ -52,6 +52,7 @@ export const initialize = (
   /** Turns (clue, guess, end-turn, start-turn) */
   const turns = createTurns(logger)({
     getGameState,
+    getGameplayState,
     gameplayHandler,
     getTurnState,
     loadGameData,
