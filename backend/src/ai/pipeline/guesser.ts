@@ -7,14 +7,14 @@
  */
 
 import type { LLMService } from "../models";
-import type { PreFilterOutput } from "./guesser-prefilter";
 import type { AppLogger } from "@backend/shared/logging";
 
 export type RankingInput = {
   currentTeam: string;
   clueWord: string;
   clueNumber: number;
-  candidates: PreFilterOutput[];
+  /** All board words still in play; the guesser scores each one against the clue. */
+  remainingWords: string[];
 };
 
 export type RankedWord = {
@@ -37,9 +37,9 @@ export type RankingOutput = {
  * - Short prompt = more attention budget for actual word association
  */
 export const buildRankingPrompt = (input: RankingInput): string => {
-  const { clueWord, clueNumber, candidates } = input;
+  const { clueWord, clueNumber } = input;
 
-  const wordList = candidates.map((c, i) => `${i + 1}. ${c.word}`).join("\n");
+  const wordList = input.remainingWords.map((w, i) => `${i + 1}. ${w}`).join("\n");
 
   return `Codenames Guesser. The clue is a hint — pick which board words it connects to.
 
@@ -75,12 +75,12 @@ export const runRanking = async (
 
   // Build set of valid board words for hallucination filtering
   const validWords = new Set(
-    input.candidates.map((c) => c.word.toUpperCase()),
+    input.remainingWords.map((w) => w.toUpperCase()),
   );
 
   // Map for normalising casing back to original board words
   const wordCaseMap = new Map(
-    input.candidates.map((c) => [c.word.toUpperCase(), c.word]),
+    input.remainingWords.map((w) => [w.toUpperCase(), w]),
   );
 
   let attempts = 0;

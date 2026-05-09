@@ -7,7 +7,7 @@ import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clu
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import type { EndTurnService } from "@backend/game/gameplay/turns/end-turn.service";
 import type { GameDataLoader } from "@backend/game/gameplay/state/game-data-loader";
-import type { CodenamesPipeline, PreFilterOutput } from "../pipeline";
+import type { CodenamesPipeline, RankedWord } from "../pipeline";
 import type {
   RunCreator,
   RunFinderByGame,
@@ -410,30 +410,21 @@ export const createAIPlayerService =
         const myTeam = currentTurn.teamName;
         const clueNumber = currentTurn.clue.number;
 
-        await emitNarration(context, `Looking at the clue "${currentTurn.clue.word}"... filtering through ${remainingWords.length} words...`);
-        GameEventsEmitter.aiPipelineStage(context.gameId, run.id, "prefilter");
+        await emitNarration(context, `Looking at the clue "${currentTurn.clue.word}"... considering ${remainingWords.length} words...`);
+        GameEventsEmitter.aiPipelineStage(context.gameId, run.id, "ranker");
 
-        const operativeDecision = await pipeline.runOperativePipeline({
+        const guessResult = await pipeline.runOperativePipeline({
           currentTeam: myTeam,
           remainingWords,
           clueWord: currentTurn.clue.word,
           clueNumber: currentTurn.clue.number,
-          onWordEvaluated: async (result: PreFilterOutput) => {
-            emitNarration(context, `"${result.word}": ${result.link_confidence} connection. ${result.reason}`);
-          },
-          onPrefilterComplete: async (results) => {
-            const moderateWords = results.filter((r) => r.link_confidence === "moderately");
-            const strongWords = results.filter((r) => r.link_confidence === "extremely");
-            if (moderateWords.length > 0 || strongWords.length > 0) {
-              const wordsList = [...strongWords.map((r) => `${r.word} (strong)`), ...moderateWords.map((r) => `${r.word} (moderate)`)];
-              emitNarration(context, `Found ${wordsList.length} promising words: ${wordsList.join(", ")}`);
-            }
-          },
           onPromptGenerated: async (prompt: string) => { await appendPrompt(run.id, prompt); },
         });
 
-        if (operativeDecision.action === "stop") {
-          await emitNarration(context, "Hmm, none of these words feel right. I'll pass.");
+        const rankedList: RankedWord[] = guessResult.ranked;
+
+        if (rankedList.length === 0) {
+          await emitNarration(context, "I couldn't score any words. Passing.");
 
           const endTurnState = await loadGameStateForAI(context.gameId, context.playerId);
           if (!endTurnState) throw new Error("Failed to load state for end turn");
@@ -443,22 +434,19 @@ export const createAIPlayerService =
 
           await updatePipelineStatus(run.id, PIPELINE_STATUS.COMPLETE);
           GameEventsEmitter.aiPipelineComplete(context.gameId, run.id);
-          emitNarration(context, `Turn ended. Playing it safe this round.`);
-          setTimeout(() => { emitNarration(context, `Waiting for the next prompt...`); }, 20000);
           return;
         }
 
-        const rankedList = operativeDecision.rankedList;
-        if (!rankedList || rankedList.length === 0) throw new Error("No ranked list returned from pipeline");
-
-        const prefilterResponse: PrefilterResponse = { candidateWords: rankedList.map((r) => r.word), reasoning: operativeDecision.reason };
-        await updatePrefilterResponse(run.id, prefilterResponse);
-
-        await emitNarration(context, `Found ${rankedList.length} good candidates! Ranking them now...`);
-        GameEventsEmitter.aiPipelineStage(context.gameId, run.id, "ranker");
-
-        const rankerResponse: RankerResponse = { rankedWords: rankedList.map((r) => ({ word: r.word, score: r.score, reasoning: r.reason })) };
+        const rankerResponse: RankerResponse = {
+          rankedWords: rankedList.map((r) => ({ word: r.word, score: r.score, reasoning: r.reason })),
+        };
         await updateRankerResponse(run.id, rankerResponse);
+
+        const topWordsLine = rankedList
+          .slice(0, 4)
+          .map((r) => `${r.word} (${(r.score * 100).toFixed(0)}%)`)
+          .join(", ");
+        await emitNarration(context, `Top candidates: ${topWordsLine}`);
 
         const maxGuesses = Math.min(clueNumber, rankedList.length);
         await emitNarration(context, `Ready to make up to ${maxGuesses} guess(es). Let's go!`);

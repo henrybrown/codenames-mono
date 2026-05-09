@@ -10,17 +10,14 @@ import type { LLMService } from "../models";
 import { createCodenamesPipeline } from "./codenames-pipeline";
 import type { CodenamesPipeline } from "./codenames-pipeline";
 
-export type { CodenamesPipeline } from "./codenames-pipeline";
 export type {
+  CodenamesPipeline,
   SpymasterInput,
   SpymasterOutput,
   GuesserInput,
-  GuesserDecision,
+  GuesserOutput,
   RankingInput,
   RankedWord,
-  RankingOutput,
-  PreFilterInput,
-  PreFilterOutput,
 } from "./codenames-pipeline";
 
 export interface PipelineDependencies {
