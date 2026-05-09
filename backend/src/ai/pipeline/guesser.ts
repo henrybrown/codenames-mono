@@ -55,17 +55,28 @@ export const runRanking = async (
   );
 
   let attempts = 0;
-  const maxAttempts = 5;
+  const maxAttempts = 3;
+  let lastRejectionReason: string | undefined;
 
   while (attempts < maxAttempts) {
     attempts++;
 
+    const attemptPrompt =
+      attempts === 1
+        ? prompt
+        : buildGuesserPrompt(promptStyle, input, lastRejectionReason);
+
+    if (attempts > 1 && onPromptGenerated) {
+      await onPromptGenerated(attemptPrompt);
+    }
+
     try {
-      const result = await llm.generateJSON<RankingOutput>(prompt, {
+      const result = await llm.generateJSON<RankingOutput>(attemptPrompt, {
         temperature: 0.45,
       });
 
       if (!result.ranked || !Array.isArray(result.ranked) || result.ranked.length === 0) {
+        lastRejectionReason = "your previous answer had no 'ranked' array — return JSON with a 'ranked' array of word/score/reason objects";
         logger.debug("ranker: empty ranked array", { attempt: attempts });
         continue;
       }
@@ -87,6 +98,10 @@ export const runRanking = async (
       });
 
       if (validEntries.length === 0) {
+        const example = result.ranked.find((r) => typeof r.word === "string");
+        lastRejectionReason = example
+          ? `your previous answer used "${example.word}" which is not on the board — only use words from the numbered list`
+          : "your previous answer had no valid words — only use words from the numbered list";
         logger.debug("ranker: no valid board words in response", { attempt: attempts });
         continue;
       }
@@ -105,6 +120,7 @@ export const runRanking = async (
 
       return validEntries;
     } catch (error) {
+      lastRejectionReason = "your previous answer was not valid JSON — respond with a JSON object only";
       logger.warn("ranker: attempt failed", {
         attempt: attempts,
         maxAttempts,

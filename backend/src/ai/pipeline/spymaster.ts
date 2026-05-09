@@ -67,7 +67,8 @@ export const runSpymasterPipeline = async (
   }
 
   let attempts = 0;
-  const maxAttempts = 8;
+  const maxAttempts = 3;
+  let lastRejectionReason: string | undefined;
 
   const allBoardWords = [
     ...input.friendlyWords,
@@ -79,17 +80,29 @@ export const runSpymasterPipeline = async (
   while (attempts < maxAttempts) {
     attempts++;
 
+    // Rebuild prompt each time so retry feedback is included
+    const attemptPrompt =
+      attempts === 1
+        ? prompt
+        : buildSpymasterPrompt(promptStyle, input, lastRejectionReason);
+
+    if (attempts > 1 && input.onPromptGenerated) {
+      await input.onPromptGenerated(attemptPrompt);
+    }
+
     try {
-      const result = await llm.generateJSON<SpymasterOutput>(prompt, {
+      const result = await llm.generateJSON<SpymasterOutput>(attemptPrompt, {
         temperature: 0.7,
       });
 
       if (!result.clue || typeof result.clue !== "string") {
+        lastRejectionReason = "your previous answer had no 'clue' field — return JSON with a 'clue' string";
         logger.debug("spymaster: invalid structure", { attempt: attempts, result });
         continue;
       }
 
       if (!result.number || typeof result.number !== "number" || result.number < 1) {
+        lastRejectionReason = `your previous answer had an invalid 'number' (${result.number}) — must be a positive integer`;
         logger.debug("spymaster: invalid number", { attempt: attempts, number: result.number });
         continue;
       }
@@ -97,21 +110,25 @@ export const runSpymasterPipeline = async (
       const clueWordLower = result.clue.toLowerCase().trim();
 
       if (clueWordLower.includes(" ")) {
+        lastRejectionReason = `your previous answer "${result.clue}" was multiple words — give a single word only`;
         logger.debug("spymaster: multi-word clue rejected", { attempt: attempts, clue: result.clue });
         continue;
       }
 
       if (allBoardWords.some((w) => w.toLowerCase() === clueWordLower)) {
+        lastRejectionReason = `your previous answer "${result.clue}" is on the board — pick a different word`;
         logger.debug("spymaster: clue is a board word", { attempt: attempts, clue: result.clue });
         continue;
       }
 
       if (isWordFormOf(clueWordLower, allBoardWords)) {
+        lastRejectionReason = `your previous answer "${result.clue}" is a word-form of a board word (e.g. plural or conjugation) — pick a different root word`;
         logger.debug("spymaster: clue is word-form of board word", { attempt: attempts, clue: result.clue });
         continue;
       }
 
       if (input.previousClues.some((c) => c.toLowerCase() === clueWordLower)) {
+        lastRejectionReason = `your previous answer "${result.clue}" was already used earlier this round — pick a different word`;
         logger.debug("spymaster: clue previously used", { attempt: attempts, clue: result.clue });
         continue;
       }
@@ -132,6 +149,7 @@ export const runSpymasterPipeline = async (
         reasoning: result.reasoning,
       };
     } catch (error) {
+      lastRejectionReason = "your previous answer was not valid JSON — respond with a JSON object only";
       logger.warn("spymaster: attempt failed", {
         attempt: attempts,
         maxAttempts,
