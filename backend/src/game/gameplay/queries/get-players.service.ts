@@ -1,4 +1,4 @@
-import { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
+import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import { PlayerRole, PLAYER_ROLE } from "@codenames/shared/types";
 
 /**
@@ -23,7 +23,7 @@ export type PublicPlayerInfo = {
 export type GetPlayersResult =
   | { status: "found"; data: PublicPlayerInfo[] }
   | { status: "game-not-found" }
-  | { status: "user-not-player" };
+  | { status: "user-not-in-game" };
 
 /**
  * Service function type
@@ -37,7 +37,7 @@ export type GetPlayersService = (
  * Dependencies for the service
  */
 export type GetPlayersServiceDependencies = {
-  getGameState: GameplayStateProvider;
+  getGameplayState: GameplayStateProvider;
 };
 
 /**
@@ -82,24 +82,17 @@ export const createGetPlayersService = (
 ): GetPlayersService => {
   return async (gameId: string, userId: number): Promise<GetPlayersResult> => {
     // Get full game state to determine player statuses
-    const gameStateResult = await deps.getGameState(gameId, userId);
+    const gameStateResult = await deps.getGameplayState({ gameId, userId });
 
     if (gameStateResult.status === "game-not-found") {
       return { status: "game-not-found" };
     }
 
-    if (gameStateResult.status === "user-not-player") {
-      return { status: "user-not-player" };
+    if (gameStateResult.status !== "found") {
+      // Any non-success status is treated as user not being a player.
+      return { status: "user-not-in-game" };
     }
 
-    // These cases shouldn't occur when no playerId is provided, but handle them defensively
-    if (gameStateResult.status === "player-not-found" || 
-        gameStateResult.status === "player-not-in-game" || 
-        gameStateResult.status === "user-not-authorized") {
-      return { status: "user-not-player" }; // Treat as user not being a player
-    }
-
-    // gameStateResult.status === 'found' (all other cases handled above)
     const gameState = gameStateResult.data;
 
     // Collect all players from all teams

@@ -80,7 +80,11 @@ export const initialize = (
     makeGuessService: turns.services.makeGuess,
     endTurnService: turns.services.endTurn,
     startTurnService: turns.services.startTurn,
-    getGameState,
-    loadGameData,
+    getGameState,                       // legacy — chat consumes (membership-only)
+    getGameplayState,                   // new — primary read-only entry point
+    loadGameAggregate,
+    verifyMembership,
+    resolvePlayerContext,
+    loadGameData,                       // legacy alias for loadGameAggregate
   };
 };

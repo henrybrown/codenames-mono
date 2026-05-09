@@ -6,7 +6,8 @@
 import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clue.service";
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import type { EndTurnService } from "@backend/game/gameplay/turns/end-turn.service";
-import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { PlayerContextResolver } from "@backend/game/gameplay/state/resolve-player-context";
 import type { CodenamesPipeline, RankedWord } from "../pipeline";
 import type {
   RunCreator,
@@ -32,7 +33,8 @@ export type AIPlayerDependencies = {
   giveClue: GiveClueService;
   makeGuess: MakeGuessService;
   endTurn: EndTurnService;
-  loadGameData: GameDataLoader;
+  loadGameAggregate: GameAggregateLoader;
+  resolvePlayerContext: PlayerContextResolver;
   // Repository functions
   createPipelineRun: RunCreator;
   findRunningPipeline: RunFinderByGame;
@@ -87,7 +89,8 @@ export const createAIPlayerService =
       giveClue,
       makeGuess,
       endTurn,
-      loadGameData,
+      loadGameAggregate,
+      resolvePlayerContext,
       createPipelineRun,
       findRunningPipeline,
       updatePipelineStatus,
@@ -131,33 +134,23 @@ export const createAIPlayerService =
      * Helper to build a GameAggregate with AI player's context set
      */
     const loadGameStateForAI = async (gameId: string, playerId: string) => {
-      const gameState = await loadGameData(gameId);
-      if (!gameState || !gameState.currentRound) return null;
+      const aggregate = await loadGameAggregate(gameId);
+      if (!aggregate || !aggregate.currentRound) return null;
 
-      // Find the player and set as playerContext
-      const allPlayers = gameState.teams.flatMap((t) => t.players ?? []);
-      const aiPlayer = allPlayers.find((p) => p.publicId === playerId);
-      if (!aiPlayer) return null;
-
-      return {
-        ...gameState,
-        playerContext: {
-          _id: aiPlayer._id,
-          publicId: aiPlayer.publicId,
-          _userId: aiPlayer._userId,
-          _teamId: aiPlayer._teamId,
-          teamName: aiPlayer.teamName,
-          publicName: aiPlayer.publicName,
-          role: aiPlayer.role as "CODEMASTER" | "CODEBREAKER",
-        },
-      };
+      const ctx = resolvePlayerContext(aggregate, {
+        kind: "byPlayerId",
+        playerId,
+        userId: 0, // AI bypass
+      });
+      if (!ctx.ok || !ctx.playerContext) return null;
+      return { ...aggregate, playerContext: ctx.playerContext };
     };
 
     const checkAndActIfNeeded = async (gameId: string) => {
       logger.debug("checkAndActIfNeeded START", { gameId });
 
       try {
-        const gameState = await loadGameData(gameId);
+        const gameState = await loadGameAggregate(gameId);
 
         if (!gameState) {
           logger.warn("checkAndActIfNeeded: game not found", { gameId });

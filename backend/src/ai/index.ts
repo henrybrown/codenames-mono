@@ -35,7 +35,8 @@ import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clu
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import type { EndTurnService } from "@backend/game/gameplay/turns/end-turn.service";
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
-import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { PlayerContextResolver } from "@backend/game/gameplay/state/resolve-player-context";
 
 // Public re-exports
 export { createPipeline } from "./pipeline";
@@ -56,7 +57,8 @@ export type GameplayFeature = {
   makeGuess: MakeGuessService;
   endTurn: EndTurnService;
   getGameState: GameplayStateProvider;
-  loadGameData: GameDataLoader;
+  loadGameAggregate: GameAggregateLoader;
+  resolvePlayerContext: PlayerContextResolver;
 };
 
 export type AIModuleDependencies = {
@@ -104,10 +106,11 @@ export const initialize = (deps: AIModuleDependencies) => {
   const player = createPlayer(logger)({
     pipeline,
     // gameplay services
-    giveClue:     gameplay.giveClue,
-    makeGuess:    gameplay.makeGuess,
-    endTurn:      gameplay.endTurn,
-    loadGameData: gameplay.loadGameData,
+    giveClue:             gameplay.giveClue,
+    makeGuess:            gameplay.makeGuess,
+    endTurn:              gameplay.endTurn,
+    loadGameAggregate:    gameplay.loadGameAggregate,
+    resolvePlayerContext: gameplay.resolvePlayerContext,
     // ai feature repositories
     createPipelineRun:       repositories.createPipelineRun,
     findRunningPipeline:     repositories.findRunningPipeline,

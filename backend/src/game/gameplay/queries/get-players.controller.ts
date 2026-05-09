@@ -52,7 +52,7 @@ export const createGetPlayersController = (logger: AppLogger) => (
         return;
       }
 
-      if (result.status === "user-not-player") {
+      if (result.status === "user-not-in-game") {
         res.status(403).json({
           success: false,
           error: "User is not a player in this game",

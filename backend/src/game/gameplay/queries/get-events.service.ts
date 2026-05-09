@@ -1,5 +1,5 @@
 import type { GameEventRow } from "@backend/shared/data-access/repositories/game-events.repository";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
+import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import type { AppLogger } from "@backend/shared/logging";
 
 /**
@@ -21,7 +21,7 @@ export interface GameEvent {
  */
 export interface GetEventsServiceDeps {
   getEventsByGameId: (gameId: number) => Promise<GameEventRow[]>;
-  getGameState: GameplayStateProvider;
+  getGameplayState: GameplayStateProvider;
 }
 
 /**
@@ -38,7 +38,7 @@ export type GetEventsResult =
 export const getEventsService = (logger: AppLogger) => (deps: GetEventsServiceDeps) =>
   async (gameId: string, userId: number): Promise<GetEventsResult> => {
     // Verify user has access to this game
-    const gameState = await deps.getGameState(gameId, userId);
+    const gameState = await deps.getGameplayState({ gameId, userId });
 
     if (gameState.status === "game-not-found") {
       return { status: "game-not-found", gameId };

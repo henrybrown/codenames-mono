@@ -125,7 +125,15 @@ const auth = initializeAuth(app, dbInstance, {
 
 // Initialize features
 const lobby = initializeLobby(app, dbInstance, authHandlers, appLogger);
-const { giveClueService, makeGuessService, endTurnService, getGameState, loadGameData } = initializeGameplay(
+const {
+  giveClueService,
+  makeGuessService,
+  endTurnService,
+  getGameState,
+  loadGameAggregate,
+  resolvePlayerContext,
+  loadGameData,
+} = initializeGameplay(
   app,
   dbInstance,
   authHandlers,
@@ -158,7 +166,8 @@ const ai = initializeAI({
     makeGuess:    makeGuessService,
     endTurn:      endTurnService,
     getGameState,
-    loadGameData,
+    loadGameAggregate,
+    resolvePlayerContext,
   },
 });
 

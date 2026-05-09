@@ -10,7 +10,8 @@ import type { CodenamesPipeline } from "../pipeline";
 import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clue.service";
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import type { EndTurnService } from "@backend/game/gameplay/turns/end-turn.service";
-import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { PlayerContextResolver } from "@backend/game/gameplay/state/resolve-player-context";
 import type {
   RunCreator,
   RunFinderByGame,
@@ -34,7 +35,8 @@ export interface PlayerDependencies {
   giveClue: GiveClueService;
   makeGuess: MakeGuessService;
   endTurn: EndTurnService;
-  loadGameData: GameDataLoader;
+  loadGameAggregate: GameAggregateLoader;
+  resolvePlayerContext: PlayerContextResolver;
   // AI feature repositories
   createPipelineRun: RunCreator;
   findRunningPipeline: RunFinderByGame;

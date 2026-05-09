@@ -38,7 +38,7 @@ export const createQueries = (logger: AppLogger) => (deps: QueriesDependencies) 
   const getGameController = getGameStateController({ getGameState: getGameService });
 
   /** Get players */
-  const playersService = createGetPlayersService({ getGameState: deps.getGameState });
+  const playersService = createGetPlayersService({ getGameplayState: deps.getGameplayState });
   const getPlayersController = createGetPlayersController(
     logger.for({ service: "get-players" }).create(),
   )({ getPlayersService: playersService });
@@ -46,7 +46,7 @@ export const createQueries = (logger: AppLogger) => (deps: QueriesDependencies) 
   /** Get events */
   const eventsService = getEventsService(logger)({
     getEventsByGameId: gameEventsRepository.getEventsByGameId(deps.db),
-    getGameState: deps.getGameState,
+    getGameplayState: deps.getGameplayState,
   });
   const eventsController = getEventsController({ getEvents: eventsService });
 
