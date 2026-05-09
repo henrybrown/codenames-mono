@@ -2,6 +2,8 @@ import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import type { submitMessageService } from "./submit-message.service";
 import { z } from "zod";
+import { GameEventsEmitter } from "@backend/shared/websocket";
+import { MESSAGE_TYPE } from "@backend/shared/data-access/repositories/game-messages.repository";
 
 /**
  * Request validation schemas
@@ -65,6 +67,13 @@ export const submitMessageController = (deps: SubmitMessageControllerDeps) =>
         });
         return;
       }
+
+      GameEventsEmitter.gameMessageCreated(
+        result.message.gameId,
+        result.message.id,
+        MESSAGE_TYPE.CHAT,
+        result.audienceTeamId,
+      );
 
       res.status(201).json({
         success: true,

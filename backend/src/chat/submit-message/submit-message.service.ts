@@ -1,7 +1,6 @@
 import type { GameMessageData, CreateMessageInput } from "@backend/shared/data-access/repositories/game-messages.repository";
 import { MESSAGE_TYPE } from "@backend/shared/data-access/repositories/game-messages.repository";
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
-import { GameEventsEmitter } from "@backend/shared/websocket";
 import type { GameMessage } from "../game-message";
 import { toGameMessage } from "../game-message";
 
@@ -25,7 +24,7 @@ export interface SubmitMessageInput {
  * Service result types
  */
 export type SubmitMessageResult =
-  | { status: "success"; message: GameMessage }
+  | { status: "success"; message: GameMessage; audienceTeamId: number | undefined }
   | { status: "game-not-found"; gameId: string }
   | { status: "unauthorized"; gameId: string; userId: number }
   | { status: "invalid-input"; error: string };
@@ -77,14 +76,6 @@ export const submitMessageService = (deps: SubmitMessageServiceDeps) =>
       content: input.content.trim(),
     });
 
-    // Broadcast WebSocket event
-    GameEventsEmitter.gameMessageCreated(
-      gameId,
-      messageData.id,
-      MESSAGE_TYPE.CHAT,
-      input.teamOnly ? userPlayer._teamId : undefined,
-    );
-
     // Transform to API format (enriched with player info from game state)
     const message: GameMessage = toGameMessage(messageData, gameId, {
       publicId: userPlayer.publicId,
@@ -92,7 +83,13 @@ export const submitMessageService = (deps: SubmitMessageServiceDeps) =>
       teamName: userPlayer.teamName,
     });
 
-    return { status: "success", message };
+    return {
+      status: "success",
+      message,
+      // Surface the team scoping so the controller can choose the right
+      // websocket audience without re-deriving it.
+      audienceTeamId: input.teamOnly ? userPlayer._teamId : undefined,
+    };
   };
 
 export type { GameMessage } from "../game-message";
