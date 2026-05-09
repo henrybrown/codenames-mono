@@ -8,6 +8,7 @@
 
 import type { LLMService } from "../models";
 import type { AppLogger } from "@backend/shared/logging";
+import { buildGuesserPrompt, type PromptStyle } from "./prompts";
 
 export type RankingInput = {
   currentTeam: string;
@@ -28,46 +29,16 @@ export type RankingOutput = {
 };
 
 /**
- * Build the ranking prompt.
- *
- * Design principles:
- * - One few-shot example teaches format and scoring calibration
- * - Numbered word list so the model can reference clearly
- * - Explicit reminder that the clue is NOT a board word
- * - Short prompt = more attention budget for actual word association
- */
-export const buildRankingPrompt = (input: RankingInput): string => {
-  const { clueWord, clueNumber } = input;
-
-  const wordList = input.remainingWords.map((w, i) => `${i + 1}. ${w}`).join("\n");
-
-  return `Codenames Guesser. The clue is a hint — pick which board words it connects to.
-
-Example:
-Clue: "fruit" for 2
-Board words: 1. ROCKET 2. APPLE 3. MOON 4. CHERRY 5. HAMMER
-Answer: {"ranked":[{"word":"APPLE","score":0.95,"reason":"apple is a fruit"},{"word":"CHERRY","score":0.9,"reason":"cherry is a fruit"},{"word":"MOON","score":0.05,"reason":"no link to fruit"},{"word":"ROCKET","score":0.02,"reason":"no link"},{"word":"HAMMER","score":0.01,"reason":"no link"}]}
-
-Now your turn.
-Clue: "${clueWord}" for ${clueNumber}
-Board words:
-${wordList}
-
-IMPORTANT: Only use words from the numbered list above. "${clueWord}" is the clue, NOT a board word.
-
-Answer:`;
-};
-
-/**
  * Run ranking on all remaining words
  */
 export const runRanking = async (
   llm: LLMService,
+  promptStyle: PromptStyle,
   logger: AppLogger,
   input: RankingInput,
   onPromptGenerated?: (prompt: string) => void | Promise<void>,
 ): Promise<RankedWord[]> => {
-  const prompt = buildRankingPrompt(input);
+  const prompt = buildGuesserPrompt(promptStyle, input);
 
   if (onPromptGenerated) {
     await onPromptGenerated(prompt);

@@ -13,6 +13,7 @@ import type { LLMService } from "../models";
 import type { AppLogger } from "@backend/shared/logging";
 import { runSpymasterPipeline, type SpymasterInput, type SpymasterOutput } from "./spymaster";
 import { runRanking, type RankingInput, type RankedWord } from "./guesser";
+import type { PromptStyle } from "./prompts";
 
 export type { SpymasterInput, SpymasterOutput } from "./spymaster";
 export type { RankingInput, RankedWord } from "./guesser";
@@ -37,9 +38,13 @@ export type GuesserOutput = {
   ranked: RankedWord[];
 };
 
-export const createCodenamesPipeline = (llm: LLMService, logger: AppLogger) => {
+export const createCodenamesPipeline = (
+  llm: LLMService,
+  promptStyle: PromptStyle,
+  logger: AppLogger,
+) => {
   const runSpymaster = async (input: SpymasterInput): Promise<SpymasterOutput> =>
-    runSpymasterPipeline(llm, logger, input);
+    runSpymasterPipeline(llm, promptStyle, logger, input);
 
   const runGuess = async (input: GuesserInput): Promise<GuesserOutput> => {
     if (input.remainingWords.length === 0) {
@@ -48,6 +53,7 @@ export const createCodenamesPipeline = (llm: LLMService, logger: AppLogger) => {
 
     const ranked = await runRanking(
       llm,
+      promptStyle,
       logger,
       {
         currentTeam: input.currentTeam,

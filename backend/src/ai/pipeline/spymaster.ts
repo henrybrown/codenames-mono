@@ -9,6 +9,7 @@
 
 import type { LLMService } from "../models";
 import type { AppLogger } from "@backend/shared/logging";
+import { buildSpymasterPrompt, type PromptStyle } from "./prompts";
 
 export type SpymasterInput = {
   currentTeam: string;
@@ -24,44 +25,11 @@ export type SpymasterOutput = {
   clue: string;
   number: number;
   explanation: string;
-};
-
-/**
- * Build the spymaster prompt.
- *
- * Design principles:
- * - Two few-shot examples teach the format AND the strategy
- * - Board state is compact (categorised, not labelled per-word)
- * - Only 2 rules stated: single word, not a board word
- * - Everything else is enforced in code
- */
-export const buildSpymasterPrompt = (input: SpymasterInput): string => {
-  const { friendlyWords, opponentWords, neutralWords, assassinWord, previousClues } =
-    input;
-
-  const previousClueNote =
-    previousClues.length > 0
-      ? `\nAlready used clues (do not reuse): ${previousClues.join(", ")}`
-      : "";
-
-  return `Codenames Spymaster. Give a one-word clue connecting AS MANY of your team's words as possible. Connecting 3+ words is great, 2 is good, 1 is a last resort. Avoid opponent/assassin words. Your clue must NOT be any word on the board.
-
-Example 1:
-Team words: APPLE, PIE, CHERRY
-Opponent: ROCKET, MOON | Assassin: BOMB
-Answer: {"clue":"baking","number":3}
-
-Example 2:
-Team words: JUPITER, SATELLITE, NET, STAR
-Opponent: APPLE, CHAIR | Assassin: KNIFE
-Answer: {"clue":"space","number":3}
-
-Now your turn.
-Team words: ${friendlyWords.join(", ")}
-Opponent: ${opponentWords.join(", ")} | Assassin: ${assassinWord}
-Neutral: ${neutralWords.join(", ")}${previousClueNote}
-
-Answer:`;
+  /** Optional fields the model may include for transparency. Ignored by code. */
+  danger_opponents?: string[];
+  danger_assassin_note?: string;
+  covers?: string[];
+  reasoning?: string;
 };
 
 /**
@@ -88,10 +56,11 @@ export const isWordFormOf = (clue: string, boardWords: string[]): boolean => {
  */
 export const runSpymasterPipeline = async (
   llm: LLMService,
+  promptStyle: PromptStyle,
   logger: AppLogger,
   input: SpymasterInput,
 ): Promise<SpymasterOutput> => {
-  const prompt = buildSpymasterPrompt(input);
+  const prompt = buildSpymasterPrompt(promptStyle, input);
 
   if (input.onPromptGenerated) {
     await input.onPromptGenerated(prompt);
@@ -156,7 +125,11 @@ export const runSpymasterPipeline = async (
       return {
         clue: result.clue.trim(),
         number: result.number,
-        explanation: result.explanation || "",
+        explanation: result.explanation || result.reasoning || "",
+        danger_opponents: result.danger_opponents,
+        danger_assassin_note: result.danger_assassin_note,
+        covers: result.covers,
+        reasoning: result.reasoning,
       };
     } catch (error) {
       logger.warn("spymaster: attempt failed", {

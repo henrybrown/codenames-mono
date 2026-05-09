@@ -27,7 +27,7 @@ import * as gamesRepo from "@backend/shared/data-access/repositories/games.repos
 
 import { createModels } from "./models";
 import type { LLMConfig, LLMService, LLMProvider } from "./models";
-import { createPipeline } from "./pipeline";
+import { createPipeline, type PromptStyle } from "./pipeline";
 import { createPlayer } from "./player";
 import aiMove from "./move";
 
@@ -97,7 +97,8 @@ export const initialize = (deps: AIModuleDependencies) => {
   const { llm } = createModels(logger)({ config: llmConfig, httpClient });
 
   /** Pipeline (spymaster + guesser orchestration) */
-  const pipeline = createPipeline(logger)({ llm });
+  const promptStyle: PromptStyle = llmConfig.providerName === "ollama" ? "local" : "hosted";
+  const pipeline = createPipeline(logger)({ llm, promptStyle });
 
   /** AI player (event-driven decision loop) */
   const player = createPlayer(logger)({
