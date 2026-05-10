@@ -4,7 +4,7 @@ import { DB } from "@backend/shared/db/db.types";
 import { Router } from "express";
 import { AuthMiddleware } from "@backend/shared/http-middleware/auth.middleware";
 import type { HttpLoggerHandler } from "@backend/shared/http-middleware/http-logger.middleware";
-import { blockingGameAction } from "@backend/shared/http-middleware/blocking-game-action.middleware";
+import { blockingGameAction } from "@backend/game/access";
 import type { AppLogger } from "@backend/shared/logging";
 
 import { gameplayState, turnState } from "./state";
