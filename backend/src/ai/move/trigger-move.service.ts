@@ -1,5 +1,6 @@
 import type { AIPlayerService } from "@backend/ai/player";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import { findPlayerByUserId } from "@backend/game/access";
 import type { AppLogger } from "@backend/shared/logging";
 
 /**
@@ -16,7 +17,7 @@ export interface PipelineRunInfo {
  */
 export interface TriggerMoveServiceDeps {
   aiPlayerService: AIPlayerService;
-  getGameplayState: GameplayStateProvider;
+  loadGameAggregate: GameAggregateLoader;
 }
 
 /**
@@ -40,14 +41,12 @@ export const triggerMoveService =
   (logger: AppLogger) =>
   (deps: TriggerMoveServiceDeps) =>
   async (gameId: string, userId: number): Promise<TriggerMoveResult> => {
-    // Verify user has access to this game
-    const gameState = await deps.getGameplayState({ gameId, userId });
-
-    if (gameState.status === "game-not-found") {
+    const aggregate = await deps.loadGameAggregate(gameId);
+    if (!aggregate) {
       return { status: "game-not-found", gameId };
     }
 
-    if (gameState.status !== "found") {
+    if (!findPlayerByUserId(aggregate, userId)) {
       return { status: "unauthorized", gameId, userId };
     }
 

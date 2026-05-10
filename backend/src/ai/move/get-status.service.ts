@@ -1,6 +1,6 @@
 import type { RunFinderByGame } from "@backend/shared/data-access/repositories/ai-pipeline-runs.repository";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
-import type { GameFinder } from "@backend/shared/data-access/repositories/games.repository";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import { findPlayerByUserId } from "@backend/game/access";
 
 export type HealthPlacement = "gpu" | "partial" | "cpu" | "not-loaded" | "unknown";
 
@@ -36,8 +36,7 @@ export interface HealthAwareLLM {
  */
 export interface GetStatusServiceDeps {
   findRunningPipeline: RunFinderByGame;
-  findGameByPublicId: GameFinder<string>;
-  getGameplayState: GameplayStateProvider;
+  loadGameAggregate: GameAggregateLoader;
   llm: HealthAwareLLM;
 }
 
@@ -57,21 +56,13 @@ export const getStatusService = (deps: GetStatusServiceDeps) =>
     // Fire-and-forget health probe. Throttled internally; failures are logged at debug.
     deps.llm.probeHealth().catch(() => { /* swallow — already logged at debug */ });
 
-    // Verify user has access to this game
-    const gameState = await deps.getGameplayState({ gameId, userId });
-
-    if (gameState.status === "game-not-found") {
+    const aggregate = await deps.loadGameAggregate(gameId);
+    if (!aggregate) {
       return { status: "game-not-found", gameId };
     }
 
-    if (gameState.status !== "found") {
+    if (!findPlayerByUserId(aggregate, userId)) {
       return { status: "unauthorized", gameId, userId };
-    }
-
-    // Get internal game ID
-    const game = await deps.findGameByPublicId(gameId);
-    if (!game) {
-      return { status: "game-not-found", gameId };
     }
 
     const rawHealth = deps.llm.getHealthState();
@@ -81,7 +72,7 @@ export const getStatusService = (deps: GetStatusServiceDeps) =>
         : undefined;
 
     // Check for running pipeline
-    const runningPipeline = await deps.findRunningPipeline(game._id);
+    const runningPipeline = await deps.findRunningPipeline(aggregate._id);
 
     if (runningPipeline) {
       return {
@@ -96,7 +87,7 @@ export const getStatusService = (deps: GetStatusServiceDeps) =>
     }
 
     // Check if it's AI's turn
-    if (!gameState.data.currentRound) {
+    if (!aggregate.currentRound) {
       return {
         status: "success",
         aiStatus: {
@@ -107,8 +98,8 @@ export const getStatusService = (deps: GetStatusServiceDeps) =>
       };
     }
 
-    const currentRound = gameState.data.currentRound;
-    const allPlayers = gameState.data.teams.flatMap((team) => team.players);
+    const currentRound = aggregate.currentRound;
+    const allPlayers = aggregate.teams.flatMap((team) => team.players);
     const currentTurn = currentRound.turns.length > 0
       ? currentRound.turns[currentRound.turns.length - 1]
       : null;

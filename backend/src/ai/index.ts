@@ -34,9 +34,7 @@ import aiMove from "./move";
 import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clue.service";
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import type { EndTurnService } from "@backend/game/gameplay/turns/end-turn.service";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
-import type { PlayerContextResolver } from "@backend/game/gameplay/state/resolve-player-context";
 
 // Public re-exports
 export { createPipeline } from "./pipeline";
@@ -56,9 +54,7 @@ export type GameplayFeature = {
   giveClue: GiveClueService;
   makeGuess: MakeGuessService;
   endTurn: EndTurnService;
-  getGameplayState: GameplayStateProvider;
   loadGameAggregate: GameAggregateLoader;
-  resolvePlayerContext: PlayerContextResolver;
 };
 
 export type AIModuleDependencies = {
@@ -106,11 +102,10 @@ export const initialize = (deps: AIModuleDependencies) => {
   const player = createPlayer(logger)({
     pipeline,
     // gameplay services
-    giveClue:             gameplay.giveClue,
-    makeGuess:            gameplay.makeGuess,
-    endTurn:              gameplay.endTurn,
-    loadGameAggregate:    gameplay.loadGameAggregate,
-    resolvePlayerContext: gameplay.resolvePlayerContext,
+    giveClue:          gameplay.giveClue,
+    makeGuess:         gameplay.makeGuess,
+    endTurn:           gameplay.endTurn,
+    loadGameAggregate: gameplay.loadGameAggregate,
     // ai feature repositories
     createPipelineRun:       repositories.createPipelineRun,
     findRunningPipeline:     repositories.findRunningPipeline,
@@ -128,7 +123,7 @@ export const initialize = (deps: AIModuleDependencies) => {
   /** Move feature (HTTP) */
   const aiMoveFeature = aiMove(logger)({
     aiPlayerService: player,
-    getGameplayState: gameplay.getGameplayState,
+    loadGameAggregate: gameplay.loadGameAggregate,
     db,   // move/ still takes db internally — separate clean-up pass
     llm,  // move/get-status reads health off llm — separate clean-up pass
   });

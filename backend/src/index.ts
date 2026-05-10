@@ -162,12 +162,10 @@ const ai = initializeAI({
     },
   },
   gameplay: {
-    giveClue:     giveClueService,
-    makeGuess:    makeGuessService,
-    endTurn:      endTurnService,
-    getGameplayState,
+    giveClue:  giveClueService,
+    makeGuess: makeGuessService,
+    endTurn:   endTurnService,
     loadGameAggregate,
-    resolvePlayerContext,
   },
 });
 

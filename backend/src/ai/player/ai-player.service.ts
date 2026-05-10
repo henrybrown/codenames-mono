@@ -7,7 +7,7 @@ import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clu
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import type { EndTurnService } from "@backend/game/gameplay/turns/end-turn.service";
 import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
-import type { PlayerContextResolver } from "@backend/game/gameplay/state/resolve-player-context";
+import { findPlayerByPublicId } from "@backend/game/access";
 import type { CodenamesPipeline, RankedWord } from "../pipeline";
 import type {
   RunCreator,
@@ -34,7 +34,6 @@ export type AIPlayerDependencies = {
   makeGuess: MakeGuessService;
   endTurn: EndTurnService;
   loadGameAggregate: GameAggregateLoader;
-  resolvePlayerContext: PlayerContextResolver;
   // Repository functions
   createPipelineRun: RunCreator;
   findRunningPipeline: RunFinderByGame;
@@ -90,7 +89,6 @@ export const createAIPlayerService =
       makeGuess,
       endTurn,
       loadGameAggregate,
-      resolvePlayerContext,
       createPipelineRun,
       findRunningPipeline,
       updatePipelineStatus,
@@ -137,13 +135,21 @@ export const createAIPlayerService =
       const aggregate = await loadGameAggregate(gameId);
       if (!aggregate || !aggregate.currentRound) return null;
 
-      const ctx = resolvePlayerContext(aggregate, {
-        kind: "byPlayerId",
-        playerId,
-        userId: 0, // AI bypass
-      });
-      if (!ctx.ok || !ctx.playerContext) return null;
-      return { ...aggregate, playerContext: ctx.playerContext };
+      const player = findPlayerByPublicId(aggregate, playerId);
+      if (!player) return null;
+
+      return {
+        ...aggregate,
+        playerContext: {
+          _id: player._id,
+          publicId: player.publicId,
+          _userId: player._userId,
+          _teamId: player._teamId,
+          teamName: player.teamName,
+          publicName: player.publicName,
+          role: player.role as "CODEMASTER" | "CODEBREAKER",
+        },
+      };
     };
 
     const checkAndActIfNeeded = async (gameId: string) => {
