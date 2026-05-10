@@ -8,9 +8,11 @@ import type { AppLogger } from "@backend/shared/logging";
 import { GameplayValidationError } from "../errors/gameplay.errors";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import type { GameAggregate } from "@backend/game/gameplay/state/gameplay-state.types";
+import type { GamePlayer } from "@backend/game/access";
 
 export type EndTurnInput = {
   gameState: GameAggregate;
+  playerContext: GamePlayer;
 };
 
 export type EndTurnService = (input: EndTurnInput) => Promise<EndTurnResult>;
@@ -29,7 +31,7 @@ export const createEndTurnService = (logger: AppLogger) => (
   const { gameplayHandler } = deps;
 
   return async (input) => {
-    const { gameState } = input;
+    const { gameState, playerContext } = input;
     const log = logger.for({}).withMeta({ gameId: gameState.public_id }).create();
     log.info(`endTurn called`);
 
@@ -51,23 +53,16 @@ export const createEndTurnService = (logger: AppLogger) => (
         return { success: false, error: "Turn already completed" };
       }
 
-      // Verify the player is a codebreaker
-      const player = gameState.playerContext;
-      if (!player) {
-        log.warn("endTurn failed: player not found");
-        return { success: false, error: "Player not found" };
-      }
-
-      if (player.role !== "CODEBREAKER") {
+      if (playerContext.role !== "CODEBREAKER") {
         log.warn("endTurn failed: only codebreakers can end turn");
         return { success: false, error: "Only codebreakers can end turn" };
       }
 
       // For non-AI players, verify it's their team's turn
       const fullPlayer = currentRound.players.find(
-        p => p.publicId === player.publicId
+        p => p.publicId === playerContext.publicId
       );
-      if (!fullPlayer?.isAi && player.teamName !== currentTurn.teamName) {
+      if (!fullPlayer?.isAi && playerContext.teamName !== currentTurn.teamName) {
         log.warn("endTurn failed: not your team's turn");
         return { success: false, error: "Not your team's turn" };
       }

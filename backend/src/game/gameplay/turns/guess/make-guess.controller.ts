@@ -2,9 +2,12 @@ import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import type { MakeGuessService } from "./make-guess.service";
 import type { AppLogger } from "@backend/shared/logging";
-import type { ResolveGameplayContext } from "../../shared/resolve-gameplay-context";
-import { contextErrorToHttp } from "../../shared/resolve-gameplay-context";
 import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import {
+  findPlayerByUserId,
+  findPlayerByActiveRole,
+  type GamePlayer,
+} from "@backend/game/access";
 import { PLAYER_ROLE, GAME_TYPE } from "@codenames/shared/types";
 import { z } from "zod";
 
@@ -29,7 +32,6 @@ const multiDeviceBody = z.object({
 
 export type Dependencies = {
   makeGuess: MakeGuessService;
-  resolveContext: ResolveGameplayContext;
   loadGameAggregate: GameAggregateLoader;
 };
 
@@ -47,28 +49,32 @@ export const makeGuessController = (logger: AppLogger) => (deps: Dependencies) =
       const { gameId, roundNumber } = paramsResult.data;
       const { userId } = authResult.data;
 
-      const rawGameState = await deps.loadGameAggregate(gameId);
-      if (!rawGameState) {
+      const aggregate = await deps.loadGameAggregate(gameId);
+      if (!aggregate) {
         res.status(404).json({ success: false, error: "Game not found" });
         return;
       }
 
-      if (rawGameState.currentRound && rawGameState.currentRound.number !== roundNumber) {
+      if (aggregate.currentRound && aggregate.currentRound.number !== roundNumber) {
         res.status(409).json({ success: false, error: "Round is not current" });
         return;
       }
 
-      let contextResult;
+      let playerContext: GamePlayer | null;
       let cardWord: string;
 
-      if (rawGameState.game_type === GAME_TYPE.SINGLE_DEVICE) {
+      if (aggregate.game_type === GAME_TYPE.SINGLE_DEVICE) {
         const bodyResult = singleDeviceBody.safeParse(req.body);
         if (!bodyResult.success) {
           res.status(400).json({ success: false, error: "Invalid request body" });
           return;
         }
         cardWord = bodyResult.data.cardWord;
-        contextResult = await deps.resolveContext.fromRole(gameId, userId, bodyResult.data.role);
+        playerContext = findPlayerByActiveRole(aggregate, bodyResult.data.role);
+        if (!playerContext) {
+          res.status(404).json({ success: false, error: "No player for that role on the active turn" });
+          return;
+        }
       } else {
         const bodyResult = multiDeviceBody.safeParse(req.body);
         if (!bodyResult.success) {
@@ -76,17 +82,16 @@ export const makeGuessController = (logger: AppLogger) => (deps: Dependencies) =
           return;
         }
         cardWord = bodyResult.data.cardWord;
-        contextResult = await deps.resolveContext.fromPlayerId(gameId, userId, bodyResult.data.playerId);
-      }
-
-      if (!contextResult.success) {
-        const httpError = contextErrorToHttp(contextResult.error);
-        res.status(httpError.status).json({ success: false, ...httpError.body });
-        return;
+        playerContext = findPlayerByUserId(aggregate, userId);
+        if (!playerContext) {
+          res.status(403).json({ success: false, error: "Not a player in this game" });
+          return;
+        }
       }
 
       const result = await deps.makeGuess({
-        gameState: contextResult.gameState,
+        gameState: aggregate,
+        playerContext,
         cardWord,
       });
 

@@ -4,6 +4,7 @@ import type { AppLogger } from "@backend/shared/logging";
 import { CODEBREAKER_OUTCOME } from "@codenames/shared/types";
 import { complexProperties, computeTurnPhase } from "@backend/game/gameplay/state/gameplay-state.helpers";
 import { TurnPhase, GameAggregate, Player } from "@backend/game/gameplay/state/gameplay-state.types";
+import type { GamePlayer } from "@backend/game/access";
 import { winningConditions } from "./make-guess.rules";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import { GameplayValidationError } from "../../errors/gameplay.errors";
@@ -13,6 +14,7 @@ import { GameplayValidationError } from "../../errors/gameplay.errors";
  */
 export type MakeGuessInput = {
   gameState: GameAggregate;
+  playerContext: GamePlayer;
   cardWord: string;
 };
 
@@ -146,7 +148,7 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
   };
 
   return async (input: MakeGuessInput): Promise<MakeGuessResult> => {
-    const { gameState, cardWord } = input;
+    const { gameState, playerContext, cardWord } = input;
     const log = logger.for({}).withMeta({ gameId: gameState.public_id }).create();
     log.info(`makeGuess called: cardWord=${cardWord}`);
 
@@ -233,7 +235,7 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
         gameState.public_id,
         gameState.currentRound!.number,
         currentTurn.publicId,
-        gameState.playerContext?.publicId ?? "",
+        playerContext.publicId,
       );
 
       if (completeTurnData.status === "COMPLETED") {

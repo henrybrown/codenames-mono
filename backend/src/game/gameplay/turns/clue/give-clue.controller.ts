@@ -2,9 +2,12 @@ import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import type { GiveClueService } from "./give-clue.service";
 import type { AppLogger } from "@backend/shared/logging";
-import type { ResolveGameplayContext } from "../../shared/resolve-gameplay-context";
-import { contextErrorToHttp } from "../../shared/resolve-gameplay-context";
 import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import {
+  findPlayerByUserId,
+  findPlayerByActiveRole,
+  type GamePlayer,
+} from "@backend/game/access";
 import { PLAYER_ROLE, GAME_TYPE } from "@codenames/shared/types";
 import { z } from "zod";
 
@@ -32,7 +35,6 @@ const multiDeviceBody = clueFields.extend({
 
 export type Dependencies = {
   giveClue: GiveClueService;
-  resolveContext: ResolveGameplayContext;
   loadGameAggregate: GameAggregateLoader;
 };
 
@@ -41,7 +43,6 @@ export const giveClueController = (logger: AppLogger) => (deps: Dependencies) =>
     const log = logger.for({}).withMeta({ endpoint: "POST /clues" }).create();
 
     try {
-      // Validate params + auth
       const paramsResult = paramsSchema.safeParse(req.params);
       const authResult = authSchema.safeParse(req.auth);
       if (!paramsResult.success || !authResult.success) {
@@ -51,25 +52,24 @@ export const giveClueController = (logger: AppLogger) => (deps: Dependencies) =>
       const { gameId, roundNumber } = paramsResult.data;
       const { userId } = authResult.data;
 
-      // Load game to determine type
-      const rawGameState = await deps.loadGameAggregate(gameId);
-      if (!rawGameState) {
+      // Load aggregate (membership/role already verified by middleware)
+      const aggregate = await deps.loadGameAggregate(gameId);
+      if (!aggregate) {
         res.status(404).json({ success: false, error: "Game not found" });
         return;
       }
 
-      // Validate round number
-      if (rawGameState.currentRound && rawGameState.currentRound.number !== roundNumber) {
+      if (aggregate.currentRound && aggregate.currentRound.number !== roundNumber) {
         res.status(409).json({ success: false, error: "Round is not current" });
         return;
       }
 
-      // Branch on game type for body validation + context resolution
-      let contextResult;
+      // Resolve playerContext + body validation, branching on game type
+      let playerContext: GamePlayer | null;
       let word: string;
       let targetCardCount: number;
 
-      if (rawGameState.game_type === GAME_TYPE.SINGLE_DEVICE) {
+      if (aggregate.game_type === GAME_TYPE.SINGLE_DEVICE) {
         const bodyResult = singleDeviceBody.safeParse(req.body);
         if (!bodyResult.success) {
           res.status(400).json({ success: false, error: "Invalid request body" });
@@ -77,7 +77,11 @@ export const giveClueController = (logger: AppLogger) => (deps: Dependencies) =>
         }
         word = bodyResult.data.word;
         targetCardCount = bodyResult.data.targetCardCount;
-        contextResult = await deps.resolveContext.fromRole(gameId, userId, bodyResult.data.role);
+        playerContext = findPlayerByActiveRole(aggregate, bodyResult.data.role);
+        if (!playerContext) {
+          res.status(404).json({ success: false, error: "No player for that role on the active turn" });
+          return;
+        }
       } else {
         const bodyResult = multiDeviceBody.safeParse(req.body);
         if (!bodyResult.success) {
@@ -86,18 +90,18 @@ export const giveClueController = (logger: AppLogger) => (deps: Dependencies) =>
         }
         word = bodyResult.data.word;
         targetCardCount = bodyResult.data.targetCardCount;
-        contextResult = await deps.resolveContext.fromPlayerId(gameId, userId, bodyResult.data.playerId);
+        // Middleware already verified user is the codemaster; this just retrieves
+        playerContext = findPlayerByUserId(aggregate, userId);
+        if (!playerContext) {
+          // Defensive: middleware should have caught this
+          res.status(403).json({ success: false, error: "Not a player in this game" });
+          return;
+        }
       }
 
-      if (!contextResult.success) {
-        const httpError = contextErrorToHttp(contextResult.error);
-        res.status(httpError.status).json({ success: false, ...httpError.body });
-        return;
-      }
-
-      // Call service with resolved game state
       const result = await deps.giveClue({
-        gameState: contextResult.gameState,
+        gameState: aggregate,
+        playerContext,
         word,
         targetCardCount,
       });

@@ -1,15 +1,12 @@
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import type { TurnStateProvider } from "@backend/game/gameplay/state/turn-state.provider";
 import type { GameplayHandler } from "../../gameplay-actions";
 import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import type { AppLogger } from "@backend/shared/logging";
-import { createResolveGameplayContext } from "../../shared/resolve-gameplay-context";
 
 import { makeGuessService } from "./make-guess.service";
 import { makeGuessController } from "./make-guess.controller";
 
 export interface MakeGuessDependencies {
-  getGameplayState: GameplayStateProvider;
   gameplayHandler: GameplayHandler;
   getTurnState: TurnStateProvider;
   loadGameAggregate: GameAggregateLoader;
@@ -21,13 +18,8 @@ export const makeGuess = (logger: AppLogger) => (dependencies: MakeGuessDependen
     getTurnState: dependencies.getTurnState,
   });
 
-  const resolveContext = createResolveGameplayContext({
-    getGameplayState: dependencies.getGameplayState,
-  });
-
   const controller = makeGuessController(logger)({
     makeGuess: service,
-    resolveContext,
     loadGameAggregate: dependencies.loadGameAggregate,
   });
 

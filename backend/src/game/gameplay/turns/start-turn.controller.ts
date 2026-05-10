@@ -4,15 +4,13 @@
  *
  * Note: this endpoint is called between turns (no active turn exists yet),
  * so it does NOT resolve a player-specific context. It only verifies that
- * the requesting user is a player in the game.
+ * the requesting user is a player in the game (via the access middleware).
  */
 
 import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import type { StartTurnService } from "./start-turn.service";
 import type { AppLogger } from "@backend/shared/logging";
-import type { ResolveGameplayContext } from "../shared/resolve-gameplay-context";
-import { contextErrorToHttp } from "../shared/resolve-gameplay-context";
 import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import { z } from "zod";
 
@@ -27,7 +25,6 @@ const authSchema = z.object({
 
 export type StartTurnControllerDeps = {
   startTurn: StartTurnService;
-  resolveContext: ResolveGameplayContext;
   loadGameAggregate: GameAggregateLoader;
 };
 
@@ -44,28 +41,19 @@ export const createStartTurnController =
           return;
         }
         const { gameId, roundNumber } = paramsResult.data;
-        const { userId } = authResult.data;
 
-        const rawGameState = await deps.loadGameAggregate(gameId);
-        if (!rawGameState) {
+        const aggregate = await deps.loadGameAggregate(gameId);
+        if (!aggregate) {
           res.status(404).json({ success: false, error: "Game not found" });
           return;
         }
 
-        if (rawGameState.currentRound && rawGameState.currentRound.number !== roundNumber) {
+        if (aggregate.currentRound && aggregate.currentRound.number !== roundNumber) {
           res.status(409).json({ success: false, error: "Round number mismatch" });
           return;
         }
 
-        const contextResult = await deps.resolveContext.fromUser(gameId, userId);
-
-        if (!contextResult.success) {
-          const httpError = contextErrorToHttp(contextResult.error);
-          res.status(httpError.status).json({ success: false, ...httpError.body });
-          return;
-        }
-
-        const result = await deps.startTurn({ gameState: contextResult.gameState });
+        const result = await deps.startTurn({ gameState: aggregate });
 
         if (!result.success) {
           log.warn(`Response: ${result.error}`);

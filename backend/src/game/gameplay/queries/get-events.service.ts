@@ -1,5 +1,6 @@
 import type { GameEventRow } from "@backend/shared/data-access/repositories/game-events.repository";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import { findPlayerByUserId } from "@backend/game/access";
 import type { AppLogger } from "@backend/shared/logging";
 
 /**
@@ -21,7 +22,7 @@ export interface GameEvent {
  */
 export interface GetEventsServiceDeps {
   getEventsByGameId: (gameId: number) => Promise<GameEventRow[]>;
-  getGameplayState: GameplayStateProvider;
+  loadGameAggregate: GameAggregateLoader;
 }
 
 /**
@@ -37,19 +38,17 @@ export type GetEventsResult =
  */
 export const getEventsService = (logger: AppLogger) => (deps: GetEventsServiceDeps) =>
   async (gameId: string, userId: number): Promise<GetEventsResult> => {
-    // Verify user has access to this game
-    const gameState = await deps.getGameplayState({ gameId, userId });
-
-    if (gameState.status === "game-not-found") {
+    const aggregate = await deps.loadGameAggregate(gameId);
+    if (!aggregate) {
       return { status: "game-not-found", gameId };
     }
 
-    if (gameState.status !== "found") {
+    if (!findPlayerByUserId(aggregate, userId)) {
       return { status: "unauthorized", gameId, userId };
     }
 
     // Get all events for this game
-    const eventRows = await deps.getEventsByGameId(gameState.data._id);
+    const eventRows = await deps.getEventsByGameId(aggregate._id);
 
     // Transform to API format
     const events: GameEvent[] = eventRows.map((row) => {

@@ -3,6 +3,7 @@ import type { GameplayHandler } from "../../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
 import { computeTurnPhase } from "@backend/game/gameplay/state/gameplay-state.helpers";
 import { TurnPhase, GameAggregate, Player } from "@backend/game/gameplay/state/gameplay-state.types";
+import type { GamePlayer } from "@backend/game/access";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import { GameplayValidationError } from "../../errors/gameplay.errors";
 
@@ -11,6 +12,7 @@ import { GameplayValidationError } from "../../errors/gameplay.errors";
  */
 export type GiveClueInput = {
   gameState: GameAggregate;
+  playerContext: GamePlayer;
   word: string;
   targetCardCount: number;
 };
@@ -138,7 +140,7 @@ export const giveClueService = (logger: AppLogger) => (dependencies: GiveClueDep
   };
 
   return async (input: GiveClueInput): Promise<GiveClueResult> => {
-    const { gameState, word, targetCardCount } = input;
+    const { gameState, playerContext, word, targetCardCount } = input;
     const log = logger.for({}).withMeta({ gameId: gameState.public_id }).create();
     log.info(`giveClue called: word=${word}, count=${targetCardCount}`);
 
@@ -168,7 +170,7 @@ export const giveClueService = (logger: AppLogger) => (dependencies: GiveClueDep
         gameState.public_id,
         gameState.currentRound.number,
         currentTurn?.publicId ?? "",
-        gameState.playerContext?.publicId ?? "",
+        playerContext.publicId,
       );
 
       log.info(`giveClue success: word=${word}, count=${targetCardCount}`);

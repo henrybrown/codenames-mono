@@ -1,7 +1,13 @@
 import { GameAggregate, TurnPhase } from "@backend/game/gameplay/state/gameplay-state.types";
-import { PLAYER_ROLE, PlayerRole, ROUND_STATE } from "@codenames/shared/types";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
+import { PLAYER_ROLE, PlayerRole, ROUND_STATE, GAME_TYPE } from "@codenames/shared/types";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import { computeTurnPhase } from "@backend/game/gameplay/state/gameplay-state.helpers";
+import {
+  findPlayerByUserId,
+  findPlayerByPublicId,
+  findPlayerByActiveRole,
+  type GamePlayer,
+} from "@backend/game/access";
 import type { AppLogger } from "@backend/shared/logging";
 
 /**
@@ -75,7 +81,6 @@ export type PublicGameStateResponse = {
  */
 export const GAME_STATE_ERROR = {
   GAME_NOT_FOUND: "game-not-found",
-  UNAUTHORIZED: "unauthorized",
   PLAYER_NOT_FOUND: "player-not-found",
 } as const;
 
@@ -84,88 +89,81 @@ export const GAME_STATE_ERROR = {
  */
 export type GetGameStateFailure =
   | { status: typeof GAME_STATE_ERROR.GAME_NOT_FOUND; gameId: string }
-  | { status: typeof GAME_STATE_ERROR.UNAUTHORIZED; userId: number }
   | { status: typeof GAME_STATE_ERROR.PLAYER_NOT_FOUND; playerId: string };
 
 /**
  * Dependencies required by the service
  */
 export type GetGameStateDependencies = {
-  getGameplayState: GameplayStateProvider;
+  loadGameAggregate: GameAggregateLoader;
 };
 
 /**
  * Creates a service for retrieving role-specific game state
  */
-export const getGameStateService = (logger: AppLogger) => (dependencies: GetGameStateDependencies) => {
+export const getGameStateService = (logger: AppLogger) => (deps: GetGameStateDependencies) => {
   return async (input: GetGameStateInput): Promise<GetGameStateResult> => {
-    const result = await dependencies.getGameplayState(
-      input.role
-        ? { gameId: input.gameId, userId: input.userId, role: input.role }
-        : input.playerId
-        ? { gameId: input.gameId, userId: input.userId, playerId: input.playerId }
-        : { gameId: input.gameId, userId: input.userId },
-    );
+    const aggregate = await deps.loadGameAggregate(input.gameId);
+    if (!aggregate) {
+      return {
+        success: false,
+        error: { status: GAME_STATE_ERROR.GAME_NOT_FOUND, gameId: input.gameId },
+      };
+    }
 
-    switch (result.status) {
-      case "found":
-        return { success: true, data: transformGameState(result.data) };
-      case "game-not-found":
+    // Resolve the player context for the response. Three cases:
+    //   - role provided     -> active-turn role lookup (single-device)
+    //   - playerId provided -> direct lookup by public id (multi-device)
+    //   - neither           -> identify by userId (spectator/multi-device user)
+    let playerContext: GamePlayer | null = null;
+
+    if (input.role) {
+      playerContext = findPlayerByActiveRole(aggregate, input.role);
+      // null is fine — single-device between turns has no active role; treat as spectator
+    } else if (input.playerId) {
+      playerContext = findPlayerByPublicId(aggregate, input.playerId);
+      if (!playerContext) {
         return {
           success: false,
-          error: { status: GAME_STATE_ERROR.GAME_NOT_FOUND, gameId: input.gameId },
-        };
-      case "user-not-in-game":
-        return {
-          success: false,
-          error: { status: GAME_STATE_ERROR.UNAUTHORIZED, userId: input.userId },
-        };
-      case "player-not-found":
-        return {
-          success: false,
-          error: { status: GAME_STATE_ERROR.PLAYER_NOT_FOUND, playerId: input.playerId! },
-        };
-      case "user-not-authorized":
-        return {
-          success: false,
-          error: { status: GAME_STATE_ERROR.UNAUTHORIZED, userId: input.userId },
-        };
-      case "no-active-turn":
-      case "no-player-for-role": {
-        // Old behaviour returned the loaded state without playerContext when
-        // there was no active turn / no player for role on the role path.
-        // Re-fetch with byUser to surface the data without role-resolution.
-        const fallback = await dependencies.getGameplayState({
-          gameId: input.gameId,
-          userId: input.userId,
-        });
-        if (fallback.status === "found") {
-          return { success: true, data: transformGameState(fallback.data) };
-        }
-        return {
-          success: false,
-          error: { status: GAME_STATE_ERROR.GAME_NOT_FOUND, gameId: input.gameId },
+          error: { status: GAME_STATE_ERROR.PLAYER_NOT_FOUND, playerId: input.playerId },
         };
       }
+      // For multi-device, ensure the user owns the player they specified.
+      if (
+        aggregate.game_type === GAME_TYPE.MULTI_DEVICE &&
+        playerContext._userId !== input.userId
+      ) {
+        // Treat as spectator instead of erroring — the user can't act as
+        // someone else, but they can view the game.
+        playerContext = null;
+      }
+    } else {
+      // No specific identifier — find the user's own player if they have one.
+      playerContext = findPlayerByUserId(aggregate, input.userId);
     }
+
+    return { success: true, data: transformGameState(aggregate, playerContext) };
   };
 };
 
 /**
  * Transforms the internal game state to the public API format
  */
-function transformGameState(gameData: GameAggregate): PublicGameStateResponse {
-  const playerRole = gameData.playerContext?.role || PLAYER_ROLE.NONE;
+function transformGameState(
+  aggregate: GameAggregate,
+  playerContext: GamePlayer | null,
+): PublicGameStateResponse {
+  const playerRole = playerContext?.role ?? PLAYER_ROLE.NONE;
 
   return {
-    publicId: gameData.public_id,
-    status: gameData.status,
-    gameType: gameData.game_type,
-    gameFormat: gameData.game_format,
-    aiMode: gameData.aiMode,
-    createdAt: gameData.createdAt,
+    publicId: aggregate.public_id,
+    status: aggregate.status,
+    gameType: aggregate.game_type,
+    gameFormat: aggregate.game_format,
+    aiMode: aggregate.aiMode,
+    createdAt: aggregate.createdAt,
 
-    teams: gameData.teams.map((team) => ({
+    teams: aggregate.teams.map((team) => ({
       name: team.teamName,
       score: 0,
       players: team.players.map((player) => ({
@@ -176,15 +174,15 @@ function transformGameState(gameData: GameAggregate): PublicGameStateResponse {
       })),
     })),
 
-    currentRound: gameData.currentRound
+    currentRound: aggregate.currentRound
       ? {
-          roundNumber: gameData.currentRound.number,
-          status: gameData.currentRound.status,
-          winningTeamName: gameData.currentRound.winningTeamName,
-          cards: gameData.currentRound.cards.map((card) =>
-            applyCardVisibility(card, playerRole, gameData.currentRound!.status),
+          roundNumber: aggregate.currentRound.number,
+          status: aggregate.currentRound.status,
+          winningTeamName: aggregate.currentRound.winningTeamName,
+          cards: aggregate.currentRound.cards.map((card) =>
+            applyCardVisibility(card, playerRole, aggregate.currentRound!.status),
           ),
-          turns: gameData.currentRound.turns.map((turn) => ({
+          turns: aggregate.currentRound.turns.map((turn) => ({
             id: turn.publicId,
             teamName: turn.teamName,
             status: turn.status,
@@ -197,17 +195,17 @@ function transformGameState(gameData: GameAggregate): PublicGameStateResponse {
               playerName: guess.playerName,
               outcome: guess.outcome,
             })),
-            active: computeTurnPhase(turn, gameData.currentRound!.players),
+            active: computeTurnPhase(turn, aggregate.currentRound!.players),
           })),
         }
       : null,
 
-    playerContext: gameData.playerContext
+    playerContext: playerContext
       ? {
-          publicId: gameData.playerContext.publicId,
-          playerName: gameData.playerContext.publicName,
-          teamName: gameData.playerContext.teamName,
-          role: gameData.playerContext.role,
+          publicId: playerContext.publicId,
+          playerName: playerContext.publicName,
+          teamName: playerContext.teamName,
+          role: playerContext.role,
         }
       : null,
   };

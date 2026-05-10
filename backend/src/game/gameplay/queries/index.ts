@@ -1,4 +1,3 @@
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import type { TurnStateProvider } from "@backend/game/gameplay/state/turn-state.provider";
 import type { TurnsFinder, RoundId } from "@backend/shared/data-access/repositories/turns.repository";
@@ -18,7 +17,6 @@ import { getTurnService } from "./get-turn.service";
 import { controller as getTurnControllerFactory } from "./get-turn.controller";
 
 export interface QueriesDependencies {
-  getGameplayState: GameplayStateProvider;
   loadGameAggregate: GameAggregateLoader;
   getTurnState: TurnStateProvider;
   getTurnsByRoundId: TurnsFinder<RoundId>;
@@ -31,12 +29,12 @@ export const createQueries = (logger: AppLogger) => (deps: QueriesDependencies) 
   const getGameService = getGameStateService(
     logger.for({ service: "get-game" }).create(),
   )({
-    getGameplayState: deps.getGameplayState,
+    loadGameAggregate: deps.loadGameAggregate,
   });
   const getGameController = getGameStateController({ getGameState: getGameService });
 
   /** Get players */
-  const playersService = createGetPlayersService({ getGameplayState: deps.getGameplayState });
+  const playersService = createGetPlayersService({ loadGameAggregate: deps.loadGameAggregate });
   const getPlayersController = createGetPlayersController(
     logger.for({ service: "get-players" }).create(),
   )({ getPlayersService: playersService });
@@ -44,7 +42,7 @@ export const createQueries = (logger: AppLogger) => (deps: QueriesDependencies) 
   /** Get events */
   const eventsService = getEventsService(logger)({
     getEventsByGameId: gameEventsRepository.getEventsByGameId(deps.db),
-    getGameplayState: deps.getGameplayState,
+    loadGameAggregate: deps.loadGameAggregate,
   });
   const eventsController = getEventsController({ getEvents: eventsService });
 

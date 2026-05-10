@@ -337,6 +337,7 @@ export const createAIPlayerService =
 
         const clueResult = await giveClue({
           gameState,
+          playerContext: gameState.playerContext!,
           word: pipelineResult.clue,
           targetCardCount: pipelineResult.number,
         });
@@ -440,7 +441,10 @@ export const createAIPlayerService =
           const endTurnState = await loadGameStateForAI(context.gameId, context.playerId);
           if (!endTurnState) throw new Error("Failed to load state for end turn");
 
-          const endTurnResult = await endTurn({ gameState: endTurnState });
+          const endTurnResult = await endTurn({
+            gameState: endTurnState,
+            playerContext: endTurnState.playerContext!,
+          });
           if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.error}`);
 
           await updatePipelineStatus(run.id, PIPELINE_STATUS.COMPLETE);
@@ -512,6 +516,7 @@ export const createAIPlayerService =
 
           const result = await makeGuess({
             gameState: guessState,
+            playerContext: guessState.playerContext!,
             cardWord: candidate.word,
           });
 
@@ -540,14 +545,20 @@ export const createAIPlayerService =
           const endState = await loadGameStateForAI(context.gameId, context.playerId);
           if (!endState) throw new Error("Failed to load state for end turn");
 
-          const endTurnResult = await endTurn({ gameState: endState });
+          const endTurnResult = await endTurn({
+            gameState: endState,
+            playerContext: endState.playerContext!,
+          });
           if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.error}`);
           await emitNarration(context, `Perfect! Found all ${correctGuesses} cards. Ending my turn.`);
         } else if (stopReason === "low-confidence") {
           const endState = await loadGameStateForAI(context.gameId, context.playerId);
           if (!endState) throw new Error("Failed to load state for end turn");
 
-          const endTurnResult = await endTurn({ gameState: endState });
+          const endTurnResult = await endTurn({
+            gameState: endState,
+            playerContext: endState.playerContext!,
+          });
           if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.error}`);
           await emitNarration(
             context,

@@ -1,4 +1,5 @@
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import { isUserPlayerInGame } from "@backend/game/access";
 import { PlayerRole, PLAYER_ROLE } from "@codenames/shared/types";
 
 /**
@@ -37,7 +38,7 @@ export type GetPlayersService = (
  * Dependencies for the service
  */
 export type GetPlayersServiceDependencies = {
-  getGameplayState: GameplayStateProvider;
+  loadGameAggregate: GameAggregateLoader;
 };
 
 /**
@@ -67,7 +68,7 @@ const determinePlayerStatus = (
 
   // Check if this player should be active
   const isRightTeam = player._teamId === activeTurn._teamId;
-  const isRightRole = 
+  const isRightRole =
     (shouldCodemasterBeActive && player.role === PLAYER_ROLE.CODEMASTER) ||
     (shouldCodebreakerBeActive && player.role === PLAYER_ROLE.CODEBREAKER);
 
@@ -81,22 +82,17 @@ export const createGetPlayersService = (
   deps: GetPlayersServiceDependencies,
 ): GetPlayersService => {
   return async (gameId: string, userId: number): Promise<GetPlayersResult> => {
-    // Get full game state to determine player statuses
-    const gameStateResult = await deps.getGameplayState({ gameId, userId });
-
-    if (gameStateResult.status === "game-not-found") {
+    const aggregate = await deps.loadGameAggregate(gameId);
+    if (!aggregate) {
       return { status: "game-not-found" };
     }
 
-    if (gameStateResult.status !== "found") {
-      // Any non-success status is treated as user not being a player.
+    if (!isUserPlayerInGame(aggregate, userId)) {
       return { status: "user-not-in-game" };
     }
 
-    const gameState = gameStateResult.data;
-
     // Collect all players from all teams
-    const allPlayers = gameState.teams.flatMap(team => 
+    const allPlayers = aggregate.teams.flatMap(team =>
       team.players.map(player => ({ ...player, teamName: team.teamName }))
     );
 
@@ -106,7 +102,7 @@ export const createGetPlayersService = (
       name: player.publicName,
       teamName: player.teamName,
       role: player.role as PlayerRole,
-      status: determinePlayerStatus(player, gameState),
+      status: determinePlayerStatus(player, aggregate),
     }));
 
     return {
