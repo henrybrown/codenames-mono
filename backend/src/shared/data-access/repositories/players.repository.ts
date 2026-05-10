@@ -79,6 +79,12 @@ export type PlayerFinderByPublicId = (
   publicId: PublicPlayerId,
 ) => Promise<PlayerResult | null>;
 
+/** Find a single player by game ID and user ID */
+export type PlayerFinderByGameAndUser = (
+  gameId: GameId,
+  userId: UserId,
+) => Promise<PlayerResult | null>;
+
 /** Repository function type for player context */
 export type PlayerContextFinder = (
   gameId: GameId,
@@ -270,6 +276,60 @@ export const findPlayerByPublicId =
       ])
       .executeTakeFirst();
 
+    return player
+      ? {
+          _id: player.id,
+          publicId: player.public_id,
+          _userId: player.user_id,
+          _gameId: player.game_id,
+          _teamId: player.team_id,
+          teamName: player.team_name,
+          statusId: player.status_id,
+          publicName: player.public_name,
+          isAi: player.is_ai,
+          role: parseRoleName(player.role_name),
+        }
+      : null;
+  };
+
+/**
+ * Find a single player by (game ID, user ID).
+ *
+ * For multi-device games, a user has at most one player per game; this
+ * returns it (with their latest round role) or null.
+ *
+ * For single-device games, a user (typically the lobby creator) may own
+ * multiple players in the same game. This function returns one of them
+ * (which one is non-deterministic). Single-device callers should not rely
+ * on this function — use findPlayersByGameId or work from the aggregate.
+ */
+export const findPlayerByGameAndUser =
+  (db: DbContext | TransactionContext): PlayerFinderByGameAndUser =>
+  async (gameId, userId) => {
+    const player = await db
+      .selectFrom("players")
+      .innerJoin("teams", "players.team_id", "teams.id")
+      .leftJoin("player_round_roles as latest_prr", (join) =>
+        join
+          .onRef("latest_prr.player_id", "=", "players.id")
+          .on("latest_prr.round_id", "=", (eb) =>
+            eb
+              .selectFrom("rounds")
+              .where("rounds.game_id", "=", gameId)
+              .select("rounds.id")
+              .orderBy("rounds.round_number", "desc")
+              .limit(1),
+          ),
+      )
+      .leftJoin("player_roles", "latest_prr.role_id", "player_roles.id")
+      .where("players.game_id", "=", gameId)
+      .where("players.user_id", "=", userId)
+      .select([
+        ...playerResultColumns,
+        "teams.team_name",
+        "player_roles.role_name",
+      ])
+      .executeTakeFirst();
     return player
       ? {
           _id: player.id,
