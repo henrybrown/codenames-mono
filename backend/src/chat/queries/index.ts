@@ -1,5 +1,5 @@
 import type { AppLogger } from "@backend/shared/logging";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import type {
   GameMessageData,
   MessageQueryParams,
@@ -9,7 +9,7 @@ import { getMessagesService } from "./get-messages.service";
 import { getMessagesController } from "./get-messages.controller";
 
 export interface GetMessagesDependencies {
-  getGameplayState: GameplayStateProvider;
+  loadGameAggregate: GameAggregateLoader;
   findMessagesByGame: (params: MessageQueryParams) => Promise<GameMessageData[]>;
 }
 
@@ -17,7 +17,7 @@ export const createGetMessages =
   (logger: AppLogger) => (deps: GetMessagesDependencies) => {
     const service = getMessagesService({
       findMessagesByGame: deps.findMessagesByGame,
-      getGameplayState: deps.getGameplayState,
+      loadGameAggregate: deps.loadGameAggregate,
     });
 
     const controller = getMessagesController({

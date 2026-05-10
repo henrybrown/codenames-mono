@@ -2,7 +2,8 @@ import type {
   GameMessageData,
   MessageQueryParams,
 } from "@backend/shared/data-access/repositories/game-messages.repository";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import { findPlayerByUserId } from "@backend/game/access";
 import type { GameMessage, MessageAuthorInfo } from "../game-message";
 import { toGameMessage } from "../game-message";
 
@@ -11,7 +12,7 @@ import { toGameMessage } from "../game-message";
  */
 export interface GetMessagesServiceDeps {
   findMessagesByGame: (params: MessageQueryParams) => Promise<GameMessageData[]>;
-  getGameplayState: GameplayStateProvider;
+  loadGameAggregate: GameAggregateLoader;
 }
 
 /**
@@ -40,32 +41,29 @@ export const getMessagesService =
     userId: number,
     query: GetMessagesQuery = {},
   ): Promise<GetMessagesResult> => {
-    // Verify user has access to this game and get their team
-    const gameState = await deps.getGameplayState({ gameId, userId });
-
-    if (gameState.status === "game-not-found") {
+    const aggregate = await deps.loadGameAggregate(gameId);
+    if (!aggregate) {
       return { status: "game-not-found", gameId };
     }
 
-    if (gameState.status !== "found") {
+    const userPlayer = findPlayerByUserId(aggregate, userId);
+    if (!userPlayer) {
       return { status: "unauthorized", gameId, userId };
     }
 
-    // Find the user's team
-    const allPlayers = gameState.data.teams.flatMap((team) => team.players);
-    const userPlayer = allPlayers.find((p) => p._userId === userId);
-    const userTeamId = userPlayer?._teamId || null;
+    const userTeamId = userPlayer._teamId;
     const sinceDate = query.since ? new Date(query.since) : undefined;
 
     // Get messages for this game
     const messageRows = await deps.findMessagesByGame({
-      gameId: gameState.data._id,
+      gameId: aggregate._id,
       since: sinceDate,
       limit: query.limit,
       requestingTeamId: userTeamId,
     });
 
     // Build lookup map: DB player id -> player info
+    const allPlayers = aggregate.teams.flatMap((team) => team.players);
     const playerById = new Map(allPlayers.map((p) => [p._id, p]));
 
     // Transform to API format, enriching with player/team names from game state

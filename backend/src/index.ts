@@ -178,7 +178,7 @@ const chat = initializeChat({
   auth: authHandlers,
   httpLogger: httpLoggerHandler,
   appLogger,
-  gameplay: { getGameplayState },
+  gameplay: { loadGameAggregate },
 });
 
 app.get("/api/health", (req, res) => {

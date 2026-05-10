@@ -1,6 +1,7 @@
 import type { GameMessageData, CreateMessageInput } from "@backend/shared/data-access/repositories/game-messages.repository";
 import { MESSAGE_TYPE } from "@backend/shared/data-access/repositories/game-messages.repository";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import { findPlayerByUserId } from "@backend/game/access";
 import type { GameMessage } from "../game-message";
 import { toGameMessage } from "../game-message";
 
@@ -9,7 +10,7 @@ import { toGameMessage } from "../game-message";
  */
 export interface SubmitMessageServiceDeps {
   createGameMessage: (input: CreateMessageInput) => Promise<GameMessageData>;
-  getGameplayState: GameplayStateProvider;
+  loadGameAggregate: GameAggregateLoader;
 }
 
 /**
@@ -47,28 +48,19 @@ export const submitMessageService = (deps: SubmitMessageServiceDeps) =>
       return { status: "invalid-input", error: "Message content cannot exceed 1000 characters" };
     }
 
-    // Verify user has access to this game and get their team
-    const gameState = await deps.getGameplayState({ gameId, userId });
-
-    if (gameState.status === "game-not-found") {
+    const aggregate = await deps.loadGameAggregate(gameId);
+    if (!aggregate) {
       return { status: "game-not-found", gameId };
     }
 
-    if (gameState.status !== "found") {
-      return { status: "unauthorized", gameId, userId };
-    }
-
-    // Find the user's player and team
-    const allPlayers = gameState.data.teams.flatMap((team) => team.players);
-    const userPlayer = allPlayers.find((p) => p._userId === userId);
-
+    const userPlayer = findPlayerByUserId(aggregate, userId);
     if (!userPlayer) {
       return { status: "unauthorized", gameId, userId };
     }
 
     // Create the message
     const messageData = await deps.createGameMessage({
-      gameId: gameState.data._id,
+      gameId: aggregate._id,
       playerId: userPlayer._id,
       teamId: userPlayer._teamId,
       teamOnly: input.teamOnly,
