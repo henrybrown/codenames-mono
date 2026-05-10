@@ -1,5 +1,6 @@
 import { createEndTurnService } from "@backend/game/gameplay/turns/end-turn.service";
 import { buildGameAggregate, buildTurn } from "../../__test-utils__/fixtures";
+import type { GamePlayer } from "@backend/game/access";
 
 vi.mock("@backend/shared/websocket", () => ({
   GameEventsEmitter: {
@@ -28,18 +29,25 @@ describe("endTurnService", () => {
     return createEndTurnService(mockLogger)({ gameplayHandler });
   };
 
+  const makePlayer = (overrides: Partial<GamePlayer> = {}): GamePlayer => ({
+    _id: 1,
+    publicId: "player-1",
+    _userId: 101,
+    _teamId: 1,
+    teamName: "Red",
+    publicName: "Bob",
+    role: "CODEBREAKER",
+    ...overrides,
+  });
+
   it("returns success when codebreaker ends turn", async () => {
     const gameState = buildGameAggregate();
-    // Set playerContext to codebreaker
-    gameState.playerContext = {
-      ...gameState.playerContext!,
-      role: "CODEBREAKER",
-    };
     // Ensure turn has a clue (codebreaker phase)
     gameState.currentRound!.turns[0].clue = { _id: 1, _turnId: 1, word: "FRUIT", number: 2, createdAt: new Date() };
+    const playerContext = makePlayer({ teamName: "Red" });
 
     const service = createService();
-    const result = await service({ gameState });
+    const result = await service({ gameState, playerContext });
 
     expect(result.success).toBe(true);
     if (result.success) {
@@ -48,10 +56,11 @@ describe("endTurnService", () => {
   });
 
   it("rejects when player is not codebreaker", async () => {
-    const gameState = buildGameAggregate(); // Default is CODEMASTER
+    const gameState = buildGameAggregate();
+    const playerContext = makePlayer({ role: "CODEMASTER" });
 
     const service = createService();
-    const result = await service({ gameState });
+    const result = await service({ gameState, playerContext });
 
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe("Only codebreakers can end turn");
@@ -59,10 +68,10 @@ describe("endTurnService", () => {
 
   it("rejects when no active round", async () => {
     const gameState = buildGameAggregate({ currentRound: null });
-    gameState.playerContext = { ...gameState.playerContext!, role: "CODEBREAKER" };
+    const playerContext = makePlayer();
 
     const service = createService();
-    const result = await service({ gameState });
+    const result = await service({ gameState, playerContext });
 
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe("No active round");
@@ -70,23 +79,13 @@ describe("endTurnService", () => {
 
   it("rejects when turn already completed", async () => {
     const gameState = buildGameAggregate();
-    gameState.playerContext = { ...gameState.playerContext!, role: "CODEBREAKER" };
     gameState.currentRound!.turns = [buildTurn({ status: "COMPLETED" })];
+    const playerContext = makePlayer();
 
     const service = createService();
-    const result = await service({ gameState });
+    const result = await service({ gameState, playerContext });
 
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe("Turn already completed");
-  });
-
-  it("rejects when no player context", async () => {
-    const gameState = buildGameAggregate({ playerContext: null });
-
-    const service = createService();
-    const result = await service({ gameState });
-
-    expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe("Player not found");
   });
 });

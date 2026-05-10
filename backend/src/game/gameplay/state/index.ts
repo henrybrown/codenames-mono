@@ -15,9 +15,6 @@ import {
   createGameAggregateLoader,
   type GameAggregateLoader,
 } from "./load-game-aggregate";
-import { createGameMembershipVerifier } from "./verify-game-membership";
-import { createPlayerContextResolver } from "./resolve-player-context";
-import { createGameplayStateProvider } from "./get-gameplay-state";
 
 /**
  * Creates a turn state provider with the given database context
@@ -69,33 +66,10 @@ const createInternalLoader = (
  * @param dbContext - Database connection or transaction context
  * @returns Object containing configured state components
  */
-export const gameplayState = (dbContext: DbContext | TransactionContext) => {
-  // Building blocks
-  const loadAggregate = createInternalLoader(dbContext);
-  const verifyMembership = createGameMembershipVerifier({
-    getGameById: gameRepository.findGameByPublicId(dbContext),
-    getPlayersByGameId: playerRepository.findPlayersByGameId(dbContext),
-  });
-  const resolvePlayerContext = createPlayerContextResolver();
-
-  // Primary entry point — read-only request lifecycle (auth -> load -> identify)
-  const getGameplayState = createGameplayStateProvider({
-    loadAggregate,
-    verifyMembership,
-    resolvePlayerContext,
-  });
-
-  return {
-    // Primary entry point most callers use
-    provider: getGameplayState,
-    // Building blocks for callers that need to interleave a DB mutation
-    // (action services) or only need part of the lifecycle.
-    loader: loadAggregate,
-    loadGameAggregate: loadAggregate,
-    verifyMembership,
-    resolvePlayerContext,
-  };
-};
+export const gameplayState = (dbContext: DbContext | TransactionContext) => ({
+  loader: createInternalLoader(dbContext),
+  loadGameAggregate: createInternalLoader(dbContext),
+});
 
 /**
  * Convenience: returns just the auth-free game data loader

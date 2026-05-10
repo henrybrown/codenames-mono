@@ -1,6 +1,17 @@
 import { makeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import { buildGameAggregate, buildTurn } from "../../__test-utils__/fixtures";
+import type { GamePlayer } from "@backend/game/access";
 import { GameplayValidationError } from "@backend/game/gameplay/errors/gameplay.errors";
+
+const playerCtx: GamePlayer = {
+  _id: 1,
+  publicId: "player-1",
+  _userId: 101,
+  _teamId: 1,
+  teamName: "Red",
+  publicName: "Bob",
+  role: "CODEBREAKER",
+};
 
 vi.mock("@backend/shared/websocket", () => ({
   GameEventsEmitter: {
@@ -62,7 +73,7 @@ describe("makeGuessService", () => {
     const service = createService("CORRECT_TEAM_CARD");
     const gameState = buildGameAggregate();
 
-    const result = await service({ gameState, cardWord: "APPLE" });
+    const result = await service({ gameState, playerContext: playerCtx, cardWord: "APPLE" });
 
     expect(result.success).toBe(true);
     if (result.success) {
@@ -76,7 +87,7 @@ describe("makeGuessService", () => {
     const service = createService();
     const gameState = buildGameAggregate({ currentRound: null });
 
-    const result = await service({ gameState, cardWord: "APPLE" });
+    const result = await service({ gameState, playerContext: playerCtx, cardWord: "APPLE" });
 
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -90,7 +101,7 @@ describe("makeGuessService", () => {
     ]));
 
     const gameState = buildGameAggregate();
-    const result = await service({ gameState, cardWord: "APPLE" });
+    const result = await service({ gameState, playerContext: playerCtx, cardWord: "APPLE" });
 
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -104,7 +115,7 @@ describe("makeGuessService", () => {
     ]));
 
     const gameState = buildGameAggregate();
-    const result = await service({ gameState, cardWord: "APPLE" });
+    const result = await service({ gameState, playerContext: playerCtx, cardWord: "APPLE" });
 
     expect(result.success).toBe(false);
     if (!result.success) {

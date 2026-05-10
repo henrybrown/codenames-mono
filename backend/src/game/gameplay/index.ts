@@ -29,12 +29,7 @@ export const initialize = (
   const logger = appLogger.for({ feature: "gameplay" }).create();
 
   /** State providers */
-  const {
-    provider: getGameplayState,
-    loadGameAggregate,
-    verifyMembership,
-    resolvePlayerContext,
-  } = gameplayState(db);
+  const { loadGameAggregate } = gameplayState(db);
   const { provider: getTurnState, getTurnsByRoundId, findPlayersByRoundId } = turnState(db);
 
   /** Gameplay actions (transactional handler) */
@@ -107,9 +102,6 @@ export const initialize = (
     makeGuessService: turns.services.makeGuess,
     endTurnService: turns.services.endTurn,
     startTurnService: turns.services.startTurn,
-    getGameplayState,
     loadGameAggregate,
-    verifyMembership,
-    resolvePlayerContext,
   };
 };

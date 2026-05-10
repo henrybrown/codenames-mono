@@ -16,6 +16,17 @@ import {
   resetIds,
 } from "../../__test-utils__/fixtures";
 import type { GameAggregate } from "@backend/game/gameplay/state/gameplay-state.types";
+import type { GamePlayer } from "@backend/game/access";
+
+const playerCtx: GamePlayer = {
+  _id: 1,
+  publicId: "player-1",
+  _userId: 101,
+  _teamId: 1,
+  teamName: "Red",
+  publicName: "Bob",
+  role: "CODEBREAKER",
+};
 
 vi.mock("@backend/shared/websocket", () => ({
   GameEventsEmitter: {
@@ -217,7 +228,7 @@ describe("make-guess orchestration", () => {
     };
 
     const { service, ops } = createServiceWithTracking(gameState, "CORRECT_TEAM_CARD", postState);
-    await service({ gameState, cardWord: "RED5" });
+    await service({ gameState, playerContext: playerCtx, cardWord: "RED5" });
 
     expect(ops.makeGuess).toHaveBeenCalledTimes(1);
     expect(ops.endTurn).not.toHaveBeenCalled();
@@ -239,7 +250,7 @@ describe("make-guess orchestration", () => {
     };
 
     const { service, ops } = createServiceWithTracking(gameState, "CORRECT_TEAM_CARD", postState);
-    await service({ gameState, cardWord: "RED5" });
+    await service({ gameState, playerContext: playerCtx, cardWord: "RED5" });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
     expect(ops.startTurn).not.toHaveBeenCalled();
@@ -260,7 +271,7 @@ describe("make-guess orchestration", () => {
     };
 
     const { service, ops } = createServiceWithTracking(gameState, "CORRECT_TEAM_CARD", postState);
-    await service({ gameState, cardWord: "RED8" });
+    await service({ gameState, playerContext: playerCtx, cardWord: "RED8" });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
     expect(ops.endRound).toHaveBeenCalledTimes(1);
@@ -299,7 +310,7 @@ describe("make-guess orchestration", () => {
       ],
     });
 
-    await service({ gameState, cardWord: "RED8" });
+    await service({ gameState, playerContext: playerCtx, cardWord: "RED8" });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
     expect(ops.endRound).toHaveBeenCalledTimes(1);
@@ -318,7 +329,7 @@ describe("make-guess orchestration", () => {
     };
 
     const { service, ops } = createServiceWithTracking(gameState, "OTHER_TEAM_CARD", postState);
-    await service({ gameState, cardWord: "BLUE3" });
+    await service({ gameState, playerContext: playerCtx, cardWord: "BLUE3" });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
     expect(ops.startTurn).not.toHaveBeenCalled();
@@ -338,7 +349,7 @@ describe("make-guess orchestration", () => {
     };
 
     const { service, ops } = createServiceWithTracking(gameState, "OTHER_TEAM_CARD", postState);
-    await service({ gameState, cardWord: "BLUE7" });
+    await service({ gameState, playerContext: playerCtx, cardWord: "BLUE7" });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
     expect(ops.endRound).toHaveBeenCalledTimes(1);
@@ -349,7 +360,7 @@ describe("make-guess orchestration", () => {
     const gameState = buildGameWithBoard({ guessesRemaining: 2 });
 
     const { service, ops } = createServiceWithTracking(gameState, "BYSTANDER_CARD");
-    await service({ gameState, cardWord: "NEUTRAL0" });
+    await service({ gameState, playerContext: playerCtx, cardWord: "NEUTRAL0" });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
     expect(ops.startTurn).not.toHaveBeenCalled();
@@ -385,7 +396,7 @@ describe("make-guess orchestration", () => {
       ],
     });
 
-    await service({ gameState, cardWord: "ASSASSIN" });
+    await service({ gameState, playerContext: playerCtx, cardWord: "ASSASSIN" });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
     expect(ops.endRound).toHaveBeenCalledTimes(1);

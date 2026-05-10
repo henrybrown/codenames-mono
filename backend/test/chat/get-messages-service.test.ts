@@ -7,7 +7,7 @@ import { buildGameAggregate } from "../__test-utils__/fixtures";
 
 describe("getMessagesService", () => {
   const findMessagesByGame = vi.fn<(params: MessageQueryParams) => Promise<GameMessageData[]>>();
-  const getGameplayState = vi.fn<any>();
+  const loadGameAggregate = vi.fn<any>();
 
   const makeRow = (overrides: Partial<GameMessageData> = {}): GameMessageData => ({
     id: "msg-1",
@@ -22,17 +22,17 @@ describe("getMessagesService", () => {
   });
 
   const createService = () =>
-    getMessagesService({ findMessagesByGame, getGameplayState: getGameplayState as any });
+    getMessagesService({ findMessagesByGame, loadGameAggregate: loadGameAggregate as any });
 
   beforeEach(() => {
     findMessagesByGame.mockReset();
-    getGameplayState.mockReset();
+    loadGameAggregate.mockReset();
   });
 
   it("returns messages for a valid game and user", async () => {
     const state = buildGameAggregate();
     const userId = state.teams[0].players[0]._userId;
-    getGameplayState.mockResolvedValue({ status: "found", data: state });
+    loadGameAggregate.mockResolvedValue(state);
     findMessagesByGame.mockResolvedValue([makeRow()]);
 
     const result = await createService()("game-1", userId);
@@ -44,7 +44,7 @@ describe("getMessagesService", () => {
   });
 
   it("returns game-not-found when game doesn't exist", async () => {
-    getGameplayState.mockResolvedValue({ status: "game-not-found", gameId: "game-1" });
+    loadGameAggregate.mockResolvedValue(null);
 
     const result = await createService()("game-1", 1);
 
@@ -52,13 +52,10 @@ describe("getMessagesService", () => {
   });
 
   it("returns unauthorized when user is not a player", async () => {
-    getGameplayState.mockResolvedValue({
-      status: "user-not-in-game",
-      gameId: "game-1",
-      userId: 999,
-    });
+    const state = buildGameAggregate();
+    loadGameAggregate.mockResolvedValue(state);
 
-    const result = await createService()("game-1", 999);
+    const result = await createService()("game-1", 999_999);
 
     expect(result.status).toBe("unauthorized");
   });
@@ -66,7 +63,7 @@ describe("getMessagesService", () => {
   it("passes requestingTeamId to the repo based on the user's team", async () => {
     const state = buildGameAggregate();
     const player = state.teams[0].players[0];
-    getGameplayState.mockResolvedValue({ status: "found", data: state });
+    loadGameAggregate.mockResolvedValue(state);
     findMessagesByGame.mockResolvedValue([]);
 
     await createService()("game-1", player._userId);
@@ -78,7 +75,7 @@ describe("getMessagesService", () => {
 
   it("respects the `since` timestamp parameter", async () => {
     const state = buildGameAggregate();
-    getGameplayState.mockResolvedValue({ status: "found", data: state });
+    loadGameAggregate.mockResolvedValue(state);
     findMessagesByGame.mockResolvedValue([]);
     const sinceIso = "2025-01-01T12:00:00.000Z";
 
@@ -91,7 +88,7 @@ describe("getMessagesService", () => {
 
   it("respects the `limit` parameter", async () => {
     const state = buildGameAggregate();
-    getGameplayState.mockResolvedValue({ status: "found", data: state });
+    loadGameAggregate.mockResolvedValue(state);
     findMessagesByGame.mockResolvedValue([]);
 
     await createService()("game-1", state.teams[0].players[0]._userId, { limit: 25 });
@@ -103,7 +100,7 @@ describe("getMessagesService", () => {
 
   it("returns an empty array when no messages exist", async () => {
     const state = buildGameAggregate();
-    getGameplayState.mockResolvedValue({ status: "found", data: state });
+    loadGameAggregate.mockResolvedValue(state);
     findMessagesByGame.mockResolvedValue([]);
 
     const result = await createService()("game-1", state.teams[0].players[0]._userId);
@@ -117,7 +114,7 @@ describe("getMessagesService", () => {
   it("transforms rows and enriches with player publicId/name from game state", async () => {
     const state = buildGameAggregate();
     const player = state.teams[0].players[0];
-    getGameplayState.mockResolvedValue({ status: "found", data: state });
+    loadGameAggregate.mockResolvedValue(state);
     const row = makeRow({
       id: "msg-xyz",
       player_id: player._id,
@@ -153,7 +150,7 @@ describe("getMessagesService", () => {
 
   it("returns null player fields when player_id doesn't match any player in state", async () => {
     const state = buildGameAggregate();
-    getGameplayState.mockResolvedValue({ status: "found", data: state });
+    loadGameAggregate.mockResolvedValue(state);
     findMessagesByGame.mockResolvedValue([
       makeRow({ player_id: null, message_type: "SYSTEM", content: "notice" }),
     ]);

@@ -129,10 +129,7 @@ const {
   giveClueService,
   makeGuessService,
   endTurnService,
-  getGameplayState,
   loadGameAggregate,
-  resolvePlayerContext,
-  verifyMembership,
 } = initializeGameplay(
   app,
   dbInstance,
