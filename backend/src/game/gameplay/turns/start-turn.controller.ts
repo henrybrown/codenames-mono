@@ -13,7 +13,7 @@ import type { StartTurnService } from "./start-turn.service";
 import type { AppLogger } from "@backend/shared/logging";
 import type { ResolveGameplayContext } from "../shared/resolve-gameplay-context";
 import { contextErrorToHttp } from "../shared/resolve-gameplay-context";
-import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import { z } from "zod";
 
 const paramsSchema = z.object({
@@ -28,7 +28,7 @@ const authSchema = z.object({
 export type StartTurnControllerDeps = {
   startTurn: StartTurnService;
   resolveContext: ResolveGameplayContext;
-  loadGameData: GameDataLoader;
+  loadGameAggregate: GameAggregateLoader;
 };
 
 export const createStartTurnController =
@@ -46,7 +46,7 @@ export const createStartTurnController =
         const { gameId, roundNumber } = paramsResult.data;
         const { userId } = authResult.data;
 
-        const rawGameState = await deps.loadGameData(gameId);
+        const rawGameState = await deps.loadGameAggregate(gameId);
         if (!rawGameState) {
           res.status(404).json({ success: false, error: "Game not found" });
           return;

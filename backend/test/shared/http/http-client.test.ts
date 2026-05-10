@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { createHttpClient, HttpError } from "@backend/shared/http";
+import { createHttpClient, HttpError } from "@backend/shared/http-client";
 
 const fakeLogger = {
   for: () => fakeLogger,

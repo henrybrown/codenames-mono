@@ -129,10 +129,10 @@ const {
   giveClueService,
   makeGuessService,
   endTurnService,
-  getGameState,
+  getGameplayState,
   loadGameAggregate,
   resolvePlayerContext,
-  loadGameData,
+  verifyMembership,
 } = initializeGameplay(
   app,
   dbInstance,
@@ -165,7 +165,7 @@ const ai = initializeAI({
     giveClue:     giveClueService,
     makeGuess:    makeGuessService,
     endTurn:      endTurnService,
-    getGameState,
+    getGameplayState,
     loadGameAggregate,
     resolvePlayerContext,
   },
@@ -178,7 +178,7 @@ const chat = initializeChat({
   auth: authHandlers,
   httpLogger: httpLoggerHandler,
   appLogger,
-  gameplay: { getGameState },
+  gameplay: { getGameplayState },
 });
 
 app.get("/api/health", (req, res) => {

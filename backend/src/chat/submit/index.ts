@@ -1,5 +1,5 @@
 import type { AppLogger } from "@backend/shared/logging";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
+import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import type {
   GameMessageData,
   CreateMessageInput,
@@ -9,7 +9,7 @@ import { submitMessageService } from "./submit-message.service";
 import { submitMessageController } from "./submit-message.controller";
 
 export interface SubmitMessageDependencies {
-  getGameState: GameplayStateProvider;
+  getGameplayState: GameplayStateProvider;
   createGameMessage: (input: CreateMessageInput) => Promise<GameMessageData>;
 }
 
@@ -17,7 +17,7 @@ export const createSubmitMessage =
   (logger: AppLogger) => (deps: SubmitMessageDependencies) => {
     const service = submitMessageService({
       createGameMessage: deps.createGameMessage,
-      getGameState: deps.getGameState,
+      getGameplayState: deps.getGameplayState,
     });
 
     const controller = submitMessageController({

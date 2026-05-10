@@ -1,7 +1,6 @@
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
-import type { GameplayStateProvider as NewGameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
+import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import type { GameplayHandler } from "../gameplay-actions";
-import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import type { TurnStateProvider } from "@backend/game/gameplay/state/turn-state.provider";
 import type { AppLogger } from "@backend/shared/logging";
 import { createResolveGameplayContext } from "../shared/resolve-gameplay-context";
@@ -18,11 +17,10 @@ import { createStartTurnController } from "./start-turn.controller";
 // todo: review turn action/service logic generally - should be much cleaner/ledgible
 
 export interface TurnsDependencies {
-  getGameState: GameplayStateProvider;
-  getGameplayState: NewGameplayStateProvider;
+  getGameplayState: GameplayStateProvider;
   gameplayHandler: GameplayHandler;
   getTurnState: TurnStateProvider;
-  loadGameData: GameDataLoader;
+  loadGameAggregate: GameAggregateLoader;
 }
 
 export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
@@ -38,7 +36,7 @@ export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
   const clueController = giveClueController(logger)({
     giveClue: clueService,
     resolveContext,
-    loadGameData: deps.loadGameData,
+    loadGameAggregate: deps.loadGameAggregate,
   });
 
   /** Make guess */
@@ -49,7 +47,7 @@ export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
   const guessController = createMakeGuessController(logger)({
     makeGuess: guessService,
     resolveContext,
-    loadGameData: deps.loadGameData,
+    loadGameAggregate: deps.loadGameAggregate,
   });
 
   /** End turn */
@@ -59,7 +57,7 @@ export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
   const endController = createEndTurnController(logger)({
     endTurn: endService,
     resolveContext,
-    loadGameData: deps.loadGameData,
+    loadGameAggregate: deps.loadGameAggregate,
   });
 
   /** Start turn */
@@ -69,7 +67,7 @@ export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
   const startController = createStartTurnController(logger)({
     startTurn: startService,
     resolveContext,
-    loadGameData: deps.loadGameData,
+    loadGameAggregate: deps.loadGameAggregate,
   });
 
   return {

@@ -4,18 +4,11 @@ import type {
   CreateMessageInput,
 } from "@backend/shared/data-access/repositories/game-messages.repository";
 
-vi.mock("@backend/shared/websocket", () => ({
-  GameEventsEmitter: {
-    gameMessageCreated: vi.fn(),
-  },
-}));
-
-import { GameEventsEmitter } from "@backend/shared/websocket";
-import { submitMessageService } from "@backend/chat/submit-message/submit-message.service";
+import { submitMessageService } from "@backend/chat/submit/submit-message.service";
 
 describe("submitMessageService", () => {
   const createGameMessage = vi.fn<(input: CreateMessageInput) => Promise<GameMessageData>>();
-  const getGameState = vi.fn<any>();
+  const getGameplayState = vi.fn<any>();
 
   const makeRow = (overrides: Partial<GameMessageData> = {}): GameMessageData => ({
     id: "msg-new",
@@ -30,18 +23,17 @@ describe("submitMessageService", () => {
   });
 
   const createService = () =>
-    submitMessageService({ createGameMessage, getGameState: getGameState as any });
+    submitMessageService({ createGameMessage, getGameplayState: getGameplayState as any });
 
   beforeEach(() => {
     createGameMessage.mockReset();
-    getGameState.mockReset();
-    vi.mocked(GameEventsEmitter.gameMessageCreated).mockReset();
+    getGameplayState.mockReset();
   });
 
   it("returns success with message data on valid input", async () => {
     const state = buildGameAggregate();
     const player = state.teams[0].players[0];
-    getGameState.mockResolvedValue({ status: "found", data: state });
+    getGameplayState.mockResolvedValue({ status: "found", data: state });
     createGameMessage.mockResolvedValue(makeRow({ content: "hi there" }));
 
     const result = await createService()("game-1", player._userId, {
@@ -55,7 +47,7 @@ describe("submitMessageService", () => {
   it("returned message uses player publicId/publicName/teamName and never DB _id fields", async () => {
     const state = buildGameAggregate();
     const player = state.teams[0].players[0];
-    getGameState.mockResolvedValue({ status: "found", data: state });
+    getGameplayState.mockResolvedValue({ status: "found", data: state });
     createGameMessage.mockResolvedValue(makeRow({ id: "msg-9" }));
 
     const result = await createService()("game-1", player._userId, {
@@ -76,58 +68,38 @@ describe("submitMessageService", () => {
     }
   });
 
-  it("calls GameEventsEmitter.gameMessageCreated with correct args", async () => {
+  it("for team-only messages, returns audienceTeamId", async () => {
     const state = buildGameAggregate();
     const player = state.teams[0].players[0];
-    getGameState.mockResolvedValue({ status: "found", data: state });
-    createGameMessage.mockResolvedValue(makeRow({ id: "msg-abc" }));
-
-    await createService()("game-1", player._userId, { content: "hi", teamOnly: false });
-
-    expect(GameEventsEmitter.gameMessageCreated).toHaveBeenCalledWith(
-      "game-1",
-      "msg-abc",
-      "CHAT",
-      undefined,
-    );
-  });
-
-  it("for team-only messages, passes teamId to the emitter", async () => {
-    const state = buildGameAggregate();
-    const player = state.teams[0].players[0];
-    getGameState.mockResolvedValue({ status: "found", data: state });
+    getGameplayState.mockResolvedValue({ status: "found", data: state });
     createGameMessage.mockResolvedValue(makeRow());
 
-    await createService()("game-1", player._userId, { content: "secret", teamOnly: true });
+    const result = await createService()("game-1", player._userId, { content: "secret", teamOnly: true });
 
-    expect(GameEventsEmitter.gameMessageCreated).toHaveBeenCalledWith(
-      "game-1",
-      expect.any(String),
-      "CHAT",
-      player._teamId,
-    );
+    expect(result.status).toBe("success");
+    if (result.status === "success") {
+      expect(result.audienceTeamId).toBe(player._teamId);
+    }
   });
 
-  it("for public messages, passes undefined as teamId", async () => {
+  it("for public messages, returns undefined audienceTeamId", async () => {
     const state = buildGameAggregate();
     const player = state.teams[0].players[0];
-    getGameState.mockResolvedValue({ status: "found", data: state });
+    getGameplayState.mockResolvedValue({ status: "found", data: state });
     createGameMessage.mockResolvedValue(makeRow());
 
-    await createService()("game-1", player._userId, { content: "public", teamOnly: false });
+    const result = await createService()("game-1", player._userId, { content: "public", teamOnly: false });
 
-    expect(GameEventsEmitter.gameMessageCreated).toHaveBeenCalledWith(
-      "game-1",
-      expect.any(String),
-      "CHAT",
-      undefined,
-    );
+    expect(result.status).toBe("success");
+    if (result.status === "success") {
+      expect(result.audienceTeamId).toBeUndefined();
+    }
   });
 
   it("returns invalid-input when content is empty", async () => {
     const result = await createService()("game-1", 1, { content: "   ", teamOnly: false });
     expect(result.status).toBe("invalid-input");
-    expect(getGameState).not.toHaveBeenCalled();
+    expect(getGameplayState).not.toHaveBeenCalled();
   });
 
   it("returns invalid-input when content exceeds 1000 chars", async () => {
@@ -139,7 +111,7 @@ describe("submitMessageService", () => {
   });
 
   it("returns game-not-found when game doesn't exist", async () => {
-    getGameState.mockResolvedValue({ status: "game-not-found", gameId: "game-1" });
+    getGameplayState.mockResolvedValue({ status: "game-not-found", gameId: "game-1" });
 
     const result = await createService()("game-1", 1, { content: "hi", teamOnly: false });
 
@@ -147,8 +119,8 @@ describe("submitMessageService", () => {
   });
 
   it("returns unauthorized when user is not a player in the game", async () => {
-    getGameState.mockResolvedValue({
-      status: "user-not-player",
+    getGameplayState.mockResolvedValue({
+      status: "user-not-in-game",
       gameId: "game-1",
       userId: 999,
     });
@@ -161,7 +133,7 @@ describe("submitMessageService", () => {
   it("trims whitespace from message content before saving", async () => {
     const state = buildGameAggregate();
     const player = state.teams[0].players[0];
-    getGameState.mockResolvedValue({ status: "found", data: state });
+    getGameplayState.mockResolvedValue({ status: "found", data: state });
     createGameMessage.mockResolvedValue(makeRow());
 
     await createService()("game-1", player._userId, {

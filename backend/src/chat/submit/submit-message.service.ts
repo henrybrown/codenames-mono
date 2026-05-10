@@ -1,6 +1,6 @@
 import type { GameMessageData, CreateMessageInput } from "@backend/shared/data-access/repositories/game-messages.repository";
 import { MESSAGE_TYPE } from "@backend/shared/data-access/repositories/game-messages.repository";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
+import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import type { GameMessage } from "../game-message";
 import { toGameMessage } from "../game-message";
 
@@ -9,7 +9,7 @@ import { toGameMessage } from "../game-message";
  */
 export interface SubmitMessageServiceDeps {
   createGameMessage: (input: CreateMessageInput) => Promise<GameMessageData>;
-  getGameState: GameplayStateProvider;
+  getGameplayState: GameplayStateProvider;
 }
 
 /**
@@ -48,7 +48,7 @@ export const submitMessageService = (deps: SubmitMessageServiceDeps) =>
     }
 
     // Verify user has access to this game and get their team
-    const gameState = await deps.getGameState(gameId, userId);
+    const gameState = await deps.getGameplayState({ gameId, userId });
 
     if (gameState.status === "game-not-found") {
       return { status: "game-not-found", gameId };

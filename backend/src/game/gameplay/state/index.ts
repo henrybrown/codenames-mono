@@ -11,7 +11,6 @@ import * as cardsRepository from "@backend/shared/data-access/repositories/cards
 import * as turnsRepository from "@backend/shared/data-access/repositories/turns.repository";
 
 import { turnStateProvider } from "./turn-state.provider";
-import { gameplayStateProvider } from "./gameplay-state.provider";
 import {
   createGameAggregateLoader,
   type GameAggregateLoader,
@@ -47,29 +46,10 @@ export const turnState = (dbContext: DbContext) => {
   };
 };
 
-// LEGACY: the old auth+fetch+identify-merged provider.
-// Removed in step 6 once all callers have migrated to the new provider.
-const createLegacyProvider = (
-  dbContext: DbContext | TransactionContext,
-) => {
-  return gameplayStateProvider(
-    gameRepository.findGameByPublicId(dbContext),
-    teamsRepository.getTeamsByGameId(dbContext),
-    cardsRepository.getCardsByRoundId(dbContext),
-    turnsRepository.getTurnsByRoundId(dbContext),
-    playerRepository.findPlayersByGameId(dbContext),
-    roundsRepository.getLatestRound(dbContext),
-    roundsRepository.getRoundsByGameId(dbContext),
-    playerRepository.getPlayerContext(dbContext),
-    playerRepository.findPlayerByPublicId(dbContext),
-  );
-};
-
-
 /**
  * Creates an auth-free game data loader with the given database context
  */
-const createInternalGameDataLoader = (
+const createInternalLoader = (
   dbContext: DbContext | TransactionContext,
 ): GameAggregateLoader => {
   return createGameAggregateLoader({
@@ -91,7 +71,7 @@ const createInternalGameDataLoader = (
  */
 export const gameplayState = (dbContext: DbContext | TransactionContext) => {
   // Building blocks
-  const loadAggregate = createInternalGameDataLoader(dbContext);
+  const loadAggregate = createInternalLoader(dbContext);
   const verifyMembership = createGameMembershipVerifier({
     getGameById: gameRepository.findGameByPublicId(dbContext),
     getPlayersByGameId: playerRepository.findPlayersByGameId(dbContext),
@@ -109,13 +89,11 @@ export const gameplayState = (dbContext: DbContext | TransactionContext) => {
     // Primary entry point most callers use
     provider: getGameplayState,
     // Building blocks for callers that need to interleave a DB mutation
-    // (action services) or only need part of the lifecycle (chat membership-only).
+    // (action services) or only need part of the lifecycle.
     loader: loadAggregate,
     loadGameAggregate: loadAggregate,
     verifyMembership,
     resolvePlayerContext,
-    // LEGACY: removed in step 6.
-    legacyProvider: createLegacyProvider(dbContext),
   };
 };
 
@@ -123,7 +101,7 @@ export const gameplayState = (dbContext: DbContext | TransactionContext) => {
  * Convenience: returns just the auth-free game data loader
  */
 export const gameDataLoader = (dbContext: DbContext | TransactionContext): GameAggregateLoader => {
-  return createInternalGameDataLoader(dbContext);
+  return createInternalLoader(dbContext);
 };
 
-export type { GameAggregateLoader, GameAggregateLoader as GameDataLoader };
+export type { GameAggregateLoader };

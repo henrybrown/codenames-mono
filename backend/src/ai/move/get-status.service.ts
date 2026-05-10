@@ -1,5 +1,5 @@
 import type { RunFinderByGame } from "@backend/shared/data-access/repositories/ai-pipeline-runs.repository";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
+import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import type { GameFinder } from "@backend/shared/data-access/repositories/games.repository";
 
 export type HealthPlacement = "gpu" | "partial" | "cpu" | "not-loaded" | "unknown";
@@ -37,7 +37,7 @@ export interface HealthAwareLLM {
 export interface GetStatusServiceDeps {
   findRunningPipeline: RunFinderByGame;
   findGameByPublicId: GameFinder<string>;
-  getGameState: GameplayStateProvider;
+  getGameplayState: GameplayStateProvider;
   llm: HealthAwareLLM;
 }
 
@@ -58,7 +58,7 @@ export const getStatusService = (deps: GetStatusServiceDeps) =>
     deps.llm.probeHealth().catch(() => { /* swallow — already logged at debug */ });
 
     // Verify user has access to this game
-    const gameState = await deps.getGameState(gameId, userId);
+    const gameState = await deps.getGameplayState({ gameId, userId });
 
     if (gameState.status === "game-not-found") {
       return { status: "game-not-found", gameId };

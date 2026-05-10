@@ -4,7 +4,7 @@ import type { GiveClueService } from "./give-clue.service";
 import type { AppLogger } from "@backend/shared/logging";
 import type { ResolveGameplayContext } from "../../shared/resolve-gameplay-context";
 import { contextErrorToHttp } from "../../shared/resolve-gameplay-context";
-import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import { PLAYER_ROLE, GAME_TYPE } from "@codenames/shared/types";
 import { z } from "zod";
 
@@ -33,7 +33,7 @@ const multiDeviceBody = clueFields.extend({
 export type Dependencies = {
   giveClue: GiveClueService;
   resolveContext: ResolveGameplayContext;
-  loadGameData: GameDataLoader;
+  loadGameAggregate: GameAggregateLoader;
 };
 
 export const giveClueController = (logger: AppLogger) => (deps: Dependencies) => {
@@ -52,7 +52,7 @@ export const giveClueController = (logger: AppLogger) => (deps: Dependencies) =>
       const { userId } = authResult.data;
 
       // Load game to determine type
-      const rawGameState = await deps.loadGameData(gameId);
+      const rawGameState = await deps.loadGameAggregate(gameId);
       if (!rawGameState) {
         res.status(404).json({ success: false, error: "Game not found" });
         return;

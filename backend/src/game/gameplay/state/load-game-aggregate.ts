@@ -138,7 +138,3 @@ export const createGameAggregateLoader = (deps: GameAggregateLoaderDeps): GameAg
   };
 };
 
-// Backwards-compat aliases. Removed in Step 6.
-export type GameDataLoader = GameAggregateLoader;
-export type GameDataLoaderDeps = GameAggregateLoaderDeps;
-export const createGameDataLoader = createGameAggregateLoader;

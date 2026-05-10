@@ -24,7 +24,7 @@ import type { AppLogger } from "@backend/shared/logging";
 
 import * as gameMessagesRepo from "@backend/shared/data-access/repositories/game-messages.repository";
 
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
+import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 
 import { createGetMessages } from "./queries";
 import { createSubmitMessage } from "./submit";
@@ -40,7 +40,7 @@ export type { GameMessage } from "./game-message";
  * errors exactly at the chat boundary.
  */
 export type GameplayFeature = {
-  getGameState: GameplayStateProvider;
+  getGameplayState: GameplayStateProvider;
 };
 
 export type ChatModuleDependencies = {
@@ -67,12 +67,12 @@ export const initialize = (deps: ChatModuleDependencies) => {
 
   /** Sub-features */
   const getMessagesFeature = createGetMessages(logger)({
-    getGameState: gameplay.getGameState,
+    getGameplayState: gameplay.getGameplayState,
     findMessagesByGame: repositories.findMessagesByGame,
   });
 
   const submitMessageFeature = createSubmitMessage(logger)({
-    getGameState: gameplay.getGameState,
+    getGameplayState: gameplay.getGameplayState,
     createGameMessage: repositories.createGameMessage,
   });
 

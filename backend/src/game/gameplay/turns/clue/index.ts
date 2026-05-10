@@ -1,7 +1,7 @@
 import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import type { TurnStateProvider } from "@backend/game/gameplay/state/turn-state.provider";
 import type { GameplayHandler } from "../../gameplay-actions";
-import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import type { AppLogger } from "@backend/shared/logging";
 import { createResolveGameplayContext } from "../../shared/resolve-gameplay-context";
 
@@ -12,7 +12,7 @@ export interface GiveClueDependencies {
   getGameplayState: GameplayStateProvider;
   gameplayHandler: GameplayHandler;
   getTurnState: TurnStateProvider;
-  loadGameData: GameDataLoader;
+  loadGameAggregate: GameAggregateLoader;
 }
 
 export const giveClue = (logger: AppLogger) => (dependencies: GiveClueDependencies) => {
@@ -28,7 +28,7 @@ export const giveClue = (logger: AppLogger) => (dependencies: GiveClueDependenci
   const controller = giveClueController(logger)({
     giveClue: service,
     resolveContext,
-    loadGameData: dependencies.loadGameData,
+    loadGameAggregate: dependencies.loadGameAggregate,
   });
 
   return { controller, service };

@@ -1,6 +1,5 @@
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
-import type { GameplayStateProvider as NewGameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
-import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import type { TurnStateProvider } from "@backend/game/gameplay/state/turn-state.provider";
 import type { TurnsFinder, RoundId } from "@backend/shared/data-access/repositories/turns.repository";
 import type { PlayerFinderAll, RoundId as PlayerRoundId } from "@backend/shared/data-access/repositories/players.repository";
@@ -19,9 +18,8 @@ import { getTurnService } from "./get-turn.service";
 import { controller as getTurnControllerFactory } from "./get-turn.controller";
 
 export interface QueriesDependencies {
-  getGameState: GameplayStateProvider;          // legacy — used by get-events / get-players
-  getGameplayState: NewGameplayStateProvider;   // new — used by get-game
-  loadGameData: GameDataLoader;
+  getGameplayState: GameplayStateProvider;
+  loadGameAggregate: GameAggregateLoader;
   getTurnState: TurnStateProvider;
   getTurnsByRoundId: TurnsFinder<RoundId>;
   findPlayersByRoundId: PlayerFinderAll<PlayerRoundId>;

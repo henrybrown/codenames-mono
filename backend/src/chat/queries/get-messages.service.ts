@@ -2,7 +2,7 @@ import type {
   GameMessageData,
   MessageQueryParams,
 } from "@backend/shared/data-access/repositories/game-messages.repository";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
+import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import type { GameMessage, MessageAuthorInfo } from "../game-message";
 import { toGameMessage } from "../game-message";
 
@@ -11,7 +11,7 @@ import { toGameMessage } from "../game-message";
  */
 export interface GetMessagesServiceDeps {
   findMessagesByGame: (params: MessageQueryParams) => Promise<GameMessageData[]>;
-  getGameState: GameplayStateProvider;
+  getGameplayState: GameplayStateProvider;
 }
 
 /**
@@ -41,7 +41,7 @@ export const getMessagesService =
     query: GetMessagesQuery = {},
   ): Promise<GetMessagesResult> => {
     // Verify user has access to this game and get their team
-    const gameState = await deps.getGameState(gameId, userId);
+    const gameState = await deps.getGameplayState({ gameId, userId });
 
     if (gameState.status === "game-not-found") {
       return { status: "game-not-found", gameId };

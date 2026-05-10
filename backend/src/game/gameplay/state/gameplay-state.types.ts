@@ -114,8 +114,7 @@ export const roundSchema = z.object({
  * Canonical PlayerContext.
  *
  * One shape, owned by this file. Constructed only by
- * resolvePlayerContext. Other definitions (in the legacy
- * gameplay-state.provider.ts) are aliases pending removal.
+ * resolvePlayerContext.
  */
 export const playerContextSchema = z.object({
   _userId: z.number().int().positive(),

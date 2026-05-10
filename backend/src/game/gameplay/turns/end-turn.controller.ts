@@ -9,7 +9,7 @@ import type { EndTurnService } from "./end-turn.service";
 import type { AppLogger } from "@backend/shared/logging";
 import type { ResolveGameplayContext } from "../shared/resolve-gameplay-context";
 import { contextErrorToHttp } from "../shared/resolve-gameplay-context";
-import type { GameDataLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
 import { PLAYER_ROLE, GAME_TYPE } from "@codenames/shared/types";
 import { z } from "zod";
 
@@ -33,7 +33,7 @@ const multiDeviceBody = z.object({
 export type EndTurnControllerDeps = {
   endTurn: EndTurnService;
   resolveContext: ResolveGameplayContext;
-  loadGameData: GameDataLoader;
+  loadGameAggregate: GameAggregateLoader;
 };
 
 export const createEndTurnController = (logger: AppLogger) => (deps: EndTurnControllerDeps) => {
@@ -50,7 +50,7 @@ export const createEndTurnController = (logger: AppLogger) => (deps: EndTurnCont
       const { gameId, roundNumber } = paramsResult.data;
       const { userId } = authResult.data;
 
-      const rawGameState = await deps.loadGameData(gameId);
+      const rawGameState = await deps.loadGameAggregate(gameId);
       if (!rawGameState) {
         res.status(404).json({ success: false, error: "Game not found" });
         return;

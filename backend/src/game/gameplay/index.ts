@@ -27,9 +27,7 @@ export const initialize = (
 
   /** State providers */
   const {
-    provider: getGameplayState,         // new — discriminated-union input
-    legacyProvider: getGameState,       // old — positional args; consumers migrate in steps 3-5
-    loader: loadGameData,
+    provider: getGameplayState,
     loadGameAggregate,
     verifyMembership,
     resolvePlayerContext,
@@ -41,9 +39,8 @@ export const initialize = (
 
   /** Queries */
   const queries = createQueries(logger)({
-    getGameState,
     getGameplayState,
-    loadGameData,
+    loadGameAggregate,
     getTurnState,
     getTurnsByRoundId,
     findPlayersByRoundId,
@@ -52,11 +49,10 @@ export const initialize = (
 
   /** Turns (clue, guess, end-turn, start-turn) */
   const turns = createTurns(logger)({
-    getGameState,
     getGameplayState,
     gameplayHandler,
     getTurnState,
-    loadGameData,
+    loadGameAggregate,
   });
 
   /** Routes */
@@ -80,11 +76,9 @@ export const initialize = (
     makeGuessService: turns.services.makeGuess,
     endTurnService: turns.services.endTurn,
     startTurnService: turns.services.startTurn,
-    getGameState,                       // legacy — chat consumes (membership-only)
-    getGameplayState,                   // new — primary read-only entry point
+    getGameplayState,
     loadGameAggregate,
     verifyMembership,
     resolvePlayerContext,
-    loadGameData,                       // legacy alias for loadGameAggregate
   };
 };

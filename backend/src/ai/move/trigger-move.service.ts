@@ -1,5 +1,5 @@
 import type { AIPlayerService } from "@backend/ai/player";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
+import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import type { AppLogger } from "@backend/shared/logging";
 
 /**
@@ -16,7 +16,7 @@ export interface PipelineRunInfo {
  */
 export interface TriggerMoveServiceDeps {
   aiPlayerService: AIPlayerService;
-  getGameState: GameplayStateProvider;
+  getGameplayState: GameplayStateProvider;
 }
 
 /**
@@ -41,7 +41,7 @@ export const triggerMoveService =
   (deps: TriggerMoveServiceDeps) =>
   async (gameId: string, userId: number): Promise<TriggerMoveResult> => {
     // Verify user has access to this game
-    const gameState = await deps.getGameState(gameId, userId);
+    const gameState = await deps.getGameplayState({ gameId, userId });
 
     if (gameState.status === "game-not-found") {
       return { status: "game-not-found", gameId };

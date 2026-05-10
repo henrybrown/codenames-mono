@@ -1,5 +1,5 @@
 import type { AppLogger } from "@backend/shared/logging";
-import type { GameplayStateProvider } from "@backend/game/gameplay/state/gameplay-state.provider";
+import type { GameplayStateProvider } from "@backend/game/gameplay/state/get-gameplay-state";
 import type {
   GameMessageData,
   MessageQueryParams,
@@ -9,7 +9,7 @@ import { getMessagesService } from "./get-messages.service";
 import { getMessagesController } from "./get-messages.controller";
 
 export interface GetMessagesDependencies {
-  getGameState: GameplayStateProvider;
+  getGameplayState: GameplayStateProvider;
   findMessagesByGame: (params: MessageQueryParams) => Promise<GameMessageData[]>;
 }
 
@@ -17,7 +17,7 @@ export const createGetMessages =
   (logger: AppLogger) => (deps: GetMessagesDependencies) => {
     const service = getMessagesService({
       findMessagesByGame: deps.findMessagesByGame,
-      getGameState: deps.getGameState,
+      getGameplayState: deps.getGameplayState,
     });
 
     const controller = getMessagesController({

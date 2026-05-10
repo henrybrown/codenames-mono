@@ -1,22 +1,50 @@
 import { createResolveGameplayContext } from "@backend/game/gameplay/shared/resolve-gameplay-context";
-import { buildGameAggregate, buildTurn, buildPlayer } from "../../__test-utils__/fixtures";
+import { buildGameAggregate, buildTurn } from "../../__test-utils__/fixtures";
 import type { GameAggregate } from "@backend/game/gameplay/state/gameplay-state.types";
+import type {
+  GameplayStateProvider,
+  GameplayStateResult,
+} from "@backend/game/gameplay/state/get-gameplay-state";
+
+const okFor = (game: GameAggregate, playerIndex: { teamIdx: number; playerIdx: number }): GameplayStateResult => {
+  const player = game.teams[playerIndex.teamIdx].players[playerIndex.playerIdx];
+  return {
+    status: "found",
+    data: {
+      ...game,
+      playerContext: {
+        _id: player._id,
+        publicId: player.publicId,
+        _userId: player._userId,
+        _teamId: player._teamId,
+        publicName: player.publicName,
+        teamName: player.teamName,
+        username: player.publicName,
+        role: player.role as any,
+      },
+    },
+  };
+};
 
 describe("resolveGameplayContext.fromRole", () => {
-  const makeResolver = (gameState: GameAggregate | null = null) => {
-    const loadGameData = vi.fn<any>().mockResolvedValue(gameState);
-    const getGameState = vi.fn<any>();
-    const resolver = createResolveGameplayContext({ getGameState, loadGameData });
-    return { resolver, loadGameData, getGameState };
+  const makeResolver = (result: GameplayStateResult) => {
+    const getGameplayState = vi.fn<GameplayStateProvider>().mockResolvedValue(result);
+    const resolver = createResolveGameplayContext({ getGameplayState });
+    return { resolver, getGameplayState };
   };
 
   it("resolves CODEMASTER on active turn's team", async () => {
     const game = buildGameAggregate();
-    const userId = game.teams[0].players[0]._userId; // Red CM's userId
-    const { resolver } = makeResolver(game);
+    const userId = game.teams[0].players[0]._userId;
+    const { resolver, getGameplayState } = makeResolver(okFor(game, { teamIdx: 0, playerIdx: 0 }));
 
     const result = await resolver.fromRole("game-public-id", userId, "CODEMASTER");
 
+    expect(getGameplayState).toHaveBeenCalledWith({
+      gameId: "game-public-id",
+      userId,
+      role: "CODEMASTER",
+    });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.gameState.playerContext).not.toBeNull();
@@ -27,8 +55,8 @@ describe("resolveGameplayContext.fromRole", () => {
 
   it("resolves CODEBREAKER on active turn's team", async () => {
     const game = buildGameAggregate();
-    const userId = game.teams[0].players[1]._userId; // Red CB's userId
-    const { resolver } = makeResolver(game);
+    const userId = game.teams[0].players[1]._userId;
+    const { resolver } = makeResolver(okFor(game, { teamIdx: 0, playerIdx: 1 }));
 
     const result = await resolver.fromRole("game-public-id", userId, "CODEBREAKER");
 
@@ -39,7 +67,7 @@ describe("resolveGameplayContext.fromRole", () => {
   });
 
   it("returns game-not-found when game doesn't exist", async () => {
-    const { resolver } = makeResolver(null);
+    const { resolver } = makeResolver({ status: "game-not-found", gameId: "bad-id" });
 
     const result = await resolver.fromRole("bad-id", 1, "CODEMASTER");
 
@@ -50,8 +78,11 @@ describe("resolveGameplayContext.fromRole", () => {
   });
 
   it("returns user-not-in-game when userId doesn't match any player", async () => {
-    const game = buildGameAggregate();
-    const { resolver } = makeResolver(game);
+    const { resolver } = makeResolver({
+      status: "user-not-in-game",
+      gameId: "game-public-id",
+      userId: 99999,
+    });
 
     const result = await resolver.fromRole("game-public-id", 99999, "CODEMASTER");
 
@@ -62,15 +93,16 @@ describe("resolveGameplayContext.fromRole", () => {
   });
 
   it("returns no-active-turn when no turn is active", async () => {
+    const { resolver } = makeResolver({
+      status: "no-active-turn",
+      gameId: "game-public-id",
+    });
     const game = buildGameAggregate();
-    // Set all turns to COMPLETED
     game.currentRound!.turns = [
       buildTurn({ status: "COMPLETED", _teamId: 1, teamName: "Red" }),
     ];
-    const userId = game.teams[0].players[0]._userId;
-    const { resolver } = makeResolver(game);
 
-    const result = await resolver.fromRole("game-public-id", userId, "CODEMASTER");
+    const result = await resolver.fromRole("game-public-id", game.teams[0].players[0]._userId, "CODEMASTER");
 
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -79,15 +111,13 @@ describe("resolveGameplayContext.fromRole", () => {
   });
 
   it("returns no-player-for-role when role doesn't exist on team", async () => {
-    const game = buildGameAggregate();
-    // Remove all codemasters from Red team in round players
-    game.currentRound!.players = game.currentRound!.players.filter(
-      (p) => !(p._teamId === 1 && p.role === "CODEMASTER"),
-    );
-    const userId = game.teams[0].players[1]._userId; // Red CB's userId
-    const { resolver } = makeResolver(game);
+    const { resolver } = makeResolver({
+      status: "no-player-for-role",
+      role: "CODEMASTER",
+      teamName: "Red",
+    });
 
-    const result = await resolver.fromRole("game-public-id", userId, "CODEMASTER");
+    const result = await resolver.fromRole("game-public-id", 1, "CODEMASTER");
 
     expect(result.success).toBe(false);
     if (!result.success) {
