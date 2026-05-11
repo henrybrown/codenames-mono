@@ -1,7 +1,8 @@
-import {
-  TurnFinder,
-  PublicId,
-} from "@backend/shared/data-access/repositories/turns.repository";
+import type {
+  DbContext,
+  TransactionContext,
+} from "@backend/shared/data-access/transaction-handler";
+import * as turnsRepository from "@backend/shared/data-access/repositories/turns.repository";
 
 /**
  * Turn guess data with card word included
@@ -44,19 +45,22 @@ export interface TurnData {
 export type TurnLoader = (publicId: string) => Promise<TurnData | null>;
 
 /**
- * Low-level factory: given a repo finder, returns a TurnLoader that
- * adds the computed fields (hasGuesses / lastGuess / prevGuesses) and
- * transforms clue + guess shapes for the frontend.
+ * The single factory for loading turn-level state (turn + clue + guesses).
+ *
+ * Pure data assembly with light transformation: adds computed fields
+ * (hasGuesses, lastGuess, prevGuesses) and transforms clue + guess shapes
+ * for the frontend.
+ *
+ * Works with both regular db connections and transaction contexts.
  */
-export const buildTurnLoader =
-  (getTurnByPublicId: TurnFinder<PublicId>): TurnLoader =>
-  async (publicId) => {
-    // Get the raw turn data from repository
-    const turnData = await getTurnByPublicId(publicId);
+export const createTurnLoader = (
+  dbContext: DbContext | TransactionContext,
+): TurnLoader => {
+  const getTurnByPublicId = turnsRepository.getTurnByPublicId(dbContext);
 
-    if (!turnData) {
-      return null;
-    }
+  return async (publicId) => {
+    const turnData = await getTurnByPublicId(publicId);
+    if (!turnData) return null;
 
     // Transform guesses to frontend format with computed fields
     const transformedGuesses: TurnGuess[] = turnData.guesses.map((guess) => ({
@@ -82,9 +86,7 @@ export const buildTurnLoader =
         }
       : undefined;
 
-    // Return complete turn data with computed fields and internal IDs
     return {
-      // Raw data
       publicId: turnData.publicId,
       teamName: turnData.teamName,
       status: turnData.status as "ACTIVE" | "COMPLETED",
@@ -92,14 +94,11 @@ export const buildTurnLoader =
       createdAt: turnData.createdAt,
       completedAt: turnData.completedAt,
       clue: transformedClue,
-
-      // Computed fields
       hasGuesses,
       lastGuess,
       prevGuesses,
-
-      // Internal fields for service layer auth/logic
       _gameId: turnData._gameId,
       _roundId: turnData._roundId,
     };
   };
+};

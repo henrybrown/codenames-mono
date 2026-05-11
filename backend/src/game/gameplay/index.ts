@@ -7,10 +7,11 @@ import type { HttpLoggerHandler } from "@backend/shared/http-middleware/http-log
 import { blockingGameAction, requireGameRole } from "@backend/game/access";
 import * as gamesRepo from "@backend/shared/data-access/repositories/games.repository";
 import * as playersRepo from "@backend/shared/data-access/repositories/players.repository";
+import * as turnsRepo from "@backend/shared/data-access/repositories/turns.repository";
 import type { AppLogger } from "@backend/shared/logging";
 import { PLAYER_ROLE } from "@codenames/shared/types";
 
-import { createGameAggregateLoader, turnState } from "@backend/game/state";
+import { createGameAggregateLoader, createTurnLoader } from "@backend/game/state";
 import { gameplayActions } from "./gameplay-actions";
 import { createQueries } from "./queries";
 import { createTurns } from "./turns";
@@ -30,7 +31,9 @@ export const initialize = (
 
   /** State providers */
   const loadGameAggregate = createGameAggregateLoader(db);
-  const { loadTurn: getTurnState, getTurnsByRoundId, findPlayersByRoundId } = turnState(db);
+  const loadTurn = createTurnLoader(db);
+  const getTurnsByRoundId = turnsRepo.getTurnsByRoundId(db);
+  const findPlayersByRoundId = playersRepo.findPlayersByRoundId(db);
 
   /** Gameplay actions (transactional handler) */
   const { handler: gameplayHandler } = gameplayActions(db);
@@ -44,7 +47,7 @@ export const initialize = (
   /** Queries */
   const queries = createQueries(logger)({
     loadGameAggregate,
-    getTurnState,
+    getTurnState: loadTurn,
     getTurnsByRoundId,
     findPlayersByRoundId,
     db,
@@ -53,7 +56,7 @@ export const initialize = (
   /** Turns (clue, guess, end-turn, start-turn) */
   const turns = createTurns(logger)({
     gameplayHandler,
-    getTurnState,
+    getTurnState: loadTurn,
     loadGameAggregate,
   });
 
