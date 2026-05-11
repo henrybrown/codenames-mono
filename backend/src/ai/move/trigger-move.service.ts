@@ -1,5 +1,5 @@
 import type { AIPlayerService } from "@backend/ai/player";
-import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import { findPlayerByUserId } from "@backend/game/access";
 import type { AppLogger } from "@backend/shared/logging";
 

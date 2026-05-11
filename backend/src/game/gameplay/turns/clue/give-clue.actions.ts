@@ -3,8 +3,8 @@ import {
   TurnGuessUpdater,
 } from "@backend/shared/data-access/repositories/turns.repository";
 import type { GiveClueValidGameState, validate, validateClueWord } from "./give-clue.rules";
-import type { GameAggregate } from "@backend/game/gameplay/state/gameplay-state.types";
-import { complexProperties } from "@backend/game/gameplay/state/gameplay-state.helpers";
+import type { GameAggregate } from "@backend/game/state/gameplay-state.types";
+import { complexProperties } from "@backend/game/state/gameplay-state.helpers";
 import { UnexpectedGameplayError, GameplayValidationError } from "../../errors/gameplay.errors";
 
 /**

@@ -2,7 +2,7 @@ import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import type { MakeGuessService } from "./make-guess.service";
 import type { AppLogger } from "@backend/shared/logging";
-import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import {
   findPlayerByUserId,
   findPlayerByActiveRole,

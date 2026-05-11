@@ -2,7 +2,7 @@ import type {
   GameMessageData,
   MessageQueryParams,
 } from "@backend/shared/data-access/repositories/game-messages.repository";
-import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import { findPlayerByUserId } from "@backend/game/access";
 import type { GameMessage, MessageAuthorInfo } from "../game-message";
 import { toGameMessage } from "../game-message";

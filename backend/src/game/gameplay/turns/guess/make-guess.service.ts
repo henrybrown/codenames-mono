@@ -1,9 +1,9 @@
-import type { TurnStateProvider } from "@backend/game/gameplay/state/turn-state.provider";
+import type { TurnStateProvider } from "@backend/game/state/turn-state.provider";
 import type { GameplayHandler } from "../../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
 import { CODEBREAKER_OUTCOME } from "@codenames/shared/types";
-import { complexProperties, computeTurnPhase } from "@backend/game/gameplay/state/gameplay-state.helpers";
-import { TurnPhase, GameAggregate, Player } from "@backend/game/gameplay/state/gameplay-state.types";
+import { complexProperties, computeTurnPhase } from "@backend/game/state/gameplay-state.helpers";
+import { TurnPhase, GameAggregate, Player } from "@backend/game/state/gameplay-state.types";
 import type { GamePlayer } from "@backend/game/access";
 import { winningConditions } from "./make-guess.rules";
 import { GameEventsEmitter } from "@backend/shared/websocket";

@@ -1,4 +1,4 @@
-import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import { isUserPlayerInGame } from "@backend/game/access";
 import { PlayerRole, PLAYER_ROLE } from "@codenames/shared/types";
 

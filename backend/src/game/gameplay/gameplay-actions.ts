@@ -12,9 +12,9 @@ import * as makeGuessActions from "./turns/guess/make-guess.actions";
 import * as makeGuessRules from "./turns/guess/make-guess.rules";
 import { validate as validateGiveClue, validateClueWord } from "./turns/clue/give-clue.rules";
 
-import { gameDataLoader } from "@backend/game/gameplay/state";
+import { gameDataLoader } from "@backend/game/state";
 import { UnexpectedGameplayError } from "./errors/gameplay.errors";
-import type { GameAggregate } from "@backend/game/gameplay/state/gameplay-state.types";
+import type { GameAggregate } from "@backend/game/state/gameplay-state.types";
 
 /**
  * Creates game-scoped gameplay operations for use within a transaction.

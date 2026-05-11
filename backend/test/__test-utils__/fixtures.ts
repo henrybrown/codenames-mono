@@ -3,7 +3,7 @@
  * All use spread-based overrides for concise test setup.
  */
 
-import type { GameAggregate, Player, Turn, Card, Round } from "@backend/game/gameplay/state/gameplay-state.types";
+import type { GameAggregate, Player, Turn, Card, Round } from "@backend/game/state/gameplay-state.types";
 
 let idCounter = 1;
 const nextId = () => idCounter++;

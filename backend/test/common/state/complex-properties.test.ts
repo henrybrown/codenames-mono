@@ -3,7 +3,7 @@
  *
  * All pure functions on GameAggregate — no mocks needed.
  */
-import { complexProperties } from "@backend/game/gameplay/state/gameplay-state.helpers";
+import { complexProperties } from "@backend/game/state/gameplay-state.helpers";
 import { buildGameAggregate, buildTurn, buildRound, resetIds } from "../../__test-utils__/fixtures";
 
 describe("complexProperties", () => {

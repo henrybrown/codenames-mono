@@ -6,7 +6,7 @@
 import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clue.service";
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import type { EndTurnService } from "@backend/game/gameplay/turns/end-turn.service";
-import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import { findPlayerByPublicId } from "@backend/game/access";
 import type { CodenamesPipeline, RankedWord } from "../pipeline";
 import type {

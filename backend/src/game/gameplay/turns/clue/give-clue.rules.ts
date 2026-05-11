@@ -1,16 +1,16 @@
 import { GAME_STATE, ROUND_STATE, PLAYER_ROLE } from "@codenames/shared/types";
-import { GameAggregate } from "@backend/game/gameplay/state/gameplay-state.types";
+import { GameAggregate } from "@backend/game/state/gameplay-state.types";
 import {
   gameplayBaseSchema,
   currentRoundSchema,
   playerContextSchema,
-} from "@backend/game/gameplay/state/gameplay-state.types";
-import { complexProperties } from "@backend/game/gameplay/state/gameplay-state.helpers";
+} from "@backend/game/state/gameplay-state.types";
+import { complexProperties } from "@backend/game/state/gameplay-state.helpers";
 import {
   validateWithZodSchema,
   ValidatedGameState,
   GameplayValidationResult,
-} from "@backend/game/gameplay/state/gameplay-state.validation";
+} from "@backend/game/state/gameplay-state.validation";
 import { z } from "zod";
 
 /**

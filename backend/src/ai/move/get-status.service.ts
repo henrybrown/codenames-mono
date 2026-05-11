@@ -1,5 +1,5 @@
 import type { RunFinderByGame } from "@backend/shared/data-access/repositories/ai-pipeline-runs.repository";
-import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import { findPlayerByUserId } from "@backend/game/access";
 
 export type HealthPlacement = "gpu" | "partial" | "cpu" | "not-loaded" | "unknown";

@@ -26,7 +26,7 @@ import * as gameMessagesRepo from "@backend/shared/data-access/repositories/game
 import * as gamesRepo from "@backend/shared/data-access/repositories/games.repository";
 import * as playersRepo from "@backend/shared/data-access/repositories/players.repository";
 
-import type { GameAggregateLoader } from "@backend/game/gameplay/state/load-game-aggregate";
+import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import { requireGameMember } from "@backend/game/access";
 
 import { createGetMessages } from "./queries";

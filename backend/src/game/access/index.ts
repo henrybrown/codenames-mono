@@ -24,5 +24,5 @@ export {
   findPlayerByPublicId,
   findPlayerByActiveRole,
   isUserPlayerInGame,
-} from "@backend/game/gameplay/state/gameplay-state.helpers";
+} from "@backend/game/state/gameplay-state.helpers";
 export type { GamePlayer } from "./types";

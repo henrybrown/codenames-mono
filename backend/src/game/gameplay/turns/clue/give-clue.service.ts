@@ -1,8 +1,8 @@
-import type { TurnStateProvider } from "@backend/game/gameplay/state/turn-state.provider";
+import type { TurnStateProvider } from "@backend/game/state/turn-state.provider";
 import type { GameplayHandler } from "../../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
-import { computeTurnPhase } from "@backend/game/gameplay/state/gameplay-state.helpers";
-import { TurnPhase, GameAggregate, Player } from "@backend/game/gameplay/state/gameplay-state.types";
+import { computeTurnPhase } from "@backend/game/state/gameplay-state.helpers";
+import { TurnPhase, GameAggregate, Player } from "@backend/game/state/gameplay-state.types";
 import type { GamePlayer } from "@backend/game/access";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import { GameplayValidationError } from "../../errors/gameplay.errors";

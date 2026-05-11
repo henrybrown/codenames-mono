@@ -7,7 +7,7 @@ import type { GameplayHandler } from "../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
 import { GameplayValidationError } from "../errors/gameplay.errors";
 import { GameEventsEmitter } from "@backend/shared/websocket";
-import type { GameAggregate } from "@backend/game/gameplay/state/gameplay-state.types";
+import type { GameAggregate } from "@backend/game/state/gameplay-state.types";
 import type { GamePlayer } from "@backend/game/access";
 
 export type EndTurnInput = {
