@@ -31,7 +31,7 @@ describe("giveClueService", () => {
 
   const createService = (handlerResult: any = null, handlerThrows: Error | null = null) => {
     const gameplayHandler = vi.fn<(...args: any[]) => any>().mockImplementation(
-      async (_state: any, fn: any) => {
+      async (_state: any, _player: any, fn: any) => {
         if (handlerThrows) throw handlerThrows;
         return fn({
           giveClue: vi.fn<any>().mockResolvedValue(handlerResult ?? {

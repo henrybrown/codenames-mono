@@ -2,14 +2,15 @@ import {
   ClueCreator,
   TurnGuessUpdater,
 } from "@backend/shared/data-access/repositories/turns.repository";
-import type { GiveClueValidGameState, validate, validateClueWord } from "./give-clue.rules";
+import type { validate, validateClueWord } from "./give-clue.rules";
 import type { GameAggregate } from "@backend/game/state/types";
 import { getCurrentTurn } from "@backend/game/state/helpers";
 import { UnexpectedGameplayError, GameplayValidationError } from "../../errors/gameplay.errors";
+import type { ActingPlayer } from "../types";
 
 /**
  * Factory function that creates a self-validating clue giving action.
- * Receives raw GameAggregate, validates internally, then executes.
+ * Receives raw GameAggregate + acting player, validates internally, executes.
  */
 export const giveClueToTurn = (
   createClue: ClueCreator,
@@ -19,11 +20,10 @@ export const giveClueToTurn = (
 ) => {
   return async (
     gameState: GameAggregate,
+    player: ActingPlayer,
     word: string,
     targetCardCount: number,
   ) => {
-    // todo: remove numbered steps its nasty .... review across app for numbered steps
-    // 1. Validate clue word against board
     const clueWordResult = validateClueWordFn(gameState, word);
     if (!clueWordResult.valid) {
       throw new GameplayValidationError("clue word", [
@@ -31,13 +31,11 @@ export const giveClueToTurn = (
       ]);
     }
 
-    // 2. Validate game state (role, turn, team)
-    const validation = validateGiveClue(gameState);
+    const validation = validateGiveClue(gameState, player._teamId);
     if (!validation.valid) {
       throw new GameplayValidationError("give clue", validation.errors);
     }
 
-    // 3. Execute
     const currentTurn = getCurrentTurn(validation.data);
     if (!currentTurn) {
       throw new UnexpectedGameplayError("No active turn found");

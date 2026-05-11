@@ -28,6 +28,7 @@ import { GameStatusUpdater } from "@backend/shared/data-access/repositories/game
 import type { CreateEventInput } from "@backend/shared/data-access/repositories/game-events.repository";
 
 import { getCurrentTurnOrThrow } from "@backend/game/state/helpers";
+import type { ActingPlayer } from "../types";
 
 /**
  * Validates a specific card can be guessed
@@ -86,20 +87,20 @@ export const createMakeGuessAction = (deps: {
   createEvent: (event: CreateEventInput) => Promise<any>;
   validateMakeGuess: typeof validateMakeGuess;
 }) => {
-  return async (gameState: GameAggregate, cardWord: string) => {
-    const validation = deps.validateMakeGuess(gameState);
+  return async (
+    gameState: GameAggregate,
+    player: ActingPlayer,
+    cardWord: string,
+  ) => {
+    const validation = deps.validateMakeGuess(gameState, player._teamId);
     if (!validation.valid) {
       throw new GameplayValidationError("make guess", validation.errors);
     }
 
-    // Validate card can be guessed
     const cardValidation = validateGuessCard(gameState, cardWord);
     if (!cardValidation.valid) {
       throw new GameplayValidationError("guess card", [
-        {
-          path: "cardWord",
-          message: cardValidation.error!,
-        },
+        { path: "cardWord", message: cardValidation.error! },
       ]);
     }
 
@@ -108,11 +109,7 @@ export const createMakeGuessAction = (deps: {
       selected: true,
     });
 
-    if (!gameState.playerContext) {
-      throw new Error("Player context is required for making guesses");
-    }
-    
-    const outcome = determineOutcome(card, gameState.playerContext._teamId);
+    const outcome = determineOutcome(card, player._teamId);
 
     const newGuessesRemaining =
       outcome === CODEBREAKER_OUTCOME.CORRECT_TEAM_CARD
@@ -121,7 +118,7 @@ export const createMakeGuessAction = (deps: {
 
     const guess = await deps.createGuess({
       turnId: currentTurn._id,
-      playerId: gameState.playerContext._id,
+      playerId: player._id,
       cardId: cardValidation.cardId!,
       outcome,
     });
@@ -131,12 +128,11 @@ export const createMakeGuessAction = (deps: {
       newGuessesRemaining,
     );
 
-    // Create event for card selection
     await deps.createEvent({
       gameId: gameState._id,
       eventType: GAME_EVENT_TYPE.SELECT,
       cardId: cardValidation.cardId!,
-      playerId: gameState.playerContext._id,
+      playerId: player._id,
       roundId: gameState.currentRound?._id,
       metadata: {
         cardWord: card.word,

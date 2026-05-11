@@ -129,7 +129,11 @@ export const createAIPlayerService =
     };
 
     /**
-     * Helper to build a GameAggregate with AI player's context set
+     * Load game state plus the AI player's record for a given gameId/playerId.
+     *
+     * Returns aggregate and player separately — the aggregate has no
+     * playerContext field anymore; callers pass the player explicitly into
+     * service calls (and through the gameplay handler).
      */
     const loadGameStateForAI = async (gameId: string, playerId: string) => {
       const aggregate = await loadGameAggregate(gameId);
@@ -138,18 +142,7 @@ export const createAIPlayerService =
       const player = findPlayerByPublicId(aggregate, playerId);
       if (!player) return null;
 
-      return {
-        ...aggregate,
-        playerContext: {
-          _id: player._id,
-          publicId: player.publicId,
-          _userId: player._userId,
-          _teamId: player._teamId,
-          teamName: player.teamName,
-          publicName: player.publicName,
-          role: player.role as "CODEMASTER" | "CODEBREAKER",
-        },
-      };
+      return { aggregate, player };
     };
 
     const checkAndActIfNeeded = async (gameId: string) => {
@@ -307,11 +300,12 @@ export const createAIPlayerService =
       try {
         await emitNarration(context, "Analyzing the board and thinking of a clever clue...");
 
-        const gameState = await loadGameStateForAI(context.gameId, context.playerId);
-        if (!gameState || !gameState.currentRound) throw new Error("Failed to get game state");
+        const loaded = await loadGameStateForAI(context.gameId, context.playerId);
+        if (!loaded || !loaded.aggregate.currentRound) throw new Error("Failed to get game state");
+        const { aggregate, player } = loaded;
 
-        const cards = gameState.currentRound.cards;
-        const myTeam = gameState.playerContext?.teamName;
+        const cards = aggregate.currentRound!.cards;
+        const myTeam = player.teamName;
         if (!myTeam) throw new Error("No team found");
 
         const friendlyWords = cards.filter((c: any) => c.teamName === myTeam && !c.selected).map((c: any) => c.word);
@@ -321,7 +315,7 @@ export const createAIPlayerService =
 
         if (friendlyWords.length === 0) throw new Error("No cards left");
 
-        const previousClues = gameState.currentRound.turns
+        const previousClues = aggregate.currentRound!.turns
           .filter((t: any) => t.clue && t.clue.word)
           .map((t: any) => t.clue.word);
 
@@ -342,8 +336,8 @@ export const createAIPlayerService =
         await emitNarration(context, `I've got it! The clue is "${pipelineResult.clue}" for ${pipelineResult.number}`);
 
         const clueResult = await giveClue({
-          gameState,
-          playerContext: gameState.playerContext!,
+          gameState: aggregate,
+          playerContext: player,
           word: pipelineResult.clue,
           targetCardCount: pipelineResult.number,
         });
@@ -416,13 +410,14 @@ export const createAIPlayerService =
       }
 
       try {
-        const gameState = await loadGameStateForAI(context.gameId, context.playerId);
-        if (!gameState || !gameState.currentRound) throw new Error("Failed to get game state");
+        const loadedTop = await loadGameStateForAI(context.gameId, context.playerId);
+        if (!loadedTop || !loadedTop.aggregate.currentRound) throw new Error("Failed to get game state");
+        const aggregateTop = loadedTop.aggregate;
 
-        const currentTurn = gameState.currentRound.turns.at(-1);
+        const currentTurn = aggregateTop.currentRound!.turns.at(-1);
         if (!currentTurn || !currentTurn.clue) throw new Error("No clue found");
 
-        const remainingWords = gameState.currentRound.cards.filter((c: any) => !c.selected).map((c: any) => c.word);
+        const remainingWords = aggregateTop.currentRound!.cards.filter((c: any) => !c.selected).map((c: any) => c.word);
         if (remainingWords.length === 0) throw new Error("No cards available");
 
         const myTeam = currentTurn.teamName;
@@ -444,12 +439,12 @@ export const createAIPlayerService =
         if (rankedList.length === 0) {
           await emitNarration(context, "I couldn't score any words. Passing.");
 
-          const endTurnState = await loadGameStateForAI(context.gameId, context.playerId);
-          if (!endTurnState) throw new Error("Failed to load state for end turn");
+          const loadedEnd = await loadGameStateForAI(context.gameId, context.playerId);
+          if (!loadedEnd) throw new Error("Failed to load state for end turn");
 
           const endTurnResult = await endTurn({
-            gameState: endTurnState,
-            playerContext: endTurnState.playerContext!,
+            gameState: loadedEnd.aggregate,
+            playerContext: loadedEnd.player,
           });
           if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.error}`);
 
@@ -517,12 +512,12 @@ export const createAIPlayerService =
           }
 
           // Re-load state for each guess (state changes after each guess)
-          const guessState = await loadGameStateForAI(context.gameId, context.playerId);
-          if (!guessState) throw new Error("Failed to load state for guess");
+          const loadedGuess = await loadGameStateForAI(context.gameId, context.playerId);
+          if (!loadedGuess) throw new Error("Failed to load state for guess");
 
           const result = await makeGuess({
-            gameState: guessState,
-            playerContext: guessState.playerContext!,
+            gameState: loadedGuess.aggregate,
+            playerContext: loadedGuess.player,
             cardWord: candidate.word,
           });
 
@@ -548,22 +543,22 @@ export const createAIPlayerService =
 
         // End-of-turn handling
         if (stopReason === "completed") {
-          const endState = await loadGameStateForAI(context.gameId, context.playerId);
-          if (!endState) throw new Error("Failed to load state for end turn");
+          const loadedEnd = await loadGameStateForAI(context.gameId, context.playerId);
+          if (!loadedEnd) throw new Error("Failed to load state for end turn");
 
           const endTurnResult = await endTurn({
-            gameState: endState,
-            playerContext: endState.playerContext!,
+            gameState: loadedEnd.aggregate,
+            playerContext: loadedEnd.player,
           });
           if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.error}`);
           await emitNarration(context, `Perfect! Found all ${correctGuesses} cards. Ending my turn.`);
         } else if (stopReason === "low-confidence") {
-          const endState = await loadGameStateForAI(context.gameId, context.playerId);
-          if (!endState) throw new Error("Failed to load state for end turn");
+          const loadedEnd = await loadGameStateForAI(context.gameId, context.playerId);
+          if (!loadedEnd) throw new Error("Failed to load state for end turn");
 
           const endTurnResult = await endTurn({
-            gameState: endState,
-            playerContext: endState.playerContext!,
+            gameState: loadedEnd.aggregate,
+            playerContext: loadedEnd.player,
           });
           if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.error}`);
           await emitNarration(

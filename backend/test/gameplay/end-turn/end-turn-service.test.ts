@@ -17,7 +17,7 @@ describe("endTurnService", () => {
 
   const createService = () => {
     const gameplayHandler = vi.fn<(...args: any[]) => any>().mockImplementation(
-      async (_state: any, fn: any) => {
+      async (_state: any, _player: any, fn: any) => {
         const gameState = buildGameAggregate();
         return fn({
           endTurn: vi.fn<any>().mockResolvedValue(gameState),

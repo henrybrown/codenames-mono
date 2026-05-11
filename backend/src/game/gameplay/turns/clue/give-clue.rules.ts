@@ -1,9 +1,8 @@
-import { GAME_STATE, ROUND_STATE, PLAYER_ROLE } from "@codenames/shared/types";
+import { GAME_STATE, ROUND_STATE } from "@codenames/shared/types";
 import { GameAggregate } from "@backend/game/state/types";
 import {
   gameplayBaseSchema,
   currentRoundSchema,
-  playerContextSchema,
 } from "@backend/game/state/types";
 import { getCurrentTurn } from "@backend/game/state/helpers";
 import {
@@ -14,58 +13,77 @@ import {
 import { z } from "zod";
 
 /**
- * Rules for validating clue giving in the game
+ * Schema for the game state required to give a clue.
+ *
+ * Validates game-shape only: in-progress game, in-progress round, with
+ * a current active turn that has no clue yet. Does NOT validate who's
+ * giving the clue — request-time identity is enforced by the
+ * requireGameRole(CODEMASTER) middleware at the route layer, not here.
  */
-const clueGivingRules = {
-  /**
-   * Checks if the player is a codemaster
-   */
-  isPlayerCodemaster(game: GameAggregate): boolean {
-    return game.playerContext?.role === PLAYER_ROLE.CODEMASTER || false;
-  },
+const clueGivingSchema = gameplayBaseSchema.extend({
+  status: z.literal(GAME_STATE.IN_PROGRESS),
+  currentRound: currentRoundSchema.extend({
+    status: z.literal(ROUND_STATE.IN_PROGRESS),
+  }),
+});
 
-  /**
-   * Checks if it's the player's team's turn
-   */
-  isPlayersTurn(game: GameAggregate): boolean {
-    const currentTurn = getCurrentTurn(game);
-    return (
-      currentTurn !== null && 
-      game.playerContext !== null && 
-      currentTurn._teamId === game.playerContext._teamId
-    );
-  },
+const clueGivingAllowedSchema = clueGivingSchema
+  .refine(
+    (game) => {
+      const currentTurn = getCurrentTurn(game);
+      return currentTurn !== null && !currentTurn.clue;
+    },
+    {
+      message: "A clue has already been given for this turn",
+      path: ["currentRound", "turns"],
+    },
+  )
+  .refine(
+    (game) => {
+      const currentTurn = getCurrentTurn(game);
+      return currentTurn !== null && currentTurn.status === "ACTIVE";
+    },
+    {
+      message: "The current turn is not active",
+      path: ["currentRound", "turns"],
+    },
+  );
 
-  /**
-   * Checks if the current turn has no clue yet
-   */
-  hasNoExistingClue(game: GameAggregate): boolean {
-    const currentTurn = getCurrentTurn(game);
-    return currentTurn !== null && !currentTurn.clue;
-  },
-
-  /**
-   * Checks if the turn is active
-   */
-  isTurnActive(game: GameAggregate): boolean {
-    const currentTurn = getCurrentTurn(game);
-    return currentTurn !== null && currentTurn.status === "ACTIVE";
-  },
-
-  /**
-   * Checks if the round is in progress
-   */
-  isRoundInProgress(game: GameAggregate): boolean {
-    return (
-      game.currentRound !== undefined &&
-      game.currentRound !== null &&
-      game.currentRound.status === ROUND_STATE.IN_PROGRESS
-    );
-  },
-};
+export type GiveClueValidGameState = ValidatedGameState<
+  typeof clueGivingAllowedSchema
+>;
 
 /**
- * Enhanced clue validation that checks against card words
+ * Validates game state + acting team for clue giving.
+ *
+ * `actingTeamId` is the team the acting player belongs to; we check
+ * that the current active turn belongs to that team. This is a
+ * game-rule check ("it's not your team's turn"), not an auth check.
+ */
+export function validate(
+  data: GameAggregate,
+  actingTeamId: number,
+): GameplayValidationResult<GiveClueValidGameState> {
+  const schemaResult = validateWithZodSchema(clueGivingAllowedSchema, data);
+  if (!schemaResult.valid) return schemaResult;
+
+  const currentTurn = getCurrentTurn(data);
+  if (!currentTurn || currentTurn._teamId !== actingTeamId) {
+    return {
+      valid: false,
+      errors: [
+        {
+          path: "currentRound.turns",
+          message: "It's not your team's turn",
+        },
+      ],
+    };
+  }
+  return schemaResult;
+}
+
+/**
+ * Pure clue-word check against the board. No player context needed.
  */
 export const validateClueWord = (
   game: GameAggregate,
@@ -102,57 +120,3 @@ export const validateClueWord = (
 
   return { valid: true };
 };
-
-/**
- * Schema for clue giving validation
- */
-const clueGivingSchema = gameplayBaseSchema.extend({
-  status: z.literal(GAME_STATE.IN_PROGRESS),
-  currentRound: currentRoundSchema.extend({
-    status: z.literal(ROUND_STATE.IN_PROGRESS),
-  }),
-  playerContext: playerContextSchema.extend({
-    role: z.literal(PLAYER_ROLE.CODEMASTER),
-  }),
-});
-
-/**
- * Enhanced schema with business rules
- */
-const clueGivingAllowedSchema = clueGivingSchema
-  .refine(clueGivingRules.isRoundInProgress, {
-    message: "Round must be in progress to give clues",
-    path: ["currentRound", "status"],
-  })
-  .refine(clueGivingRules.isPlayerCodemaster, {
-    message: "Only codemasters can give clues",
-    path: ["playerContext", "role"],
-  })
-  .refine(clueGivingRules.isPlayersTurn, {
-    message: "It's not your team's turn",
-    path: ["currentRound", "turns"],
-  })
-  .refine(clueGivingRules.hasNoExistingClue, {
-    message: "A clue has already been given for this turn",
-    path: ["currentRound", "turns"],
-  })
-  .refine(clueGivingRules.isTurnActive, {
-    message: "The current turn is not active",
-    path: ["currentRound", "turns"],
-  });
-
-/**
- * Type definition for a valid game state during clue giving
- */
-export type GiveClueValidGameState = ValidatedGameState<
-  typeof clueGivingAllowedSchema
->;
-
-/**
- * Validates the game state for clue giving
- */
-export function validate(
-  data: GameAggregate,
-): GameplayValidationResult<GiveClueValidGameState> {
-  return validateWithZodSchema(clueGivingAllowedSchema, data);
-}

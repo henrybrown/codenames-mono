@@ -76,7 +76,7 @@ export const createEndTurnService = (logger: AppLogger) => (
       // End the current turn. The next turn is started explicitly by the
       // frontend (via the outcome panel countdown / NextTurnTrigger) — we
       // never auto-start here.
-      await gameplayHandler(gameState, async (ops) => {
+      await gameplayHandler(gameState, playerContext, async (ops) => {
         await ops.endTurn(turnWithInternalId._id);
       });
 

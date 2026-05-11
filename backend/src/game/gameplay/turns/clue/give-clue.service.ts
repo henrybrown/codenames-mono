@@ -153,9 +153,13 @@ export const giveClueService = (logger: AppLogger) => (dependencies: GiveClueDep
     }
 
     try {
-      const operationResult = await dependencies.gameplayHandler(gameState, async (ops) => {
-        return await ops.giveClue(word, targetCardCount);
-      });
+      const operationResult = await dependencies.gameplayHandler(
+        gameState,
+        playerContext,
+        async (ops) => {
+          return await ops.giveClue(word, targetCardCount);
+        },
+      );
 
       // Fetch complete turn data after transaction completes
       const currentTurn = gameState.currentRound.turns?.find((t) => t.status === "ACTIVE");

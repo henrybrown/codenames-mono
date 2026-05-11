@@ -1,9 +1,10 @@
 /**
  * Load a complete GameAggregate from the database.
  *
- * Pure data assembly — no auth, no playerContext. The returned
- * aggregate has playerContext === null. Callers that need
- * playerContext should compose this with the helpers in state/helpers/.
+ * Pure data assembly — no auth, no request-time identity. The aggregate
+ * type no longer carries a playerContext field; callers that need the
+ * acting player resolve it separately via the access/helpers and pass
+ * it explicitly into action services.
  *
  * Works with both regular db connections and transaction contexts.
  *
@@ -82,7 +83,6 @@ export const createGameAggregateLoader = (
       aiMode: game.ai_mode,
       teams: teamsWithPlayers,
       historicalRounds,
-      playerContext: null,
       createdAt: game.created_at,
       updatedAt: game.updated_at,
     };

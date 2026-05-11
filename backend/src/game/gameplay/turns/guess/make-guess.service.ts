@@ -166,7 +166,7 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
 
     try {
       // Execute within transaction — ops are game-scoped, no state passing needed
-      const operationResult = await dependencies.gameplayHandler(gameState, async (ops) => {
+      const operationResult = await dependencies.gameplayHandler(gameState, playerContext, async (ops) => {
         const { outcome, state, ...guessResult } = await ops.makeGuess(cardWord);
 
         switch (outcome) {

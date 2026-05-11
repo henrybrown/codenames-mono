@@ -111,28 +111,6 @@ export const roundSchema = z.object({
 });
 
 /**
- * Canonical PlayerContext.
- *
- * One shape, owned by this file. Constructed only by
- * resolvePlayerContext.
- */
-export const playerContextSchema = z.object({
-  _userId: z.number().int().positive(),
-  _id: z.number().int().positive(),
-  publicId: z.string(),
-  _teamId: z.number().int().positive(),
-  username: z.string().optional().nullable(),
-  publicName: z.string(),
-  teamName: z.string(),
-  role: z.enum([
-    PLAYER_ROLE.SPECTATOR,
-    PLAYER_ROLE.CODEMASTER,
-    PLAYER_ROLE.CODEBREAKER,
-    PLAYER_ROLE.NONE,
-  ]),
-});
-
-/**
  * Schema for validating the current round
  */
 export const currentRoundSchema = roundSchema;
@@ -163,7 +141,6 @@ export const gameplayBaseSchema = z.object({
   teams: z.array(teamSchema),
   currentRound: currentRoundSchema.optional().nullable(),
   historicalRounds: z.array(historicalRoundSchema).optional().default([]),
-  playerContext: playerContextSchema.nullable(),
   createdAt: z.date(),
   updatedAt: z.date().optional().nullable(),
 });
@@ -186,6 +163,5 @@ export type Clue = z.infer<typeof clueSchema>;
 export type Turn = z.infer<typeof turnSchema>;
 export type TurnPhase = z.infer<typeof turnPhaseSchema>;
 export type Round = z.infer<typeof roundSchema>;
-export type PlayerContext = z.infer<typeof playerContextSchema>;
 export type CurrentRound = z.infer<typeof currentRoundSchema>;
 export type GameAggregate = z.infer<typeof gameplayBaseSchema>;

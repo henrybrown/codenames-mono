@@ -15,24 +15,30 @@ import { validate as validateGiveClue, validateClueWord } from "./turns/clue/giv
 import { createGameAggregateLoader } from "@backend/game/state";
 import { UnexpectedGameplayError } from "./errors/gameplay.errors";
 import type { GameAggregate } from "@backend/game/state/types";
+import type { ActingPlayer } from "./turns/types";
 
 /**
  * Creates game-scoped gameplay operations for use within a transaction.
  *
- * Ops know which game they operate on, reload state internally after mutations,
- * and never require callers to pass state or remember to refresh.
+ * Ops know which game they operate on, which player is acting, and reload
+ * state internally after mutations. The player parameter feeds into give-
+ * clue and make-guess actions; end-turn / start-turn / end-round / end-
+ * game don't read it (they're not actor-attributable in the same way).
  */
-export const gameplayOperations = (trx: TransactionContext, initialState: GameAggregate) => {
+export const gameplayOperations = (
+  trx: TransactionContext,
+  initialState: GameAggregate,
+  player: ActingPlayer,
+) => {
   const gamePublicId = initialState.public_id;
-  const playerContext = initialState.playerContext;
 
   const loadGameAggregate = createGameAggregateLoader(trx);
 
-  /** Reloads game state within the transaction, preserving the original playerContext */
+  /** Reloads game state within the transaction. */
   const reload = async (): Promise<GameAggregate> => {
     const state = await loadGameAggregate(gamePublicId);
     if (!state) throw new UnexpectedGameplayError("Game not found during reload");
-    return { ...state, playerContext };
+    return state;
   };
 
   // Build the underlying action functions
@@ -75,7 +81,7 @@ export const gameplayOperations = (trx: TransactionContext, initialState: GameAg
     /** Codemaster gives a clue. Reloads state, validates, executes, returns fresh state. */
     giveClue: async (word: string, count: number) => {
       const currentState = await reload();
-      const result = await giveClueAction(currentState, word, count);
+      const result = await giveClueAction(currentState, player, word, count);
       const freshState = await reload();
       return { ...result, state: freshState };
     },
@@ -83,7 +89,7 @@ export const gameplayOperations = (trx: TransactionContext, initialState: GameAg
     /** Codebreaker makes a guess. Reloads state, validates, executes, returns fresh state. */
     makeGuess: async (cardWord: string) => {
       const currentState = await reload();
-      const result = await makeGuessAction(currentState, cardWord);
+      const result = await makeGuessAction(currentState, player, cardWord);
       const freshState = await reload();
       return { ...result, state: freshState };
     },
@@ -125,10 +131,12 @@ export const gameplayOperations = (trx: TransactionContext, initialState: GameAg
 export type GameplayOperations = ReturnType<typeof gameplayOperations>;
 
 /**
- * Handler type: takes initial game state + operation function, runs in transaction.
+ * Handler type: takes initial game state + acting player + operation
+ * function, runs in a transaction.
  */
 export type GameplayHandler = <R>(
   initialState: GameAggregate,
+  player: ActingPlayer,
   operation: (ops: GameplayOperations) => Promise<R>,
 ) => Promise<R>;
 
@@ -136,9 +144,9 @@ export type GameplayHandler = <R>(
  * Creates gameplay action components with game-scoped transactional handler
  */
 export const gameplayActions = (dbContext: Kysely<DB>) => {
-  const handler: GameplayHandler = async (initialState, operation) => {
+  const handler: GameplayHandler = async (initialState, player, operation) => {
     return dbContext.transaction().execute(async (trx) => {
-      const ops = gameplayOperations(trx, initialState);
+      const ops = gameplayOperations(trx, initialState, player);
       return operation(ops);
     });
   };

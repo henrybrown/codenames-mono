@@ -32,7 +32,7 @@ describe("makeGuessService", () => {
   const createService = (guessOutcome = "CORRECT_TEAM_CARD", handlerThrows: Error | null = null) => {
     const gameState = buildGameAggregate();
     const gameplayHandler = vi.fn<(...args: any[]) => any>().mockImplementation(
-      async (_state: any, fn: any) => {
+      async (_state: any, _player: any, fn: any) => {
         if (handlerThrows) throw handlerThrows;
         return fn({
           makeGuess: vi.fn<any>().mockResolvedValue({

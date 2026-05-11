@@ -9,9 +9,11 @@ import { PLAYER_ROLE } from "@codenames/shared/types";
 import { GameplayValidationError } from "../errors/gameplay.errors";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import type { GameAggregate } from "@backend/game/state/types";
+import type { GamePlayer } from "@backend/game/access";
 
 export type StartTurnInput = {
   gameState: GameAggregate;
+  playerContext: GamePlayer;
 };
 
 export type StartTurnService = (input: StartTurnInput) => Promise<StartTurnResult>;
@@ -30,7 +32,7 @@ export const createStartTurnService =
     const { gameplayHandler } = deps;
 
     return async (input) => {
-      const { gameState } = input;
+      const { gameState, playerContext } = input;
       const log = logger.for({}).withMeta({ gameId: gameState.public_id }).create();
       log.info(`startTurn called`);
 
@@ -76,7 +78,7 @@ export const createStartTurnService =
 
         // Create the new turn
         let newTurnPublicId: string = "";
-        await gameplayHandler(gameState, async (ops) => {
+        await gameplayHandler(gameState, playerContext, async (ops) => {
           const { newTurn } = await ops.startTurn(currentRound._id, nextTeam._id);
           newTurnPublicId = newTurn.publicId;
         });

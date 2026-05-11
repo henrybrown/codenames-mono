@@ -1,5 +1,6 @@
 import { createStartTurnService } from "@backend/game/gameplay/turns/start-turn.service";
 import { buildGameAggregate, buildTurn } from "../../__test-utils__/fixtures";
+import type { GamePlayer } from "@backend/game/access";
 
 vi.mock("@backend/shared/websocket", () => ({
   GameEventsEmitter: {
@@ -13,9 +14,19 @@ describe("startTurnService", () => {
     error: vi.fn(),
   } as any;
 
+  const playerCtx: GamePlayer = {
+    _id: 1,
+    publicId: "player-1",
+    _userId: 101,
+    _teamId: 1,
+    teamName: "Red",
+    publicName: "Bob",
+    role: "CODEBREAKER",
+  };
+
   const createService = () => {
     const gameplayHandler = vi.fn<(...args: any[]) => any>().mockImplementation(
-      async (_state: any, fn: any) => {
+      async (_state: any, _player: any, fn: any) => {
         return fn({
           startTurn: vi.fn<any>().mockResolvedValue({ newTurn: { publicId: "new-turn-uuid" }, state: buildGameAggregate() }),
         });
@@ -31,7 +42,7 @@ describe("startTurnService", () => {
     gameState.currentRound!.turns = [buildTurn({ status: "COMPLETED", _teamId: 1, teamName: "Red" })];
 
     const service = createService();
-    const result = await service({ gameState });
+    const result = await service({ gameState, playerContext: playerCtx });
 
     expect(result.success).toBe(true);
     if (result.success) {
@@ -44,7 +55,7 @@ describe("startTurnService", () => {
     const gameState = buildGameAggregate({ currentRound: null });
 
     const service = createService();
-    const result = await service({ gameState });
+    const result = await service({ gameState, playerContext: playerCtx });
 
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe("No active round");
@@ -55,7 +66,7 @@ describe("startTurnService", () => {
     gameState.currentRound!.status = "COMPLETED";
 
     const service = createService();
-    const result = await service({ gameState });
+    const result = await service({ gameState, playerContext: playerCtx });
 
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe("Round not in progress");
@@ -65,7 +76,7 @@ describe("startTurnService", () => {
     const gameState = buildGameAggregate(); // Default has an ACTIVE turn
 
     const service = createService();
-    const result = await service({ gameState });
+    const result = await service({ gameState, playerContext: playerCtx });
 
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe("Active turn already exists");
@@ -79,7 +90,7 @@ describe("startTurnService", () => {
     gameState.currentRound!.turns = [];
 
     const service = createService();
-    const result = await service({ gameState });
+    const result = await service({ gameState, playerContext: playerCtx });
 
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe("No previous turn found");

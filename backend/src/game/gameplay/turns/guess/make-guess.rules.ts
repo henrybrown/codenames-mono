@@ -1,7 +1,6 @@
 import {
   GAME_STATE,
   ROUND_STATE,
-  PLAYER_ROLE,
   CODEBREAKER_OUTCOME,
   GameFormat,
 } from "@codenames/shared/types";
@@ -14,7 +13,6 @@ import {
 import {
   gameplayBaseSchema,
   currentRoundSchema,
-  playerContextSchema,
   cardSchema,
   turnSchema,
   teamSchema,
@@ -37,9 +35,9 @@ const makeGuessActionSchema = gameplayBaseSchema.extend({
     cards: z.array(cardSchema).min(1, "Must have cards to guess"),
     turns: z.array(turnSchema).min(1, "Must have at least one turn"),
   }),
-  playerContext: playerContextSchema.extend({
-    role: z.literal(PLAYER_ROLE.CODEBREAKER),
-  }), 
+  // playerContext intentionally not validated here — requireGameRole(CODEBREAKER)
+  // middleware enforces role at the route layer; team-turn check happens in
+  // validateMakeGuess() below as a post-schema rule using actingTeamId.
 })
   .refine((data) => {
     const currentTurn = getCurrentTurn(data);
@@ -50,28 +48,21 @@ const makeGuessActionSchema = gameplayBaseSchema.extend({
   })
   .refine((data) => {
     const currentTurn = getCurrentTurn(data);
-    return currentTurn && currentTurn._teamId === data.playerContext._teamId;
-  }, {
-    message: "It's not your team's turn",
-    path: ["playerContext", "teamId"],
-  })
-  .refine((data) => {
-    const currentTurn = getCurrentTurn(data);
-    return currentTurn && currentTurn.status === "ACTIVE";
+    return currentTurn !== null && currentTurn.status === "ACTIVE";
   }, {
     message: "Current turn is not active",
     path: ["currentRound", "turns"],
   })
   .refine((data) => {
     const currentTurn = getCurrentTurn(data);
-    return currentTurn && currentTurn.clue !== null && currentTurn.clue !== undefined;
+    return currentTurn !== null && currentTurn.clue !== null && currentTurn.clue !== undefined;
   }, {
     message: "No clue has been given for this turn",
     path: ["currentRound", "turns"],
   })
   .refine((data) => {
     const currentTurn = getCurrentTurn(data);
-    return currentTurn && currentTurn.guessesRemaining > 0;
+    return currentTurn !== null && currentTurn.guessesRemaining > 0;
   }, {
     message: "No guesses remaining for this turn",
     path: ["currentRound", "turns"],
@@ -142,8 +133,24 @@ export function validateTurnForGuessing(
  */
 export const validateMakeGuess = (
   data: GameAggregate,
+  actingTeamId: number,
 ): GameplayValidationResult<MakeGuessValidGameState> => {
-  return validateWithZodSchema(makeGuessActionSchema, data);
+  const schemaResult = validateWithZodSchema(makeGuessActionSchema, data);
+  if (!schemaResult.valid) return schemaResult;
+
+  const currentTurn = getCurrentTurn(data);
+  if (!currentTurn || currentTurn._teamId !== actingTeamId) {
+    return {
+      valid: false,
+      errors: [
+        {
+          path: "currentRound.turns",
+          message: "It's not your team's turn",
+        },
+      ],
+    };
+  }
+  return schemaResult;
 };
 
 export const validateEndTurn = (

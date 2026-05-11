@@ -203,7 +203,7 @@ describe("make-guess orchestration", () => {
     ops.endGame.mockResolvedValue(stateAfterGuess);
 
     const gameplayHandler = vi.fn<any>().mockImplementation(
-      async (_state: any, fn: any) => fn(ops),
+      async (_state: any, _player: any, fn: any) => fn(ops),
     );
 
     const service = makeGuessService(mockLogger)({
