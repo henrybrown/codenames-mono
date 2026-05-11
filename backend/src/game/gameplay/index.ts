@@ -10,7 +10,7 @@ import * as playersRepo from "@backend/shared/data-access/repositories/players.r
 import type { AppLogger } from "@backend/shared/logging";
 import { PLAYER_ROLE } from "@codenames/shared/types";
 
-import { gameplayState, turnState } from "@backend/game/state";
+import { createGameAggregateLoader, turnState } from "@backend/game/state";
 import { gameplayActions } from "./gameplay-actions";
 import { createQueries } from "./queries";
 import { createTurns } from "./turns";
@@ -29,7 +29,7 @@ export const initialize = (
   const logger = appLogger.for({ feature: "gameplay" }).create();
 
   /** State providers */
-  const { loadGameAggregate } = gameplayState(db);
+  const loadGameAggregate = createGameAggregateLoader(db);
   const { provider: getTurnState, getTurnsByRoundId, findPlayersByRoundId } = turnState(db);
 
   /** Gameplay actions (transactional handler) */

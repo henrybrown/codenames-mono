@@ -3,61 +3,46 @@
  *
  * Pure data assembly — no auth, no playerContext. The returned
  * aggregate has playerContext === null. Callers that need
- * playerContext should compose this with resolvePlayerContext.
+ * playerContext should compose this with the helpers in state/helpers/.
+ *
+ * Works with both regular db connections and transaction contexts.
  *
  * Used directly by:
  *   - the AI player (no userId concept)
  *   - transactional reloads inside actions (membership already verified)
- *   - getGameplayState (composed with verifyMembership + resolvePlayerContext)
+ *   - feature wiring (gameplay, chat) — single entry point for loading
  */
 
-import {
-  PublicId,
-  InternalId,
-  GameFinder,
-} from "@backend/shared/data-access/repositories/games.repository";
+import type {
+  DbContext,
+  TransactionContext,
+} from "@backend/shared/data-access/transaction-handler";
 
-import { TeamsFinder, TeamResult } from "@backend/shared/data-access/repositories/teams.repository";
+import * as gameRepository from "@backend/shared/data-access/repositories/games.repository";
+import * as roundsRepository from "@backend/shared/data-access/repositories/rounds.repository";
+import * as playerRepository from "@backend/shared/data-access/repositories/players.repository";
+import * as teamsRepository from "@backend/shared/data-access/repositories/teams.repository";
+import * as cardsRepository from "@backend/shared/data-access/repositories/cards.repository";
+import * as turnsRepository from "@backend/shared/data-access/repositories/turns.repository";
 
-import {
-  PlayerFinderAll,
-  PlayerResult,
-} from "@backend/shared/data-access/repositories/players.repository";
+import type { TeamResult } from "@backend/shared/data-access/repositories/teams.repository";
+import type { PlayerResult } from "@backend/shared/data-access/repositories/players.repository";
+import type { CardResult } from "@backend/shared/data-access/repositories/cards.repository";
 
-import {
-  RoundFinder,
-  RoundId,
-  RoundFinderAll,
-} from "@backend/shared/data-access/repositories/rounds.repository";
-
-import { CardsFinder, CardResult } from "@backend/shared/data-access/repositories/cards.repository";
-
-import { TurnsFinder } from "@backend/shared/data-access/repositories/turns.repository";
-
-import { GameAggregate } from "./gameplay-state.types";
+import type { GameAggregate } from "./gameplay-state.types";
 
 export type GameAggregateLoader = (gameId: string) => Promise<GameAggregate | null>;
 
-export type GameAggregateLoaderDeps = {
-  getGameById: GameFinder<PublicId>;
-  getTeams: TeamsFinder<InternalId>;
-  getCardsByRoundId: CardsFinder<RoundId>;
-  getTurnsByRoundId: TurnsFinder<RoundId>;
-  getPlayersByGameId: PlayerFinderAll<InternalId>;
-  getLatestRound: RoundFinder<InternalId>;
-  getAllRounds: RoundFinderAll<InternalId>;
-};
-
-export const createGameAggregateLoader = (deps: GameAggregateLoaderDeps): GameAggregateLoader => {
-  const {
-    getGameById,
-    getTeams,
-    getCardsByRoundId,
-    getTurnsByRoundId,
-    getPlayersByGameId,
-    getLatestRound,
-    getAllRounds,
-  } = deps;
+export const createGameAggregateLoader = (
+  dbContext: DbContext | TransactionContext,
+): GameAggregateLoader => {
+  const getGameById        = gameRepository.findGameByPublicId(dbContext);
+  const getTeams           = teamsRepository.getTeamsByGameId(dbContext);
+  const getCardsByRoundId  = cardsRepository.getCardsByRoundId(dbContext);
+  const getTurnsByRoundId  = turnsRepository.getTurnsByRoundId(dbContext);
+  const getPlayersByGameId = playerRepository.findPlayersByGameId(dbContext);
+  const getLatestRound     = roundsRepository.getLatestRound(dbContext);
+  const getAllRounds       = roundsRepository.getRoundsByGameId(dbContext);
 
   return async (gameId: string): Promise<GameAggregate | null> => {
     const game = await getGameById(gameId);
@@ -137,4 +122,3 @@ export const createGameAggregateLoader = (deps: GameAggregateLoaderDeps): GameAg
     } as GameAggregate;
   };
 };
-

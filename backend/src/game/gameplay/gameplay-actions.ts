@@ -12,7 +12,7 @@ import * as makeGuessActions from "./turns/guess/make-guess.actions";
 import * as makeGuessRules from "./turns/guess/make-guess.rules";
 import { validate as validateGiveClue, validateClueWord } from "./turns/clue/give-clue.rules";
 
-import { gameDataLoader } from "@backend/game/state";
+import { createGameAggregateLoader } from "@backend/game/state";
 import { UnexpectedGameplayError } from "./errors/gameplay.errors";
 import type { GameAggregate } from "@backend/game/state/gameplay-state.types";
 
@@ -26,11 +26,11 @@ export const gameplayOperations = (trx: TransactionContext, initialState: GameAg
   const gamePublicId = initialState.public_id;
   const playerContext = initialState.playerContext;
 
-  const loader = gameDataLoader(trx);
+  const loadGameAggregate = createGameAggregateLoader(trx);
 
   /** Reloads game state within the transaction, preserving the original playerContext */
   const reload = async (): Promise<GameAggregate> => {
-    const state = await loader(gamePublicId);
+    const state = await loadGameAggregate(gamePublicId);
     if (!state) throw new UnexpectedGameplayError("Game not found during reload");
     return { ...state, playerContext };
   };
