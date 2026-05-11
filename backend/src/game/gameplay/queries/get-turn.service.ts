@@ -1,4 +1,4 @@
-import { TurnLoader, TurnData } from "@backend/game/state/load-turn";
+import { TurnLoader, TurnData } from "@backend/game/state/load-turn-aggregate";
 import { TurnsFinder, RoundId, TurnResult } from "@backend/shared/data-access/repositories/turns.repository";
 import { PlayerFinderAll, RoundId as PlayerRoundId } from "@backend/shared/data-access/repositories/players.repository";
 import { TurnPhase, Player } from "@backend/game/state/types";

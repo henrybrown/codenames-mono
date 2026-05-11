@@ -1,4 +1,4 @@
-import type { TurnLoader } from "@backend/game/state/load-turn";
+import type { TurnLoader } from "@backend/game/state/load-turn-aggregate";
 import type { GameplayHandler } from "../../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
 import { CODEBREAKER_OUTCOME } from "@codenames/shared/types";

@@ -1,5 +1,5 @@
 import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
-import type { TurnLoader } from "@backend/game/state/load-turn";
+import type { TurnLoader } from "@backend/game/state/load-turn-aggregate";
 import type { TurnsFinder, RoundId } from "@backend/shared/data-access/repositories/turns.repository";
 import type { PlayerFinderAll, RoundId as PlayerRoundId } from "@backend/shared/data-access/repositories/players.repository";
 import type { DbContext } from "@backend/shared/data-access/transaction-handler";

@@ -1,4 +1,4 @@
-import type { LobbyStateProvider } from "../state/lobby-state.provider";
+import type { LobbyStateProvider } from "../state";
 import type { LobbyValidationError } from "../state/lobby-state.validation";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { LobbyOperations } from "../lobby-actions";

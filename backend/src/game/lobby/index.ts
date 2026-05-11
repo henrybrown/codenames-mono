@@ -8,7 +8,7 @@ import type { AppLogger } from "@backend/shared/logging";
 import { createTransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import { createUser } from "@backend/shared/data-access/repositories/users.repository";
 
-import { lobbyState } from "./state";
+import { createLobbyAggregateLoader } from "./state";
 import { lobbyOperations } from "./lobby-actions";
 import { createPlayers } from "./players";
 import { createRounds } from "./rounds";
@@ -35,23 +35,23 @@ export const initialize = (
 ) => {
   const logger = appLogger.for({ feature: "lobby" }).create();
   /** State providers */
-  const { provider: getLobbyState } = lobbyState(db);
+  const loadLobbyAggregate = createLobbyAggregateLoader(db);
 
   /** Transaction handlers */
   const lobbyHandler = createTransactionalHandler(db, lobbyOperations);
   const setupHandler = createTransactionalHandler(db, setupOperations);
 
   /** Players (add, modify, remove) */
-  const players = createPlayers({ getLobbyState, lobbyHandler });
+  const players = createPlayers({ getLobbyState: loadLobbyAggregate, lobbyHandler });
 
   /** Rounds (new-round, deal-cards, start-round) */
-  const rounds = createRounds({ getLobbyState, lobbyHandler });
+  const rounds = createRounds({ getLobbyState: loadLobbyAggregate, lobbyHandler });
 
   /** Start game */
   const createUserRepo = createUser(db);
   const lobbyStartGameService = startGameService({
     lobbyHandler,
-    getLobbyState,
+    getLobbyState: loadLobbyAggregate,
     createUser: createUserRepo,
   });
   const lobbyStartGameController = startGameController({

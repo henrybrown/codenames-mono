@@ -12,7 +12,7 @@ import * as dealCardsActions from "./rounds/deal-cards.actions";
 import * as startRoundActions from "./rounds/start-round.actions";
 import * as assignRolesActions from "./rounds/assign-roles.actions";
 
-import { lobbyState } from "./state";
+import { createLobbyAggregateLoader } from "./state";
 import { UnexpectedLobbyError } from "./errors/lobby.errors";
 
 /**
@@ -20,7 +20,7 @@ import { UnexpectedLobbyError } from "./errors/lobby.errors";
  */
 const getGameStateOrThrow =
   (trx: TransactionContext) => async (gameId: string, userId: number) => {
-    const lobby = await lobbyState(trx).provider(gameId, userId);
+    const lobby = await createLobbyAggregateLoader(trx)(gameId, userId);
 
     if (!lobby)
       throw new UnexpectedLobbyError("Lobby data not found");

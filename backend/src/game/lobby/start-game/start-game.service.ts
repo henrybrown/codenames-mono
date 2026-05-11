@@ -1,5 +1,5 @@
 import type { LobbyOperations } from "../lobby-actions";
-import type { LobbyStateProvider } from "../state/lobby-state.provider";
+import type { LobbyStateProvider } from "../state";
 import { lobbyHelpers } from "../state/lobby-state.helpers";
 import { GAME_STATE } from "@codenames/shared/types";
 import { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";

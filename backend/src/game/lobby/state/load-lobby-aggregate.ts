@@ -1,46 +1,46 @@
-import {
-  PublicId,
-  InternalId,
-  GameFinder,
-} from "@backend/shared/data-access/repositories/games.repository";
+import type {
+  DbContext,
+  TransactionContext,
+} from "@backend/shared/data-access/transaction-handler";
 
-import {
-  TeamsFinder,
-  TeamResult,
-} from "@backend/shared/data-access/repositories/teams.repository";
+import * as gameRepository from "@backend/shared/data-access/repositories/games.repository";
+import * as roundsRepository from "@backend/shared/data-access/repositories/rounds.repository";
+import * as playerRepository from "@backend/shared/data-access/repositories/players.repository";
+import * as teamsRepository from "@backend/shared/data-access/repositories/teams.repository";
+import * as cardsRepository from "@backend/shared/data-access/repositories/cards.repository";
 
-import {
-  PlayerFinderAll,
-  PlayerResult,
-} from "@backend/shared/data-access/repositories/players.repository";
+import type { PublicId } from "@backend/shared/data-access/repositories/games.repository";
+import type { TeamResult } from "@backend/shared/data-access/repositories/teams.repository";
+import type { PlayerResult } from "@backend/shared/data-access/repositories/players.repository";
 
-import {
-  RoundFinderAll,
-} from "@backend/shared/data-access/repositories/rounds.repository";
+import type { LobbyAggregate } from "./lobby-state.types";
 
-import {
-  CardsFinder,
-} from "@backend/shared/data-access/repositories/cards.repository";
-
-import { LobbyAggregate } from "./lobby-state.types";
-
-
-export type LobbyStateProvider = (
+/**
+ * Load a complete LobbyAggregate from the database.
+ *
+ * Unlike loadGameAggregate, this loader is user-scoped: it takes a
+ * userId and computes userContext (host, canModifyGame) and
+ * playerContext (the user's player record) as part of the aggregate.
+ * The lobby UI is always rendered for a specific user, and the
+ * user-scoping is intrinsic to the aggregate.
+ *
+ * Works with both regular db connections and transaction contexts.
+ */
+export type LobbyAggregateLoader = (
   gameId: PublicId,
   userId: number,
 ) => Promise<LobbyAggregate | null>;
 
-export const lobbyStateProvider = (
-  getGameById: GameFinder<PublicId>,
-  getTeams: TeamsFinder<InternalId>,
-  getPlayersByGameId: PlayerFinderAll<InternalId>,
-  getRoundsByGameId: RoundFinderAll<InternalId>,
-  getCardsByRoundId: CardsFinder<InternalId>,
-): LobbyStateProvider => {
-  const getLobbyState = async (
-    gameId: PublicId,
-    userId: number,
-  ): Promise<LobbyAggregate | null> => {
+export const createLobbyAggregateLoader = (
+  dbContext: DbContext | TransactionContext,
+): LobbyAggregateLoader => {
+  const getGameById        = gameRepository.findGameByPublicId(dbContext);
+  const getTeams           = teamsRepository.getTeamsByGameId(dbContext);
+  const getPlayersByGameId = playerRepository.findPlayersByGameId(dbContext);
+  const getRoundsByGameId  = roundsRepository.getRoundsByGameId(dbContext);
+  const getCardsByRoundId  = cardsRepository.getCardsByRoundId(dbContext);
+
+  return async (gameId, userId) => {
     const game = await getGameById(gameId);
     if (!game) return null;
 
@@ -75,8 +75,8 @@ export const lobbyStateProvider = (
 
     // Find current round (latest incomplete round) and historical rounds
     const sortedRounds = rounds.sort((a, b) => b.roundNumber - a.roundNumber);
-    const currentRound = sortedRounds.find(r => r.status !== "COMPLETED") || null;
-    const historicalRounds = sortedRounds.filter(r => r.status === "COMPLETED");
+    const currentRound = sortedRounds.find((r) => r.status !== "COMPLETED") || null;
+    const historicalRounds = sortedRounds.filter((r) => r.status === "COMPLETED");
 
     return {
       _id: game._id,
@@ -91,8 +91,8 @@ export const lobbyStateProvider = (
         _id: currentRound._id,
         number: currentRound.roundNumber,
         status: currentRound.status,
-        cards: await getCardsByRoundId(currentRound._id).then(cards =>
-          cards.map(card => ({
+        cards: await getCardsByRoundId(currentRound._id).then((cards) =>
+          cards.map((card) => ({
             _id: card._id,
             _roundId: card._roundId,
             _teamId: card._teamId,
@@ -105,7 +105,7 @@ export const lobbyStateProvider = (
         players: [],
         createdAt: currentRound.createdAt,
       } : null,
-      historicalRounds: historicalRounds.map(r => ({
+      historicalRounds: historicalRounds.map((r) => ({
         _id: r._id,
         number: r.roundNumber,
         status: r.status,
@@ -123,6 +123,4 @@ export const lobbyStateProvider = (
       updatedAt: game.updated_at,
     };
   };
-
-  return getLobbyState;
 };
