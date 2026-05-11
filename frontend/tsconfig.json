@@ -5,11 +5,10 @@
     "lib": ["dom", "dom.iterable", "esnext"],
     "jsx": "react-jsx",
     "rootDir": ".",
-    "baseUrl": ".",
     "module": "preserve",
     "moduleResolution": "bundler",
     "paths": {
-      "@frontend/*": ["src/*"]
+      "@frontend/*": ["./src/*"]
     },
     "outDir": "./dist"
   },

@@ -4,12 +4,11 @@
     "composite": true,
     "outDir": "./dist",
     "rootDir": ".",
-    "baseUrl": ".",
     "module": "preserve",
     "moduleResolution": "bundler",
     "paths": {
-      "@backend/*": ["src/*"],
-      "@backend/test/*": ["test/*"]
+      "@backend/*": ["./src/*"],
+      "@backend/test/*": ["./test/*"]
     }
   },
   "include": ["src/**/*", "src/**/*.json"],
