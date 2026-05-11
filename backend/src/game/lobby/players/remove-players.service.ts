@@ -2,7 +2,7 @@ import { UnexpectedLobbyError } from "../errors/lobby.errors";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { LobbyOperations } from "../lobby-actions";
 import type { LobbyStateProvider } from "../state";
-import { lobbyHelpers } from "../state/lobby-state.helpers";
+import { getPlayerByPublicId, isPlayerOwner } from "../state/helpers";
 
 /** Represents the result of a player removal operation */
 export type PlayerResult = {
@@ -52,7 +52,7 @@ export const removePlayersService = (dependencies: ServiceDependencies) => {
       );
     }
 
-    const playerToRemove = lobbyHelpers.getPlayerByPublicId(
+    const playerToRemove = getPlayerByPublicId(
       lobby,
       playerIdToRemove,
     );
@@ -62,7 +62,7 @@ export const removePlayersService = (dependencies: ServiceDependencies) => {
       );
     }
 
-    if (!lobbyHelpers.isPlayerOwner(lobby, playerIdToRemove)) {
+    if (!isPlayerOwner(lobby, playerIdToRemove)) {
       throw new UnexpectedLobbyError(
         "You do not have permission to remove this player",
       );

@@ -2,7 +2,7 @@ import { UnexpectedLobbyError } from "../errors/lobby.errors";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { LobbyOperations } from "../lobby-actions";
 import type { LobbyStateProvider } from "../state";
-import { lobbyHelpers } from "../state/lobby-state.helpers";
+import { getTeamNameToIdMap, getAvailableTeamNames } from "../state/helpers";
 
 export type PlayerResult = {
   _id: number;
@@ -75,7 +75,7 @@ export const modifyPlayersService = (dependencies: ServiceDependencies) => {
       .map((p) => p.teamName)
       .filter((name): name is string => name !== undefined);
 
-    const teamNameToIdMap = lobbyHelpers.getTeamNameToIdMap(lobby);
+    const teamNameToIdMap = getTeamNameToIdMap(lobby);
 
     if (teamNamesInRequest.length > 0) {
       const uniqueTeamNames = [...new Set(teamNamesInRequest)];
@@ -85,7 +85,7 @@ export const modifyPlayersService = (dependencies: ServiceDependencies) => {
 
       if (missingTeams.length > 0) {
         throw new UnexpectedLobbyError(
-          `Unknown team names: ${missingTeams.join(", ")}. Available teams: ${lobbyHelpers.getAvailableTeamNames(lobby).join(", ")}`,
+          `Unknown team names: ${missingTeams.join(", ")}. Available teams: ${getAvailableTeamNames(lobby).join(", ")}`,
         );
       }
     }

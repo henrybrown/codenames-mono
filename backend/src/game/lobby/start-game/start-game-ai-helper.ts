@@ -4,7 +4,7 @@
  */
 
 import type { LobbyAggregate } from "../state/lobby-state.types";
-import { lobbyHelpers } from "../state/lobby-state.helpers";
+import { getTeamNameToIdMap } from "../state/helpers";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { LobbyOperations } from "../lobby-actions";
 import type { UserCreator } from "@backend/shared/data-access/repositories/users.repository";
@@ -45,7 +45,7 @@ export const createAIBotsForTeams = async (input: CreateAIBotsInput): Promise<vo
 
     // Add AI bots as players using the standard flow
     await lobbyHandler(async (lobbyOps) => {
-      const teamNameToIdMap = lobbyHelpers.getTeamNameToIdMap(lobby);
+      const teamNameToIdMap = getTeamNameToIdMap(lobby);
       const teamId = teamNameToIdMap.get(team.teamName);
 
       if (!teamId) {

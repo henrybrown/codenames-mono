@@ -1,6 +1,6 @@
 import type { LobbyOperations } from "../lobby-actions";
 import type { LobbyStateProvider } from "../state";
-import { lobbyHelpers } from "../state/lobby-state.helpers";
+import { getTotalPlayerCount, getTeamPlayerCounts } from "../state/helpers";
 import { GAME_STATE } from "@codenames/shared/types";
 import { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import { GameEventsEmitter } from "@backend/shared/websocket";
@@ -46,8 +46,8 @@ export const startGameService = (dependencies: ServiceDependencies) => {
 
     // In AI mode, skip player count validation (AI bots will be added when starting rounds)
     if (!lobby.aiMode) {
-      const totalPlayers = lobbyHelpers.getTotalPlayerCount(lobby);
-      const teamCounts = lobbyHelpers.getTeamPlayerCounts(lobby);
+      const totalPlayers = getTotalPlayerCount(lobby);
+      const teamCounts = getTeamPlayerCounts(lobby);
 
       if (totalPlayers < 4) {
         return {
