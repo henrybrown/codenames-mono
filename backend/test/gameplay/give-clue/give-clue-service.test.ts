@@ -58,7 +58,7 @@ describe("giveClueService", () => {
 
     return giveClueService(mockLogger)({
       gameplayHandler,
-      getTurnState: mockTurnState,
+      loadTurn: mockTurnState,
     });
   };
 

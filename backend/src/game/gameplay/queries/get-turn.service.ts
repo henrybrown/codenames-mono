@@ -98,7 +98,7 @@ const transformProviderTurnToApi = (turnData: TurnData, active: TurnPhase | null
 });
 
 export interface GetTurnServiceDeps {
-  getTurnState: TurnLoader;
+  loadTurn: TurnLoader;
   getTurnsByRoundId: TurnsFinder<RoundId>;
   findPlayersByRoundId: PlayerFinderAll<PlayerRoundId>;
 }
@@ -107,9 +107,9 @@ export interface GetTurnServiceDeps {
  * Service for fetching turn data with historic turns for API response
  */
 export const getTurnService =
-  ({ getTurnState, getTurnsByRoundId, findPlayersByRoundId }: GetTurnServiceDeps): GetTurnService =>
+  ({ loadTurn, getTurnsByRoundId, findPlayersByRoundId }: GetTurnServiceDeps): GetTurnService =>
   async (publicTurnId) => {
-    const turnData = await getTurnState(publicTurnId);
+    const turnData = await loadTurn(publicTurnId);
 
     if (!turnData) {
       return null;

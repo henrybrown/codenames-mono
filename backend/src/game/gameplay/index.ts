@@ -47,7 +47,7 @@ export const initialize = (
   /** Queries */
   const queries = createQueries(logger)({
     loadGameAggregate,
-    getTurnState: loadTurn,
+    loadTurn,
     getTurnsByRoundId,
     findPlayersByRoundId,
     db,
@@ -56,7 +56,7 @@ export const initialize = (
   /** Turns (clue, guess, end-turn, start-turn) */
   const turns = createTurns(logger)({
     gameplayHandler,
-    getTurnState: loadTurn,
+    loadTurn,
     loadGameAggregate,
   });
 

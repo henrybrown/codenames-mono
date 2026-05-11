@@ -99,7 +99,7 @@ export type GiveClueResult =
  */
 export type GiveClueDependencies = {
   gameplayHandler: GameplayHandler;
-  getTurnState: TurnLoader;
+  loadTurn: TurnLoader;
 };
 
 /**
@@ -113,7 +113,7 @@ export const giveClueService = (logger: AppLogger) => (dependencies: GiveClueDep
     turnPublicId: string,
     players: Pick<Player, "publicName" | "teamName" | "_teamId" | "role" | "isAi">[],
   ): Promise<CompleteTurnData> => {
-    const turnData = await dependencies.getTurnState(turnPublicId);
+    const turnData = await dependencies.loadTurn(turnPublicId);
     if (!turnData) {
       throw new Error(`Failed to fetch turn data for ${turnPublicId}`);
     }

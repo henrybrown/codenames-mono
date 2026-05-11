@@ -65,7 +65,7 @@ describe("makeGuessService", () => {
 
     return makeGuessService(mockLogger)({
       gameplayHandler,
-      getTurnState: mockTurnState,
+      loadTurn: mockTurnState,
     });
   };
 

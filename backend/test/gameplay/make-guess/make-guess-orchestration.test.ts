@@ -208,7 +208,7 @@ describe("make-guess orchestration", () => {
 
     const service = makeGuessService(mockLogger)({
       gameplayHandler,
-      getTurnState: mockTurnState,
+      loadTurn: mockTurnState,
     });
 
     return { service, ops };

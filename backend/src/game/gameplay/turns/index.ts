@@ -16,7 +16,7 @@ import { createStartTurnController } from "./start-turn.controller";
 
 export interface TurnsDependencies {
   gameplayHandler: GameplayHandler;
-  getTurnState: TurnLoader;
+  loadTurn: TurnLoader;
   loadGameAggregate: GameAggregateLoader;
 }
 
@@ -24,7 +24,7 @@ export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
   /** Give clue */
   const clueService = giveClueService(logger)({
     gameplayHandler: deps.gameplayHandler,
-    getTurnState: deps.getTurnState,
+    loadTurn: deps.loadTurn,
   });
   const clueController = giveClueController(logger)({
     giveClue: clueService,
@@ -34,7 +34,7 @@ export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
   /** Make guess */
   const guessService = createMakeGuessService(logger)({
     gameplayHandler: deps.gameplayHandler,
-    getTurnState: deps.getTurnState,
+    loadTurn: deps.loadTurn,
   });
   const guessController = createMakeGuessController(logger)({
     makeGuess: guessService,

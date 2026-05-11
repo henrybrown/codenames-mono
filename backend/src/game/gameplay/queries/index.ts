@@ -18,7 +18,7 @@ import { controller as getTurnControllerFactory } from "./get-turn.controller";
 
 export interface QueriesDependencies {
   loadGameAggregate: GameAggregateLoader;
-  getTurnState: TurnLoader;
+  loadTurn: TurnLoader;
   getTurnsByRoundId: TurnsFinder<RoundId>;
   findPlayersByRoundId: PlayerFinderAll<PlayerRoundId>;
   db: DbContext;
@@ -48,7 +48,7 @@ export const createQueries = (logger: AppLogger) => (deps: QueriesDependencies) 
 
   /** Get turn */
   const turnService = getTurnService({
-    getTurnState: deps.getTurnState,
+    loadTurn: deps.loadTurn,
     getTurnsByRoundId: deps.getTurnsByRoundId,
     findPlayersByRoundId: deps.findPlayersByRoundId,
   });

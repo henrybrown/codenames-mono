@@ -8,14 +8,14 @@ import { giveClueController } from "./give-clue.controller";
 
 export interface GiveClueDependencies {
   gameplayHandler: GameplayHandler;
-  getTurnState: TurnLoader;
+  loadTurn: TurnLoader;
   loadGameAggregate: GameAggregateLoader;
 }
 
 export const giveClue = (logger: AppLogger) => (dependencies: GiveClueDependencies) => {
   const service = giveClueService(logger)({
     gameplayHandler: dependencies.gameplayHandler,
-    getTurnState: dependencies.getTurnState,
+    loadTurn: dependencies.loadTurn,
   });
 
   const controller = giveClueController(logger)({

@@ -8,14 +8,14 @@ import { makeGuessController } from "./make-guess.controller";
 
 export interface MakeGuessDependencies {
   gameplayHandler: GameplayHandler;
-  getTurnState: TurnLoader;
+  loadTurn: TurnLoader;
   loadGameAggregate: GameAggregateLoader;
 }
 
 export const makeGuess = (logger: AppLogger) => (dependencies: MakeGuessDependencies) => {
   const service = makeGuessService(logger)({
     gameplayHandler: dependencies.gameplayHandler,
-    getTurnState: dependencies.getTurnState,
+    loadTurn: dependencies.loadTurn,
   });
 
   const controller = makeGuessController(logger)({
