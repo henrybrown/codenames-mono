@@ -24,7 +24,7 @@ import {
   ValidatedGameState,
   GameplayValidationResult,
 } from "@backend/game/state/gameplay-state.validation";
-import { complexProperties } from "@backend/game/state/gameplay-state.helpers";
+import { getCurrentTurn } from "@backend/game/state/gameplay-state.helpers";
 import { z } from "zod";
 
 /**
@@ -42,35 +42,35 @@ const makeGuessActionSchema = gameplayBaseSchema.extend({
   }), 
 })
   .refine((data) => {
-    const currentTurn = complexProperties.getCurrentTurn(data);
+    const currentTurn = getCurrentTurn(data);
     return currentTurn !== null;
   }, {
     message: "No active turn found",
     path: ["currentRound", "turns"],
   })
   .refine((data) => {
-    const currentTurn = complexProperties.getCurrentTurn(data);
+    const currentTurn = getCurrentTurn(data);
     return currentTurn && currentTurn._teamId === data.playerContext._teamId;
   }, {
     message: "It's not your team's turn",
     path: ["playerContext", "teamId"],
   })
   .refine((data) => {
-    const currentTurn = complexProperties.getCurrentTurn(data);
+    const currentTurn = getCurrentTurn(data);
     return currentTurn && currentTurn.status === "ACTIVE";
   }, {
     message: "Current turn is not active",
     path: ["currentRound", "turns"],
   })
   .refine((data) => {
-    const currentTurn = complexProperties.getCurrentTurn(data);
+    const currentTurn = getCurrentTurn(data);
     return currentTurn && currentTurn.clue !== null && currentTurn.clue !== undefined;
   }, {
     message: "No clue has been given for this turn",
     path: ["currentRound", "turns"],
   })
   .refine((data) => {
-    const currentTurn = complexProperties.getCurrentTurn(data);
+    const currentTurn = getCurrentTurn(data);
     return currentTurn && currentTurn.guessesRemaining > 0;
   }, {
     message: "No guesses remaining for this turn",

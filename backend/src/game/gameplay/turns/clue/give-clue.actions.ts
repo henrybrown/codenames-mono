@@ -4,7 +4,7 @@ import {
 } from "@backend/shared/data-access/repositories/turns.repository";
 import type { GiveClueValidGameState, validate, validateClueWord } from "./give-clue.rules";
 import type { GameAggregate } from "@backend/game/state/gameplay-state.types";
-import { complexProperties } from "@backend/game/state/gameplay-state.helpers";
+import { getCurrentTurn } from "@backend/game/state/gameplay-state.helpers";
 import { UnexpectedGameplayError, GameplayValidationError } from "../../errors/gameplay.errors";
 
 /**
@@ -38,7 +38,7 @@ export const giveClueToTurn = (
     }
 
     // 3. Execute
-    const currentTurn = complexProperties.getCurrentTurn(validation.data);
+    const currentTurn = getCurrentTurn(validation.data);
     if (!currentTurn) {
       throw new UnexpectedGameplayError("No active turn found");
     }

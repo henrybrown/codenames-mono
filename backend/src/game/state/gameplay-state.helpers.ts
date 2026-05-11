@@ -11,120 +11,124 @@ import {
 import type { GamePlayer } from "@backend/game/access/types";
 
 /**
- * Collection of pure accessor functions for retrieving derived game state
+ * Pure accessor functions for retrieving derived game state.
+ *
+ * Flat named exports — consumers import the specific functions they
+ * need rather than a property bag. No `this`-binding internally.
  */
-export const complexProperties = {
-  /**
-   * @returns The current round or null if it doesn't exist
-   */
-  getLatestRound(game: GameAggregate): Round | null {
-    return game.currentRound || null;
-  },
 
-  /**
-   * @returns The current round or throws if it doesn't exist
-   */
-  getLatestRoundOrThrow(game: GameAggregate): Round {
-    const currentRound = this.getLatestRound(game);
-    if (!currentRound)
-      throw new UnexpectedGameplayError("No current round found");
-    return currentRound;
-  },
+/**
+ * @returns The current round or null if it doesn't exist
+ */
+export const getLatestRound = (game: GameAggregate): Round | null =>
+  game.currentRound || null;
 
-  /**
-   * @returns The number of teams in the game
-   */
-  getTeamCount(game: GameAggregate): number {
-    return game.teams ? game.teams.length : 0;
-  },
+/**
+ * @returns The current round or throws if it doesn't exist
+ */
+export const getLatestRoundOrThrow = (game: GameAggregate): Round => {
+  const currentRound = getLatestRound(game);
+  if (!currentRound) {
+    throw new UnexpectedGameplayError("No current round found");
+  }
+  return currentRound;
+};
 
-  /**
-   * @returns Total number of rounds in the game (current + historical)
-   */
-  getRoundCount(game: GameAggregate): number {
-    const historicalCount = game.historicalRounds?.length || 0;
-    const currentCount = game.currentRound ? 1 : 0;
-    return historicalCount + currentCount;
-  },
+/**
+ * @returns The number of teams in the game
+ */
+export const getTeamCount = (game: GameAggregate): number =>
+  game.teams ? game.teams.length : 0;
 
-  /**
-   * @param roundNumber - Round sequence number
-   * @returns The requested round (current or historical) or null if not found
-   */
-  findRoundByNumber(
-    game: GameAggregate,
-    roundNumber: number,
-  ): Round | HistoricalRound | null {
-    // Check current round first
-    if (game.currentRound && game.currentRound.number === roundNumber) {
-      return game.currentRound;
-    }
+/**
+ * @returns Total number of rounds in the game (current + historical)
+ */
+export const getRoundCount = (game: GameAggregate): number => {
+  const historicalCount = game.historicalRounds?.length || 0;
+  const currentCount = game.currentRound ? 1 : 0;
+  return historicalCount + currentCount;
+};
 
-    // Then check historical rounds
-    if (game.historicalRounds && game.historicalRounds.length > 0) {
-      return (
-        game.historicalRounds.find((round) => round.number === roundNumber) ||
-        null
-      );
-    }
+/**
+ * @param roundNumber - Round sequence number
+ * @returns The requested round (current or historical) or null if not found
+ */
+export const findRoundByNumber = (
+  game: GameAggregate,
+  roundNumber: number,
+): Round | HistoricalRound | null => {
+  // Check current round first
+  if (game.currentRound && game.currentRound.number === roundNumber) {
+    return game.currentRound;
+  }
 
+  // Then check historical rounds
+  if (game.historicalRounds && game.historicalRounds.length > 0) {
+    return (
+      game.historicalRounds.find((round) => round.number === roundNumber) ||
+      null
+    );
+  }
+
+  return null;
+};
+
+/**
+ * @returns The winning team info of the specified round, or null if not found or not completed
+ */
+export const getRoundWinningTeam = (
+  game: GameAggregate,
+  roundNumber: number,
+): { _winningTeamId: number; winningTeamName: string } | null => {
+  const winner = game.historicalRounds.find(
+    (round) => round.number === roundNumber,
+  );
+
+  if (!winner?._winningTeamId || !winner?.winningTeamName) {
     return null;
-  },
+  }
 
-  /**
-   * @returns The winning team info of the specified round, or null if not found or not completed
-   */
-  getRoundWinningTeam(
-    game: GameAggregate,
-    roundNumber: number,
-  ): { _winningTeamId: number; winningTeamName: string } | null {
-    const winner = game.historicalRounds.find(
-      (round) => round.number === roundNumber,
-    );
+  return {
+    _winningTeamId: winner._winningTeamId,
+    winningTeamName: winner.winningTeamName,
+  };
+};
 
-    if (!winner?._winningTeamId || !winner?.winningTeamName) {
-      return null;
-    }
+/**
+ * @returns The current active turn or null if it doesn't exist
+ */
+export const getCurrentTurn = (game: GameAggregate): Turn | null => {
+  if (!game.currentRound?.turns) return null;
 
-    return {
-      _winningTeamId: winner._winningTeamId,
-      winningTeamName: winner.winningTeamName,
-    };
-  },
+  const activeTurn = game.currentRound.turns.find(
+    (turn) => turn.status === "ACTIVE",
+  );
+  return activeTurn || null;
+};
 
-  /**
-   * @returns The current active turn or null if it doesn't exist
-   */
-  getCurrentTurn(game: GameAggregate): Turn | null {
-    if (!game.currentRound?.turns) return null;
+/**
+ * @returns The current turn or throws if it doesn't exist
+ */
+export const getCurrentTurnOrThrow = (game: GameAggregate): Turn => {
+  const currentTurn = getCurrentTurn(game);
+  if (!currentTurn) {
+    throw new UnexpectedGameplayError("No active turn found");
+  }
+  return currentTurn;
+};
 
-    const activeTurn = game.currentRound.turns.find(
-      (turn) => turn.status === "ACTIVE",
-    );
-    return activeTurn || null;
-  },
-
-  /**
-   * @returns The current turn or throws if it doesn't exist
-   */
-  getCurrentTurnOrThrow(game: GameAggregate): Turn {
-    const currentTurn = this.getCurrentTurn(game);
-    if (!currentTurn) {
-      throw new UnexpectedGameplayError("No active turn found");
-    }
-    return currentTurn;
-  },
-
-  /**
-   * @returns The other team ID (assumes 2-team game)
-   */
-  getOtherTeamId(game: GameAggregate, currentTeamId: number): number {
-    const otherTeam = game.teams.find((team) => team._id !== currentTeamId);
-    if (!otherTeam) {
-      throw new UnexpectedGameplayError("No other team found");
-    }
-    return otherTeam._id;
-  },
+/**
+ * @returns The other team ID (assumes 2-team game)
+ */
+export const getOtherTeamId = (
+  game: GameAggregate,
+  currentTeamId: number,
+): number => {
+  const otherTeam = game.teams.find((team) => team._id !== currentTeamId);
+  if (!otherTeam) {
+    throw new UnexpectedGameplayError("No other team found");
+  }
+  return otherTeam._id;
 };
 
 /**

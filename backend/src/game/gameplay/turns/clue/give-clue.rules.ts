@@ -5,7 +5,7 @@ import {
   currentRoundSchema,
   playerContextSchema,
 } from "@backend/game/state/gameplay-state.types";
-import { complexProperties } from "@backend/game/state/gameplay-state.helpers";
+import { getCurrentTurn } from "@backend/game/state/gameplay-state.helpers";
 import {
   validateWithZodSchema,
   ValidatedGameState,
@@ -28,7 +28,7 @@ const clueGivingRules = {
    * Checks if it's the player's team's turn
    */
   isPlayersTurn(game: GameAggregate): boolean {
-    const currentTurn = complexProperties.getCurrentTurn(game);
+    const currentTurn = getCurrentTurn(game);
     return (
       currentTurn !== null && 
       game.playerContext !== null && 
@@ -40,7 +40,7 @@ const clueGivingRules = {
    * Checks if the current turn has no clue yet
    */
   hasNoExistingClue(game: GameAggregate): boolean {
-    const currentTurn = complexProperties.getCurrentTurn(game);
+    const currentTurn = getCurrentTurn(game);
     return currentTurn !== null && !currentTurn.clue;
   },
 
@@ -48,7 +48,7 @@ const clueGivingRules = {
    * Checks if the turn is active
    */
   isTurnActive(game: GameAggregate): boolean {
-    const currentTurn = complexProperties.getCurrentTurn(game);
+    const currentTurn = getCurrentTurn(game);
     return currentTurn !== null && currentTurn.status === "ACTIVE";
   },
 

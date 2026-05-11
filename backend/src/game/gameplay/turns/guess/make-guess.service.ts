@@ -2,7 +2,11 @@ import type { TurnStateProvider } from "@backend/game/state/turn-state.provider"
 import type { GameplayHandler } from "../../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
 import { CODEBREAKER_OUTCOME } from "@codenames/shared/types";
-import { complexProperties, computeTurnPhase } from "@backend/game/state/gameplay-state.helpers";
+import {
+  getCurrentTurnOrThrow,
+  getOtherTeamId,
+  computeTurnPhase,
+} from "@backend/game/state/gameplay-state.helpers";
 import { TurnPhase, GameAggregate, Player } from "@backend/game/state/gameplay-state.types";
 import type { GamePlayer } from "@backend/game/access";
 import { winningConditions } from "./make-guess.rules";
@@ -167,7 +171,7 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
 
         switch (outcome) {
           case CODEBREAKER_OUTCOME.CORRECT_TEAM_CARD: {
-            const otherTeamId = complexProperties.getOtherTeamId(state, guessResult.turn._teamId);
+            const otherTeamId = getOtherTeamId(state, guessResult.turn._teamId);
             const roundWinner = winningConditions.checkRoundWinner(
               state.currentRound!.cards,
               guessResult.turn._teamId,
@@ -189,7 +193,7 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
           }
           case CODEBREAKER_OUTCOME.OTHER_TEAM_CARD: {
             const afterTurnEnd = await ops.endTurn(guessResult.turn._id);
-            const otherTeamId = complexProperties.getOtherTeamId(afterTurnEnd, guessResult.turn._teamId);
+            const otherTeamId = getOtherTeamId(afterTurnEnd, guessResult.turn._teamId);
             const roundWinner = winningConditions.checkRoundWinner(
               afterTurnEnd.currentRound!.cards,
               guessResult.turn._teamId,
@@ -212,7 +216,7 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
           }
           case CODEBREAKER_OUTCOME.ASSASSIN_CARD: {
             const afterTurnEnd = await ops.endTurn(guessResult.turn._id);
-            const otherTeamId = complexProperties.getOtherTeamId(afterTurnEnd, guessResult.turn._teamId);
+            const otherTeamId = getOtherTeamId(afterTurnEnd, guessResult.turn._teamId);
             const afterRoundEnd = await ops.endRound(afterTurnEnd.currentRound!._id, otherTeamId);
             const gameWinner = winningConditions.checkGameWinner(
               afterRoundEnd.historicalRounds,
@@ -226,7 +230,7 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
         return { guessResult: { ...guessResult, outcome } };
       });
 
-      const currentTurn = complexProperties.getCurrentTurnOrThrow(gameState);
+      const currentTurn = getCurrentTurnOrThrow(gameState);
       const roundPlayers = gameState.currentRound?.players ?? [];
       const completeTurnData = await getCompleteTurnData(currentTurn.publicId, roundPlayers);
 

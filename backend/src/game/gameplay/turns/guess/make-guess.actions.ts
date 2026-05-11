@@ -27,7 +27,7 @@ import {
 import { GameStatusUpdater } from "@backend/shared/data-access/repositories/games.repository";
 import type { CreateEventInput } from "@backend/shared/data-access/repositories/game-events.repository";
 
-import { complexProperties } from "@backend/game/state/gameplay-state.helpers";
+import { getCurrentTurnOrThrow } from "@backend/game/state/gameplay-state.helpers";
 
 /**
  * Validates a specific card can be guessed
@@ -103,7 +103,7 @@ export const createMakeGuessAction = (deps: {
       ]);
     }
 
-    const currentTurn = complexProperties.getCurrentTurnOrThrow(gameState);
+    const currentTurn = getCurrentTurnOrThrow(gameState);
     const [card] = await deps.updateCards([cardValidation.cardId!], {
       selected: true,
     });

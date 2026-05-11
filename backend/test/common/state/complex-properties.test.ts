@@ -3,7 +3,13 @@
  *
  * All pure functions on GameAggregate — no mocks needed.
  */
-import { complexProperties } from "@backend/game/state/gameplay-state.helpers";
+import {
+  getCurrentTurn,
+  getOtherTeamId,
+  getRoundCount,
+  findRoundByNumber,
+  getLatestRoundOrThrow,
+} from "@backend/game/state/gameplay-state.helpers";
 import { buildGameAggregate, buildTurn, buildRound, resetIds } from "../../__test-utils__/fixtures";
 
 describe("complexProperties", () => {
@@ -12,7 +18,7 @@ describe("complexProperties", () => {
   describe("getCurrentTurn", () => {
     it("returns the active turn", () => {
       const game = buildGameAggregate();
-      const turn = complexProperties.getCurrentTurn(game);
+      const turn = getCurrentTurn(game);
       expect(turn).not.toBeNull();
       expect(turn!.status).toBe("ACTIVE");
     });
@@ -23,28 +29,28 @@ describe("complexProperties", () => {
           turns: [buildTurn({ status: "COMPLETED" })],
         }),
       });
-      const turn = complexProperties.getCurrentTurn(game);
+      const turn = getCurrentTurn(game);
       expect(turn).toBeNull();
     });
 
     it("returns null when no current round", () => {
       const game = buildGameAggregate({ currentRound: null });
-      expect(complexProperties.getCurrentTurn(game)).toBeNull();
+      expect(getCurrentTurn(game)).toBeNull();
     });
   });
 
   describe("getOtherTeamId", () => {
     it("returns the other team ID", () => {
       const game = buildGameAggregate();
-      expect(complexProperties.getOtherTeamId(game, 1)).toBe(2);
-      expect(complexProperties.getOtherTeamId(game, 2)).toBe(1);
+      expect(getOtherTeamId(game, 1)).toBe(2);
+      expect(getOtherTeamId(game, 2)).toBe(1);
     });
 
     it("throws when there is only one team", () => {
       const game = buildGameAggregate({
         teams: [{ _id: 1, _gameId: 1, teamName: "Red", players: [] }],
       });
-      expect(() => complexProperties.getOtherTeamId(game, 1)).toThrow(
+      expect(() => getOtherTeamId(game, 1)).toThrow(
         "No other team found",
       );
     });
@@ -57,7 +63,7 @@ describe("complexProperties", () => {
           { _id: 10, number: 1, status: "COMPLETED", _winningTeamId: 1, winningTeamName: "Red", createdAt: new Date() },
         ],
       });
-      expect(complexProperties.getRoundCount(game)).toBe(2);
+      expect(getRoundCount(game)).toBe(2);
     });
 
     it("returns 0 when no rounds", () => {
@@ -65,14 +71,14 @@ describe("complexProperties", () => {
         currentRound: null,
         historicalRounds: [],
       });
-      expect(complexProperties.getRoundCount(game)).toBe(0);
+      expect(getRoundCount(game)).toBe(0);
     });
   });
 
   describe("findRoundByNumber", () => {
     it("returns current round when number matches", () => {
       const game = buildGameAggregate();
-      const round = complexProperties.findRoundByNumber(game, 1);
+      const round = findRoundByNumber(game, 1);
       expect(round).not.toBeNull();
       expect(round!._id).toBe(game.currentRound!._id);
     });
@@ -84,26 +90,26 @@ describe("complexProperties", () => {
           { _id: 10, number: 1, status: "COMPLETED", _winningTeamId: 1, winningTeamName: "Red", createdAt: new Date() },
         ],
       });
-      const round = complexProperties.findRoundByNumber(game, 1);
+      const round = findRoundByNumber(game, 1);
       expect(round).not.toBeNull();
       expect(round!._id).toBe(10);
     });
 
     it("returns null when round not found", () => {
       const game = buildGameAggregate();
-      expect(complexProperties.findRoundByNumber(game, 99)).toBeNull();
+      expect(findRoundByNumber(game, 99)).toBeNull();
     });
   });
 
   describe("getLatestRoundOrThrow", () => {
     it("returns current round", () => {
       const game = buildGameAggregate();
-      expect(() => complexProperties.getLatestRoundOrThrow(game)).not.toThrow();
+      expect(() => getLatestRoundOrThrow(game)).not.toThrow();
     });
 
     it("throws when no current round", () => {
       const game = buildGameAggregate({ currentRound: null });
-      expect(() => complexProperties.getLatestRoundOrThrow(game)).toThrow(
+      expect(() => getLatestRoundOrThrow(game)).toThrow(
         "No current round found",
       );
     });
