@@ -1,4 +1,4 @@
-import type { LobbyStateProvider } from "../state";
+import type { LobbyAggregateLoader } from "../state";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { LobbyOperations } from "../lobby-actions";
 
@@ -10,20 +10,20 @@ import { removePlayersService } from "./remove-players.service";
 import { removePlayersController } from "./remove-players.controller";
 
 export interface PlayersDependencies {
-  getLobbyState: LobbyStateProvider;
+  loadLobbyAggregate: LobbyAggregateLoader;
   lobbyHandler: TransactionalHandler<LobbyOperations>;
 }
 
 export const createPlayers = (deps: PlayersDependencies) => {
   const addService = addPlayersService({
     lobbyHandler: deps.lobbyHandler,
-    getLobbyState: deps.getLobbyState,
+    loadLobbyAggregate: deps.loadLobbyAggregate,
   });
   const addController = addPlayersController({ addPlayers: addService });
 
   const modifyService = modifyPlayersService({
     lobbyHandler: deps.lobbyHandler,
-    getLobbyState: deps.getLobbyState,
+    loadLobbyAggregate: deps.loadLobbyAggregate,
   });
   const { controllers: modifyController } = modifyPlayersController({
     modifyPlayersService: modifyService,
@@ -31,7 +31,7 @@ export const createPlayers = (deps: PlayersDependencies) => {
 
   const removeService = removePlayersService({
     lobbyHandler: deps.lobbyHandler,
-    getLobbyState: deps.getLobbyState,
+    loadLobbyAggregate: deps.loadLobbyAggregate,
   });
   const removeController = removePlayersController({
     removePlayersService: removeService,

@@ -1,4 +1,4 @@
-import type { LobbyStateProvider } from "../state";
+import type { LobbyAggregateLoader } from "../state";
 import type { LobbyValidationError } from "../state/validation";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { LobbyOperations } from "../lobby-actions";
@@ -66,7 +66,7 @@ export type StartRoundResult =
  * Dependencies required by the start round service
  */
 export type StartRoundDependencies = {
-  getLobbyState: LobbyStateProvider;
+  loadLobbyAggregate: LobbyAggregateLoader;
   lobbyHandler: TransactionalHandler<LobbyOperations>;
 };
 
@@ -78,7 +78,7 @@ export type StartRoundDependencies = {
  */
 export const startRoundService = (dependencies: StartRoundDependencies) => {
   return async (input: StartRoundInput): Promise<StartRoundResult> => {
-    const lobbyState = await dependencies.getLobbyState(input.gameId, input.userId);
+    const lobbyState = await dependencies.loadLobbyAggregate(input.gameId, input.userId);
 
     if (!lobbyState) {
       return {

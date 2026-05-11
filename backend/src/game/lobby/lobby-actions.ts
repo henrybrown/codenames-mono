@@ -36,7 +36,7 @@ const getGameStateOrThrow =
  * @returns Object containing all lobby operations
  */
 export const lobbyOperations = (trx: TransactionContext) => ({
-  getLobbyState: getGameStateOrThrow(trx),
+  loadLobbyAggregate: getGameStateOrThrow(trx),
   addPlayers: playersRepository.addPlayers(trx),
   removePlayer: playersRepository.removePlayer(trx),
   modifyPlayers: playersRepository.modifyPlayers(trx),

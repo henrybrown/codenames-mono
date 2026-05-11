@@ -1,4 +1,4 @@
-import type { LobbyStateProvider } from "../state";
+import type { LobbyAggregateLoader } from "../state";
 import type { LobbyValidationError } from "../state/validation";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { LobbyOperations } from "../lobby-actions";
@@ -65,7 +65,7 @@ export type DealCardsResult =
  * Dependencies required by the deal cards service
  */
 export type DealCardsDependencies = {
-  getLobbyState: LobbyStateProvider;
+  loadLobbyAggregate: LobbyAggregateLoader;
   lobbyHandler: TransactionalHandler<LobbyOperations>;
 };
 
@@ -77,7 +77,7 @@ export type DealCardsDependencies = {
  */
 export const dealCardsService = (dependencies: DealCardsDependencies) => {
   return async (input: DealCardsInput): Promise<DealCardsResult> => {
-    const lobbyState = await dependencies.getLobbyState(input.gameId, input.userId);
+    const lobbyState = await dependencies.loadLobbyAggregate(input.gameId, input.userId);
 
     if (!lobbyState) {
       return {

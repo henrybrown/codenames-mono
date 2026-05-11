@@ -1,7 +1,7 @@
 import { UnexpectedLobbyError } from "../errors/lobby.errors";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { LobbyOperations } from "../lobby-actions";
-import type { LobbyStateProvider } from "../state";
+import type { LobbyAggregateLoader } from "../state";
 import { getTeamNameToIdMap, getAvailableTeamNames } from "../state/helpers";
 
 export type PlayerResult = {
@@ -25,7 +25,7 @@ export type ModifyPlayersServiceResult = {
 
 export type ServiceDependencies = {
   lobbyHandler: TransactionalHandler<LobbyOperations>;
-  getLobbyState: LobbyStateProvider;
+  loadLobbyAggregate: LobbyAggregateLoader;
 };
 
 export const modifyPlayersService = (dependencies: ServiceDependencies) => {
@@ -38,7 +38,7 @@ export const modifyPlayersService = (dependencies: ServiceDependencies) => {
       return { modifiedPlayers: [] };
     }
 
-    const lobby = await dependencies.getLobbyState(publicGameId, userId);
+    const lobby = await dependencies.loadLobbyAggregate(publicGameId, userId);
     if (!lobby) {
       throw new UnexpectedLobbyError(
         "Failed to modify players... game does not exist",

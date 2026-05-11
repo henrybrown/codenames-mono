@@ -1,7 +1,7 @@
 import { UnexpectedLobbyError } from "../errors/lobby.errors";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { LobbyOperations } from "../lobby-actions";
-import type { LobbyStateProvider } from "../state";
+import type { LobbyAggregateLoader } from "../state";
 import { getPlayerByPublicId, isPlayerOwner } from "../state/helpers";
 
 /** Represents the result of a player removal operation */
@@ -22,7 +22,7 @@ export type RemovePlayersServiceResult = {
 /** Required dependencies for creating the RemovePlayersService */
 export type ServiceDependencies = {
   lobbyHandler: TransactionalHandler<LobbyOperations>;
-  getLobbyState: LobbyStateProvider;
+  loadLobbyAggregate: LobbyAggregateLoader;
 };
 
 /** Creates an implementation of the remove players service */
@@ -39,7 +39,7 @@ export const removePlayersService = (dependencies: ServiceDependencies) => {
     userId: number,
     playerIdToRemove: string,
   ): Promise<RemovePlayersServiceResult> => {
-    const lobby = await dependencies.getLobbyState(publicGameId, userId);
+    const lobby = await dependencies.loadLobbyAggregate(publicGameId, userId);
     if (!lobby) {
       throw new UnexpectedLobbyError(
         `Game with public ID ${publicGameId} not found`,

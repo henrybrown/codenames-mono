@@ -1,4 +1,4 @@
-import type { LobbyStateProvider } from "../state";
+import type { LobbyAggregateLoader } from "../state";
 import type { LobbyValidationError } from "../state/validation";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { LobbyOperations } from "../lobby-actions";
@@ -75,7 +75,7 @@ export type RoundCreationResult =
  * Dependencies required by the round creation service
  */
 export type RoundCreationDependencies = {
-  getLobbyState: LobbyStateProvider;
+  loadLobbyAggregate: LobbyAggregateLoader;
   lobbyHandler: TransactionalHandler<LobbyOperations>;
 };
 
@@ -87,7 +87,7 @@ export type RoundCreationDependencies = {
  */
 export const roundCreationService = (dependencies: RoundCreationDependencies) => {
   return async (input: RoundCreationInput): Promise<RoundCreationResult> => {
-    const lobbyState = await dependencies.getLobbyState(input.gameId, input.userId);
+    const lobbyState = await dependencies.loadLobbyAggregate(input.gameId, input.userId);
 
     if (!lobbyState) {
       return {
@@ -130,7 +130,7 @@ export const roundCreationService = (dependencies: RoundCreationDependencies) =>
       const newRound = await ops.createRound(validationResult.data);
 
       // Get fresh lobby state after round creation to validate card dealing
-      let currentState = await ops.getLobbyState(input.gameId, input.userId);
+      let currentState = await ops.loadLobbyAggregate(input.gameId, input.userId);
 
       if (!currentState) {
         throw new UnexpectedLobbyError("Failed to get lobby state after round creation");
@@ -145,7 +145,7 @@ export const roundCreationService = (dependencies: RoundCreationDependencies) =>
       await ops.dealCards(dealValidation.data);
 
       // Get fresh state again after dealing cards
-      currentState = await ops.getLobbyState(input.gameId, input.userId);
+      currentState = await ops.loadLobbyAggregate(input.gameId, input.userId);
 
       if (!currentState) {
         throw new UnexpectedLobbyError("Failed to get lobby state after dealing cards");
@@ -162,7 +162,7 @@ export const roundCreationService = (dependencies: RoundCreationDependencies) =>
       await ops.assignPlayerRoles(validatedForRoles.data);
 
       // Get final state to return full round data
-      const finalState = await ops.getLobbyState(input.gameId, input.userId);
+      const finalState = await ops.loadLobbyAggregate(input.gameId, input.userId);
 
       if (!finalState || !finalState.currentRound) {
         throw new UnexpectedLobbyError("Failed to get final lobby state");

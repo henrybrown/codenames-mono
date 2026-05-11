@@ -1,5 +1,5 @@
 import type { LobbyOperations } from "../lobby-actions";
-import type { LobbyStateProvider } from "../state";
+import type { LobbyAggregateLoader } from "../state";
 import { getTotalPlayerCount, getTeamPlayerCounts } from "../state/helpers";
 import { GAME_STATE } from "@codenames/shared/types";
 import { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
@@ -23,13 +23,13 @@ export type GameStartResult = GameStartSuccess | GameStartError;
 
 export type ServiceDependencies = {
   lobbyHandler: TransactionalHandler<LobbyOperations>;
-  getLobbyState: LobbyStateProvider;
+  loadLobbyAggregate: LobbyAggregateLoader;
   createUser: UserCreator;
 };
 
 export const startGameService = (dependencies: ServiceDependencies) => {
   const startGame = async (publicGameId: string): Promise<GameStartResult> => {
-    const lobby = await dependencies.getLobbyState(publicGameId, 0);
+    const lobby = await dependencies.loadLobbyAggregate(publicGameId, 0);
     if (!lobby) {
       return {
         success: false,

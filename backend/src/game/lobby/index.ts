@@ -42,16 +42,16 @@ export const initialize = (
   const setupHandler = createTransactionalHandler(db, setupOperations);
 
   /** Players (add, modify, remove) */
-  const players = createPlayers({ getLobbyState: loadLobbyAggregate, lobbyHandler });
+  const players = createPlayers({ loadLobbyAggregate, lobbyHandler });
 
   /** Rounds (new-round, deal-cards, start-round) */
-  const rounds = createRounds({ getLobbyState: loadLobbyAggregate, lobbyHandler });
+  const rounds = createRounds({ loadLobbyAggregate, lobbyHandler });
 
   /** Start game */
   const createUserRepo = createUser(db);
   const lobbyStartGameService = startGameService({
     lobbyHandler,
-    getLobbyState: loadLobbyAggregate,
+    loadLobbyAggregate,
     createUser: createUserRepo,
   });
   const lobbyStartGameController = startGameController({

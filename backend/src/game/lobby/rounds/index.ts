@@ -1,4 +1,4 @@
-import type { LobbyStateProvider } from "../state";
+import type { LobbyAggregateLoader } from "../state";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { LobbyOperations } from "../lobby-actions";
 
@@ -10,28 +10,28 @@ import { startRoundService } from "./start-round.service";
 import { startRoundController } from "./start-round.controller";
 
 export interface RoundsDependencies {
-  getLobbyState: LobbyStateProvider;
+  loadLobbyAggregate: LobbyAggregateLoader;
   lobbyHandler: TransactionalHandler<LobbyOperations>;
 }
 
 export const createRounds = (deps: RoundsDependencies) => {
   /** New round */
   const newRoundService = roundCreationService({
-    getLobbyState: deps.getLobbyState,
+    loadLobbyAggregate: deps.loadLobbyAggregate,
     lobbyHandler: deps.lobbyHandler,
   });
   const newRound = newRoundController({ createRound: newRoundService });
 
   /** Deal cards */
   const dealService = dealCardsService({
-    getLobbyState: deps.getLobbyState,
+    loadLobbyAggregate: deps.loadLobbyAggregate,
     lobbyHandler: deps.lobbyHandler,
   });
   const dealCards = dealCardsController({ dealCards: dealService });
 
   /** Start round */
   const startService = startRoundService({
-    getLobbyState: deps.getLobbyState,
+    loadLobbyAggregate: deps.loadLobbyAggregate,
     lobbyHandler: deps.lobbyHandler,
   });
   const startRound = startRoundController({ startRound: startService });
