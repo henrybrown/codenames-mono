@@ -6,23 +6,23 @@
  * to think about gates themselves.
  */
 
-export { requireGameRole } from "./require-game-role";
-export type { RequireGameRoleDeps } from "./require-game-role";
+export { requireGameRole } from "./require-game-role.middleware";
+export type { RequireGameRoleDeps } from "./require-game-role.middleware";
 
-export { requireGameMember } from "./require-game-member";
-export type { RequireGameMemberDeps } from "./require-game-member";
+export { requireGamePlayer as requireGameMember } from "./require-game-player.middleware";
+export type { RequireGamePlayerDeps as RequireGameMemberDeps } from "./require-game-player.middleware";
 
 export {
   blockingGameAction,
   isGameLocked,
   getGameLockInfo,
   type BlockingGameActionMiddleware,
-} from "./blocking-game-action";
+} from "./blocking-game-action.middleware";
 
 export {
   findPlayerByUserId,
   findPlayerByPublicId,
   findPlayerByActiveRole,
   isUserPlayerInGame,
-} from "./helpers";
+} from "@backend/game/gameplay/state/gameplay-state.helpers";
 export type { GamePlayer } from "./types";

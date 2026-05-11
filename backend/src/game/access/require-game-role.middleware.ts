@@ -44,28 +44,24 @@ export const requireGameRole =
         res.status(400).json({ success: false, error: "Missing gameId or auth" });
         return;
       }
-
-      // 1. Game must exist
       const game = await deps.getGameByPublicId(gameId);
       if (!game) {
         res.status(404).json({ success: false, error: "Game not found" });
         return;
       }
 
-      // 2. Single-device passthrough — branch before any player lookup
+      // Single-device passthrough — branch before any player lookup
       if (game.game_type === GAME_TYPE.SINGLE_DEVICE) {
         next();
         return;
       }
-
-      // 3. Multi-device: find the user's player
+    
       const player = await deps.getPlayerByGameAndUser(game._id, userId);
       if (!player) {
         res.status(403).json({ success: false, error: "Not a player in this game" });
         return;
       }
-
-      // 4. Role check
+      
       const allowedList = Array.isArray(allowed) ? allowed : [allowed];
       if (!allowedList.includes(player.role)) {
         res.status(403).json({

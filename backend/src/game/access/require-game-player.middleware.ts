@@ -19,13 +19,13 @@ import type {
 import type { PlayerFinderByGameAndUser } from "@backend/shared/data-access/repositories/players.repository";
 import { GAME_TYPE } from "@codenames/shared/types";
 
-export type RequireGameMemberDeps = {
+export type RequireGamePlayerDeps = {
   getGameByPublicId: GameFinder<GamePublicId>;
   getPlayerByGameAndUser: PlayerFinderByGameAndUser;
 };
 
-export const requireGameMember =
-  (deps: RequireGameMemberDeps) =>
+export const requireGamePlayer =
+  (deps: RequireGamePlayerDeps) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const rawGameId = req.params.gameId;
