@@ -14,7 +14,7 @@ import { validate as validateGiveClue, validateClueWord } from "./turns/clue/giv
 
 import { createGameAggregateLoader } from "@backend/game/state";
 import { UnexpectedGameplayError } from "./errors/gameplay.errors";
-import type { GameAggregate } from "@backend/game/state/gameplay-state.types";
+import type { GameAggregate } from "@backend/game/state/types";
 
 /**
  * Creates game-scoped gameplay operations for use within a transaction.

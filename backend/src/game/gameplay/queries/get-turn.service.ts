@@ -1,7 +1,7 @@
 import { TurnStateProvider, ProviderTurnData } from "@backend/game/state/turn-state.provider";
 import { TurnsFinder, RoundId, TurnResult } from "@backend/shared/data-access/repositories/turns.repository";
 import { PlayerFinderAll, RoundId as PlayerRoundId } from "@backend/shared/data-access/repositories/players.repository";
-import { TurnPhase, Player } from "@backend/game/state/gameplay-state.types";
+import { TurnPhase, Player } from "@backend/game/state/types";
 import { computeTurnPhase } from "@backend/game/state/helpers";
 
 /**

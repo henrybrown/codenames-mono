@@ -7,7 +7,7 @@ import {
   getOtherTeamId,
   computeTurnPhase,
 } from "@backend/game/state/helpers";
-import { TurnPhase, GameAggregate, Player } from "@backend/game/state/gameplay-state.types";
+import { TurnPhase, GameAggregate, Player } from "@backend/game/state/types";
 import type { GamePlayer } from "@backend/game/access";
 import { winningConditions } from "./make-guess.rules";
 import { GameEventsEmitter } from "@backend/shared/websocket";

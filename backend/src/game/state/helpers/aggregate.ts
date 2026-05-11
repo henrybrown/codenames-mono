@@ -12,7 +12,7 @@ import type {
   Round,
   HistoricalRound,
   Turn,
-} from "../gameplay-state.types";
+} from "../types";
 
 /**
  * @returns The current round or null if it doesn't exist

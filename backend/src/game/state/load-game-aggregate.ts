@@ -29,7 +29,7 @@ import type { TeamResult } from "@backend/shared/data-access/repositories/teams.
 import type { PlayerResult } from "@backend/shared/data-access/repositories/players.repository";
 import type { CardResult } from "@backend/shared/data-access/repositories/cards.repository";
 
-import type { GameAggregate } from "./gameplay-state.types";
+import type { GameAggregate } from "./types";
 
 export type GameAggregateLoader = (gameId: string) => Promise<GameAggregate | null>;
 

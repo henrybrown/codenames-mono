@@ -1,5 +1,5 @@
 import { z, ZodSchema } from "zod";
-import { GameAggregate } from "./gameplay-state.types";
+import { GameAggregate } from "./types";
 
 /**
  * Branded type for validated game state

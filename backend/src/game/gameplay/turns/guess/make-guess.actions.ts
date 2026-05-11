@@ -5,7 +5,7 @@ import {
   GAME_EVENT_TYPE,
 } from "@codenames/shared/types";
 import { GameplayValidationError } from "../../errors/gameplay.errors";
-import { GameAggregate } from "@backend/game/state/gameplay-state.types";
+import { GameAggregate } from "@backend/game/state/types";
 import type {
   validateMakeGuess,
   validateEndTurn,

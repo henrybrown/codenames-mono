@@ -10,7 +10,7 @@ import {
   Card,
   HistoricalRound,
   Turn,
-} from "@backend/game/state/gameplay-state.types";
+} from "@backend/game/state/types";
 import {
   gameplayBaseSchema,
   currentRoundSchema,
@@ -18,12 +18,12 @@ import {
   cardSchema,
   turnSchema,
   teamSchema,
-} from "@backend/game/state/gameplay-state.types";
+} from "@backend/game/state/types";
 import {
   validateWithZodSchema,
   ValidatedGameState,
   GameplayValidationResult,
-} from "@backend/game/state/gameplay-state.validation";
+} from "@backend/game/state/validation";
 import { getCurrentTurn } from "@backend/game/state/helpers";
 import { z } from "zod";
 

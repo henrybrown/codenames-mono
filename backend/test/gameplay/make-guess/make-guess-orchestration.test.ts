@@ -15,7 +15,7 @@ import {
   buildPlayer,
   resetIds,
 } from "../../__test-utils__/fixtures";
-import type { GameAggregate } from "@backend/game/state/gameplay-state.types";
+import type { GameAggregate } from "@backend/game/state/types";
 import type { GamePlayer } from "@backend/game/access";
 
 const playerCtx: GamePlayer = {

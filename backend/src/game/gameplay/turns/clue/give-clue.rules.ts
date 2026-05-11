@@ -1,16 +1,16 @@
 import { GAME_STATE, ROUND_STATE, PLAYER_ROLE } from "@codenames/shared/types";
-import { GameAggregate } from "@backend/game/state/gameplay-state.types";
+import { GameAggregate } from "@backend/game/state/types";
 import {
   gameplayBaseSchema,
   currentRoundSchema,
   playerContextSchema,
-} from "@backend/game/state/gameplay-state.types";
+} from "@backend/game/state/types";
 import { getCurrentTurn } from "@backend/game/state/helpers";
 import {
   validateWithZodSchema,
   ValidatedGameState,
   GameplayValidationResult,
-} from "@backend/game/state/gameplay-state.validation";
+} from "@backend/game/state/validation";
 import { z } from "zod";
 
 /**

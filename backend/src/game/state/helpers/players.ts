@@ -10,7 +10,7 @@
  */
 
 import { type PlayerRole } from "@codenames/shared/types";
-import type { GameAggregate } from "../gameplay-state.types";
+import type { GameAggregate } from "../types";
 import type { GamePlayer } from "@backend/game/access/types";
 
 const allGamePlayers = (aggregate: GameAggregate): GamePlayer[] =>

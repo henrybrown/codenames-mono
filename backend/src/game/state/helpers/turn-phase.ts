@@ -8,7 +8,7 @@
  */
 
 import { PLAYER_ROLE } from "@codenames/shared/types";
-import type { Player, TurnPhase } from "../gameplay-state.types";
+import type { Player, TurnPhase } from "../types";
 
 export function computeTurnPhase(
   turn: { status: string; _teamId: number; clue?: unknown },
