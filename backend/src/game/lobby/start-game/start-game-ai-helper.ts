@@ -3,7 +3,7 @@
  * Pure business logic - uses repositories instead of direct SQL
  */
 
-import type { LobbyAggregate } from "../state/lobby-state.types";
+import type { LobbyAggregate } from "../state/types";
 import { getTeamNameToIdMap } from "../state/helpers";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { LobbyOperations } from "../lobby-actions";

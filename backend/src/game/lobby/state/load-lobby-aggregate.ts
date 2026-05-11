@@ -13,7 +13,7 @@ import type { PublicId } from "@backend/shared/data-access/repositories/games.re
 import type { TeamResult } from "@backend/shared/data-access/repositories/teams.repository";
 import type { PlayerResult } from "@backend/shared/data-access/repositories/players.repository";
 
-import type { LobbyAggregate } from "./lobby-state.types";
+import type { LobbyAggregate } from "./types";
 
 /**
  * Load a complete LobbyAggregate from the database.

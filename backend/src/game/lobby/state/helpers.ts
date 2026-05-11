@@ -1,4 +1,4 @@
-import { LobbyAggregate } from "./lobby-state.types";
+import { LobbyAggregate } from "./types";
 
 type LobbyPlayer = LobbyAggregate["teams"][0]["players"][0];
 

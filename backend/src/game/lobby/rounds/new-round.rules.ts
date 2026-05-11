@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { GAME_STATE, ROUND_STATE, MAX_ROUNDS_BY_FORMAT } from "@codenames/shared/types";
-import { LobbyAggregate, lobbyBaseSchema } from "../state/lobby-state.types";
+import { LobbyAggregate, lobbyBaseSchema } from "../state/types";
 import { 
   LobbyValidationResult,
   ValidatedLobbyState,
   validateWithZodSchema
-} from "../state/lobby-state.validation";
+} from "../state/validation";
 
 /**
  * Schema for validating new round creation

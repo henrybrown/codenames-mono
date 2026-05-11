@@ -1,5 +1,5 @@
 import { z, ZodSchema } from "zod";
-import { LobbyAggregate } from "./lobby-state.types";
+import { LobbyAggregate } from "./types";
 
 /**
  * Branded type for validated lobby state

@@ -1,5 +1,5 @@
 import type { LobbyStateProvider } from "../state";
-import type { LobbyValidationError } from "../state/lobby-state.validation";
+import type { LobbyValidationError } from "../state/validation";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { LobbyOperations } from "../lobby-actions";
 import type { CardResult } from "@backend/shared/data-access/repositories/cards.repository";
