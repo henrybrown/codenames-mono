@@ -3,29 +3,29 @@ import type { DbContext } from "@backend/shared/data-access/transaction-handler"
 import * as turnsRepository from "@backend/shared/data-access/repositories/turns.repository";
 import * as playerRepository from "@backend/shared/data-access/repositories/players.repository";
 
-import { turnStateProvider } from "./turn-state.provider";
+import { buildTurnLoader } from "./load-turn";
+import type { TurnLoader } from "./load-turn";
 
 export { createGameAggregateLoader } from "./load-game-aggregate";
 export type { GameAggregateLoader } from "./load-game-aggregate";
 
-/* -------------------------------------------------------------------------- */
-/* Turn state — renamed to createTurnLoader in step 5                         */
-/* -------------------------------------------------------------------------- */
-
 /**
- * Creates a turn state provider with the given database context
- * Works with both regular db connections and transaction contexts
+ * The single factory for loading turn-level state (turn + clue + guesses).
+ *
+ * Pure data assembly with light transformation (computes hasGuesses,
+ * lastGuess, prevGuesses derived fields).
  */
-export const createTurnStateProvider = (dbContext: DbContext) =>
-  turnStateProvider(turnsRepository.getTurnByPublicId(dbContext));
+export const createTurnLoader = (dbContext: DbContext): TurnLoader =>
+  buildTurnLoader(turnsRepository.getTurnByPublicId(dbContext));
 
-export type TurnStateProvider = ReturnType<typeof createTurnStateProvider>;
+export type { TurnLoader };
 
 /**
- * Creates turn state components with all repository dependencies pre-wired
+ * Convenience: returns the turn loader plus a couple of related repo
+ * functions consumers commonly use alongside it.
  */
 export const turnState = (dbContext: DbContext) => ({
-  provider:             createTurnStateProvider(dbContext),
+  loadTurn:             createTurnLoader(dbContext),
   getTurnsByRoundId:    turnsRepository.getTurnsByRoundId(dbContext),
   findPlayersByRoundId: playerRepository.findPlayersByRoundId(dbContext),
 });

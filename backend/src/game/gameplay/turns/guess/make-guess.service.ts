@@ -1,4 +1,4 @@
-import type { TurnStateProvider } from "@backend/game/state/turn-state.provider";
+import type { TurnLoader } from "@backend/game/state/load-turn";
 import type { GameplayHandler } from "../../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
 import { CODEBREAKER_OUTCOME } from "@codenames/shared/types";
@@ -111,7 +111,7 @@ export type MakeGuessResult =
  */
 export type MakeGuessDependencies = {
   gameplayHandler: GameplayHandler;
-  getTurnState: TurnStateProvider;
+  getTurnState: TurnLoader;
 };
 
 /**

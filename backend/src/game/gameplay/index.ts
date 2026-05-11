@@ -30,7 +30,7 @@ export const initialize = (
 
   /** State providers */
   const loadGameAggregate = createGameAggregateLoader(db);
-  const { provider: getTurnState, getTurnsByRoundId, findPlayersByRoundId } = turnState(db);
+  const { loadTurn: getTurnState, getTurnsByRoundId, findPlayersByRoundId } = turnState(db);
 
   /** Gameplay actions (transactional handler) */
   const { handler: gameplayHandler } = gameplayActions(db);

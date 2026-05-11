@@ -1,5 +1,5 @@
 import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
-import type { TurnStateProvider } from "@backend/game/state/turn-state.provider";
+import type { TurnLoader } from "@backend/game/state/load-turn";
 import type { TurnsFinder, RoundId } from "@backend/shared/data-access/repositories/turns.repository";
 import type { PlayerFinderAll, RoundId as PlayerRoundId } from "@backend/shared/data-access/repositories/players.repository";
 import type { DbContext } from "@backend/shared/data-access/transaction-handler";
@@ -18,7 +18,7 @@ import { controller as getTurnControllerFactory } from "./get-turn.controller";
 
 export interface QueriesDependencies {
   loadGameAggregate: GameAggregateLoader;
-  getTurnState: TurnStateProvider;
+  getTurnState: TurnLoader;
   getTurnsByRoundId: TurnsFinder<RoundId>;
   findPlayersByRoundId: PlayerFinderAll<PlayerRoundId>;
   db: DbContext;

@@ -1,4 +1,4 @@
-import { TurnStateProvider, ProviderTurnData } from "@backend/game/state/turn-state.provider";
+import { TurnLoader, TurnData } from "@backend/game/state/load-turn";
 import { TurnsFinder, RoundId, TurnResult } from "@backend/shared/data-access/repositories/turns.repository";
 import { PlayerFinderAll, RoundId as PlayerRoundId } from "@backend/shared/data-access/repositories/players.repository";
 import { TurnPhase, Player } from "@backend/game/state/types";
@@ -83,7 +83,7 @@ const transformTurnToApi = (turn: TurnResult, players: Player[]): ApiTurnData =>
 /**
  * Transform provider turn data to API format
  */
-const transformProviderTurnToApi = (turnData: ProviderTurnData, active: TurnPhase | null): ApiTurnData => ({
+const transformProviderTurnToApi = (turnData: TurnData, active: TurnPhase | null): ApiTurnData => ({
   id: turnData.publicId,
   teamName: turnData.teamName,
   status: turnData.status,
@@ -98,7 +98,7 @@ const transformProviderTurnToApi = (turnData: ProviderTurnData, active: TurnPhas
 });
 
 export interface GetTurnServiceDeps {
-  getTurnState: TurnStateProvider;
+  getTurnState: TurnLoader;
   getTurnsByRoundId: TurnsFinder<RoundId>;
   findPlayersByRoundId: PlayerFinderAll<PlayerRoundId>;
 }

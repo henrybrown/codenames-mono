@@ -23,9 +23,9 @@ export interface TurnClue {
 }
 
 /**
- * Complete turn data with computed fields (provider return type)
+ * Complete turn data with computed fields (loader return type)
  */
-export interface ProviderTurnData {
+export interface TurnData {
   publicId: string;
   teamName: string;
   status: "ACTIVE" | "COMPLETED";
@@ -41,15 +41,15 @@ export interface ProviderTurnData {
   _roundId: number;
 }
 
-export type TurnStateProvider = (
-  publicId: string,
-) => Promise<ProviderTurnData | null>;
+export type TurnLoader = (publicId: string) => Promise<TurnData | null>;
 
 /**
- * Provider that gets turn data with computed fields from repository
+ * Low-level factory: given a repo finder, returns a TurnLoader that
+ * adds the computed fields (hasGuesses / lastGuess / prevGuesses) and
+ * transforms clue + guess shapes for the frontend.
  */
-export const turnStateProvider =
-  (getTurnByPublicId: TurnFinder<PublicId>): TurnStateProvider =>
+export const buildTurnLoader =
+  (getTurnByPublicId: TurnFinder<PublicId>): TurnLoader =>
   async (publicId) => {
     // Get the raw turn data from repository
     const turnData = await getTurnByPublicId(publicId);

@@ -1,4 +1,4 @@
-import type { TurnStateProvider } from "@backend/game/state/turn-state.provider";
+import type { TurnLoader } from "@backend/game/state/load-turn";
 import type { GameplayHandler } from "../../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
 import { computeTurnPhase } from "@backend/game/state/helpers";
@@ -99,7 +99,7 @@ export type GiveClueResult =
  */
 export type GiveClueDependencies = {
   gameplayHandler: GameplayHandler;
-  getTurnState: TurnStateProvider;
+  getTurnState: TurnLoader;
 };
 
 /**
