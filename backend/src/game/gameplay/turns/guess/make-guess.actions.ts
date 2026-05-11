@@ -27,7 +27,7 @@ import {
 import { GameStatusUpdater } from "@backend/shared/data-access/repositories/games.repository";
 import type { CreateEventInput } from "@backend/shared/data-access/repositories/game-events.repository";
 
-import { getCurrentTurnOrThrow } from "@backend/game/state/gameplay-state.helpers";
+import { getCurrentTurnOrThrow } from "@backend/game/state/helpers";
 
 /**
  * Validates a specific card can be guessed

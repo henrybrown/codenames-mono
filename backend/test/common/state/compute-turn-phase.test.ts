@@ -1,4 +1,4 @@
-import { computeTurnPhase } from "@backend/game/state/gameplay-state.helpers";
+import { computeTurnPhase } from "@backend/game/state/helpers";
 import { buildPlayer } from "../../__test-utils__/fixtures";
 
 describe("computeTurnPhase", () => {

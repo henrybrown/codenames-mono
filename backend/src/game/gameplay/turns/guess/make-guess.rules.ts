@@ -24,7 +24,7 @@ import {
   ValidatedGameState,
   GameplayValidationResult,
 } from "@backend/game/state/gameplay-state.validation";
-import { getCurrentTurn } from "@backend/game/state/gameplay-state.helpers";
+import { getCurrentTurn } from "@backend/game/state/helpers";
 import { z } from "zod";
 
 /**

@@ -6,7 +6,7 @@ import {
   getCurrentTurnOrThrow,
   getOtherTeamId,
   computeTurnPhase,
-} from "@backend/game/state/gameplay-state.helpers";
+} from "@backend/game/state/helpers";
 import { TurnPhase, GameAggregate, Player } from "@backend/game/state/gameplay-state.types";
 import type { GamePlayer } from "@backend/game/access";
 import { winningConditions } from "./make-guess.rules";

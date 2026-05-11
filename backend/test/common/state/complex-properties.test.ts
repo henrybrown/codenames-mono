@@ -9,7 +9,7 @@ import {
   getRoundCount,
   findRoundByNumber,
   getLatestRoundOrThrow,
-} from "@backend/game/state/gameplay-state.helpers";
+} from "@backend/game/state/helpers";
 import { buildGameAggregate, buildTurn, buildRound, resetIds } from "../../__test-utils__/fixtures";
 
 describe("complexProperties", () => {

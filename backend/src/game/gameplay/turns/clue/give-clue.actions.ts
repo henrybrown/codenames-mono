@@ -4,7 +4,7 @@ import {
 } from "@backend/shared/data-access/repositories/turns.repository";
 import type { GiveClueValidGameState, validate, validateClueWord } from "./give-clue.rules";
 import type { GameAggregate } from "@backend/game/state/gameplay-state.types";
-import { getCurrentTurn } from "@backend/game/state/gameplay-state.helpers";
+import { getCurrentTurn } from "@backend/game/state/helpers";
 import { UnexpectedGameplayError, GameplayValidationError } from "../../errors/gameplay.errors";
 
 /**

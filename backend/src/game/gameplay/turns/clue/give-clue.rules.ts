@@ -5,7 +5,7 @@ import {
   currentRoundSchema,
   playerContextSchema,
 } from "@backend/game/state/gameplay-state.types";
-import { getCurrentTurn } from "@backend/game/state/gameplay-state.helpers";
+import { getCurrentTurn } from "@backend/game/state/helpers";
 import {
   validateWithZodSchema,
   ValidatedGameState,
