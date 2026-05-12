@@ -35,8 +35,14 @@ export const aiMove = (logger: AppLogger) => (deps: AiMoveDependencies) => {
   const statusController = getStatusController({ getStatus: statusService });
 
   return {
-    triggerMove: { controller: triggerController, service: triggerService },
-    getStatus: { controller: statusController, service: statusService },
+    controllers: {
+      triggerMove: triggerController,
+      getStatus: statusController,
+    },
+    services: {
+      triggerMove: triggerService,
+      getStatus: statusService,
+    },
   };
 };
 

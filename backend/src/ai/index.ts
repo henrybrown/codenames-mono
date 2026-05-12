@@ -135,9 +135,9 @@ export const initialize = (deps: AIModuleDependencies) => {
     "/games/:gameId/ai/move",
     auth,
     blockingGameAction("ai-move"),
-    aiMoveFeature.triggerMove.controller,
+    aiMoveFeature.controllers.triggerMove,
   );
-  router.get("/games/:gameId/ai/status", auth, aiMoveFeature.getStatus.controller);
+  router.get("/games/:gameId/ai/status", auth, aiMoveFeature.controllers.getStatus);
 
   app.use("/api", router);
 
