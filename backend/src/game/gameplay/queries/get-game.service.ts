@@ -22,7 +22,7 @@ export type GetGameStateInput = {
 
 export type GetGameStateResult =
   | { success: true; data: PublicGameStateResponse }
-  | { success: false; error: GetGameStateFailure };
+  | { success: false; message: string; notFound?: boolean };
 
 /**
  * Public API response structure
@@ -77,21 +77,6 @@ export type PublicGameStateResponse = {
 };
 
 /**
- * Error types for the service
- */
-export const GAME_STATE_ERROR = {
-  GAME_NOT_FOUND: "game-not-found",
-  PLAYER_NOT_FOUND: "player-not-found",
-} as const;
-
-/**
- * Response types
- */
-export type GetGameStateFailure =
-  | { status: typeof GAME_STATE_ERROR.GAME_NOT_FOUND; gameId: string }
-  | { status: typeof GAME_STATE_ERROR.PLAYER_NOT_FOUND; playerId: string };
-
-/**
  * Dependencies required by the service
  */
 export type GetGameStateDependencies = {
@@ -107,7 +92,8 @@ export const getGameStateService = (logger: AppLogger) => (deps: GetGameStateDep
     if (!aggregate) {
       return {
         success: false,
-        error: { status: GAME_STATE_ERROR.GAME_NOT_FOUND, gameId: input.gameId },
+        notFound: true,
+        message: `Game ${input.gameId} not found`,
       };
     }
 
@@ -125,7 +111,8 @@ export const getGameStateService = (logger: AppLogger) => (deps: GetGameStateDep
       if (!playerContext) {
         return {
           success: false,
-          error: { status: GAME_STATE_ERROR.PLAYER_NOT_FOUND, playerId: input.playerId },
+          notFound: true,
+          message: `Player ${input.playerId} not found`,
         };
       }
       // For multi-device, ensure the user owns the player they specified.

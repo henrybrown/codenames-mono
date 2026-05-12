@@ -1,6 +1,7 @@
 import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import type { getGameStateService } from "./get-game.service";
+import { pickStatus } from "@backend/shared/http/result-status";
 import { PLAYER_ROLE } from "@codenames/shared/types";
 import { z } from "zod";
 
@@ -46,25 +47,11 @@ export const getGameStateController =
         role: (validatedRequest.query.role as "CODEMASTER" | "CODEBREAKER") || null,
       });
 
-      if (result.success) {
-        res.status(200).json({ success: true, data: { game: result.data } });
-      } else {
-        if (result.error.status === "game-not-found") {
-          res.status(404).json({
-            success: false,
-            error: "Game not found",
-            details: { code: "game-not-found", gameId: result.error.gameId },
-          });
-        } else if (result.error.status === "player-not-found") {
-          res.status(404).json({
-            success: false,
-            error: "Player not found",
-            details: { code: "player-not-found", playerId: result.error.playerId },
-          });
-        } else {
-          res.status(500).json({ success: false, error: "An unexpected error occurred" });
-        }
+      if (!result.success) {
+        res.status(pickStatus(result)).json({ success: false, error: result.message });
+        return;
       }
+      res.status(200).json({ success: true, data: { game: result.data } });
     } catch (error) {
       next(error);
     }
