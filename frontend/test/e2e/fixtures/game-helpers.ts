@@ -257,3 +257,76 @@ export async function setupGameViaApi(
 
   return { gameId: game.publicId, cookie, gameState, playerId, gameType };
 }
+
+/**
+ * Multi-device setup that returns each player's auth cookie alongside their
+ * role for the current round.
+ *
+ * Roles are randomised per round; this resolves the role -> cookie mapping by
+ * inspecting the loaded game state. Use when a test needs to act as a
+ * specific role (e.g. the codemaster on the first team) and only the API
+ * helpers — not a logged-in browser — drive the gameplay.
+ */
+export async function setupMultiDeviceGame(request: APIRequestContext) {
+  const playerSpecs = [
+    { playerName: "Alice", teamName: "Team Red" },
+    { playerName: "Bob", teamName: "Team Red" },
+    { playerName: "Charlie", teamName: "Team Blue" },
+    { playerName: "Diana", teamName: "Team Blue" },
+  ];
+
+  const { cookie: hostCookie } = await createGuestSession(request);
+  const game = await createGame(request, hostCookie, {
+    gameType: "MULTI_DEVICE",
+    gameFormat: "QUICK",
+  });
+
+  /** Host = Alice on Team Red */
+  const res = await request.post(`${API}/games/${game.publicId}/players`, {
+    headers: { cookie: hostCookie },
+    data: playerSpecs[0],
+  });
+  const body = await res.json();
+  if (!body.success) throw new Error(`Failed to add host player: ${JSON.stringify(body)}`);
+
+  const cookiesByName: Record<string, string> = { Alice: hostCookie };
+  for (const spec of playerSpecs.slice(1)) {
+    const { cookie } = await addPlayerWithNewSession(request, game.publicId, spec);
+    cookiesByName[spec.playerName] = cookie;
+  }
+
+  await startGame(request, hostCookie, game.publicId);
+  await createRound(request, hostCookie, game.publicId);
+  await startRound(request, hostCookie, game.publicId, 1);
+
+  /** GET /games/:id doesn't return currentRound.players — fetch separately
+   *  from the players-by-game endpoint which carries role for the current
+   *  round. */
+  const playersRes = await request.get(`${API}/games/${game.publicId}/players`, {
+    headers: { cookie: hostCookie },
+  });
+  const playersBody = await playersRes.json();
+  if (!playersBody.success) {
+    throw new Error(`Failed to fetch players: ${JSON.stringify(playersBody)}`);
+  }
+  const roundPlayers: any[] = playersBody.data.players;
+
+  const players = roundPlayers.map((p) => ({
+    publicId: p.publicId,
+    name: p.name,
+    teamName: p.teamName,
+    role: p.role as "CODEMASTER" | "CODEBREAKER",
+    cookie: cookiesByName[p.name],
+  }));
+
+  /** Fetch the game state from a codemaster's perspective so cards carry
+   *  cardType / teamName — required for tests that look up specific cards
+   *  (bystander, assassin, team-X) by predicate. */
+  const anyCodemaster = players.find((p) => p.role === "CODEMASTER");
+  if (!anyCodemaster) throw new Error("No codemaster found in multi-device setup");
+  const gameState = await getGameState(request, anyCodemaster.cookie, game.publicId, {
+    playerId: anyCodemaster.publicId,
+  });
+
+  return { gameId: game.publicId, hostCookie, gameState, players };
+}

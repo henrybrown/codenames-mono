@@ -67,7 +67,7 @@ export const SetupScene: React.FC<SetupSceneProps> = ({ onComplete }) => {
             <span className={styles.sectionTitle}>AI MODE</span>
             <div className={styles.aiDesc}>Empty slots filled with AI players</div>
           </div>
-          <ToggleSwitch active={aiMode} onChange={() => setAiMode(!aiMode)} />
+          <ToggleSwitch id="ai-mode-toggle" active={aiMode} onChange={() => setAiMode(!aiMode)} />
         </div>
 
         <div className={styles.actionSection}>

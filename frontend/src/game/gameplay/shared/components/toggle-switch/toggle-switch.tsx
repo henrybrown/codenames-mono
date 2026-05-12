@@ -6,6 +6,7 @@ interface ToggleSwitchProps {
   onChange: () => void;
   labelOff?: string;
   labelOn?: string;
+  id?: string;
 }
 
 export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
@@ -13,11 +14,12 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   onChange,
   labelOff = "OFF",
   labelOn = "ON",
+  id,
 }) => {
   return (
     <div className={styles.toggleContainer}>
       <span className={styles.toggleLabel} data-active={!active}>{labelOff}</span>
-      <button className={styles.toggleTrack} data-active={active} onClick={onChange}>
+      <button id={id} className={styles.toggleTrack} data-active={active} onClick={onChange}>
         <div className={styles.toggleThumb} data-active={active} />
       </button>
       <span className={styles.toggleLabel} data-active={active}>{labelOn}</span>
