@@ -16,7 +16,7 @@ export type GameStartSuccess = {
 
 export type GameStartError = {
   success: false;
-  error: string;
+  message: string;
 };
 
 export type GameStartResult = GameStartSuccess | GameStartError;
@@ -33,14 +33,14 @@ export const startGameService = (dependencies: ServiceDependencies) => {
     if (!lobby) {
       return {
         success: false,
-        error: `Game with public ID ${publicGameId} not found`,
+        message: `Game with public ID ${publicGameId} not found`,
       };
     }
 
     if (lobby.status !== "LOBBY") {
       return {
         success: false,
-        error: `Cannot start game in '${lobby.status}' state`,
+        message: `Cannot start game in '${lobby.status}' state`,
       };
     }
 
@@ -52,21 +52,21 @@ export const startGameService = (dependencies: ServiceDependencies) => {
       if (totalPlayers < 4) {
         return {
           success: false,
-          error: "Cannot start game with less than 4 players",
+          message: "Cannot start game with less than 4 players",
         };
       }
 
       if (teamCounts.length < 2) {
         return {
           success: false,
-          error: "Cannot start game with less than 2 teams",
+          message: "Cannot start game with less than 2 teams",
         };
       }
 
       if (teamCounts.some((count) => count < 2)) {
         return {
           success: false,
-          error: "Each team must have at least 2 players",
+          message: "Each team must have at least 2 players",
         };
       }
     }

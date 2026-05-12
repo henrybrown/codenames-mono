@@ -48,7 +48,7 @@ export const startGameController =
         // All errors from service are treated as 409 Conflict
         res.status(409).json({
           success: false,
-          error: result.error,
+          error: result.message,
         });
       }
     } catch (error) {

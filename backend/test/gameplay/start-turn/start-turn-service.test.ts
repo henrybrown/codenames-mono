@@ -58,7 +58,7 @@ describe("startTurnService", () => {
     const result = await service({ gameState, playerContext: playerCtx });
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe("No active round");
+    if (!result.success) expect(result.message).toBe("No active round");
   });
 
   it("rejects when round not in progress", async () => {
@@ -69,7 +69,7 @@ describe("startTurnService", () => {
     const result = await service({ gameState, playerContext: playerCtx });
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe("Round not in progress");
+    if (!result.success) expect(result.message).toBe("Round not in progress");
   });
 
   it("rejects when active turn already exists", async () => {
@@ -79,7 +79,7 @@ describe("startTurnService", () => {
     const result = await service({ gameState, playerContext: playerCtx });
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe("Active turn already exists");
+    if (!result.success) expect(result.message).toBe("Active turn already exists");
   });
 
   it("rejects when previous turn not completed", async () => {
@@ -93,6 +93,6 @@ describe("startTurnService", () => {
     const result = await service({ gameState, playerContext: playerCtx });
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe("No previous turn found");
+    if (!result.success) expect(result.message).toBe("No previous turn found");
   });
 });

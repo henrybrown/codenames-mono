@@ -91,8 +91,8 @@ export const createEndTurnController = (logger: AppLogger) => (deps: EndTurnCont
       const result = await deps.endTurn({ gameState: aggregate, playerContext });
 
       if (!result.success) {
-        log.warn(`Response: ${result.error}`);
-        res.status(400).json(result);
+        log.warn(`Response: ${result.message}`);
+        res.status(400).json({ success: false, error: result.message });
         return;
       }
 

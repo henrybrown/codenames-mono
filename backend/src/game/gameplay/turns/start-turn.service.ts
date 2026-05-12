@@ -19,7 +19,7 @@ export type StartTurnInput = {
 
 export type StartTurnResult =
   | { success: true; data: { turn: { id: string; teamName: string; status: string } } }
-  | { success: false; error: string };
+  | { success: false; message: string };
 
 export type StartTurnService = (input: StartTurnInput) => Promise<StartTurnResult>;
 
@@ -38,35 +38,35 @@ export const createStartTurnService =
     const currentRound = gameState.currentRound;
     if (!currentRound) {
       log.warn("startTurn failed: no active round");
-      return { success: false, error: "No active round" };
+      return { success: false, message: "No active round" };
     }
 
     if (currentRound.status !== "IN_PROGRESS") {
       log.warn("startTurn failed: round not in progress");
-      return { success: false, error: "Round not in progress" };
+      return { success: false, message: "Round not in progress" };
     }
 
     const activeTurn = currentRound.turns.find((t) => t.status === "ACTIVE");
     if (activeTurn) {
       log.warn("startTurn failed: active turn already exists");
-      return { success: false, error: "Active turn already exists" };
+      return { success: false, message: "Active turn already exists" };
     }
 
     const lastTurn = currentRound.turns[currentRound.turns.length - 1];
     if (!lastTurn) {
       log.warn("startTurn failed: no previous turn found");
-      return { success: false, error: "No previous turn found" };
+      return { success: false, message: "No previous turn found" };
     }
 
     if (lastTurn.status !== "COMPLETED") {
       log.warn("startTurn failed: previous turn not completed");
-      return { success: false, error: "Previous turn not completed" };
+      return { success: false, message: "Previous turn not completed" };
     }
 
     const lastTeamId = gameState.teams.find((t) => t.teamName === lastTurn.teamName)?._id;
     if (lastTeamId === undefined) {
       log.warn("startTurn failed: could not determine last team id");
-      return { success: false, error: "Could not determine last team" };
+      return { success: false, message: "Could not determine last team" };
     }
 
     const nextTeamId = getOtherTeamId(gameState, lastTeamId);
@@ -74,7 +74,7 @@ export const createStartTurnService =
 
     if (!nextTeam) {
       log.warn("startTurn failed: could not find next team");
-      return { success: false, error: "Could not find next team" };
+      return { success: false, message: "Could not find next team" };
     }
 
     try {
@@ -109,11 +109,11 @@ export const createStartTurnService =
     } catch (error) {
       if (error instanceof GameplayValidationError) {
         log.warn(`startTurn failed: ${error.message}`);
-        return { success: false, error: error.message };
+        return { success: false, message: error.message };
       }
       log.error("startTurn failed", {
         error: error instanceof Error ? error.message : String(error),
       });
-      return { success: false, error: "Failed to start turn" };
+      return { success: false, message: "Failed to start turn" };
     }
   };

@@ -122,8 +122,8 @@ export const createStartTurnController =
         const result = await deps.startTurn({ gameState: aggregate, playerContext });
 
         if (!result.success) {
-          log.warn(`Response: ${result.error}`);
-          res.status(400).json(result);
+          log.warn(`Response: ${result.message}`);
+          res.status(400).json({ success: false, error: result.message });
           return;
         }
 

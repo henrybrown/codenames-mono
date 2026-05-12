@@ -446,7 +446,7 @@ export const createAIPlayerService =
             gameState: loadedEnd.aggregate,
             playerContext: loadedEnd.player,
           });
-          if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.error}`);
+          if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.message}`);
 
           await updatePipelineStatus(run.id, PIPELINE_STATUS.COMPLETE);
           GameEventsEmitter.aiPipelineComplete(context.gameId, run.id);
@@ -550,7 +550,7 @@ export const createAIPlayerService =
             gameState: loadedEnd.aggregate,
             playerContext: loadedEnd.player,
           });
-          if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.error}`);
+          if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.message}`);
           await emitNarration(context, `Perfect! Found all ${correctGuesses} cards. Ending my turn.`);
         } else if (stopReason === "low-confidence") {
           const loadedEnd = await loadGameStateForAI(context.gameId, context.playerId);
@@ -560,7 +560,7 @@ export const createAIPlayerService =
             gameState: loadedEnd.aggregate,
             playerContext: loadedEnd.player,
           });
-          if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.error}`);
+          if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.message}`);
           await emitNarration(
             context,
             correctGuesses > 0

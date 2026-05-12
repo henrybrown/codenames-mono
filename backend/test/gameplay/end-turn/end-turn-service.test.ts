@@ -63,7 +63,7 @@ describe("endTurnService", () => {
     const result = await service({ gameState, playerContext });
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe("No active turn");
+    if (!result.success) expect(result.message).toBe("No active turn");
   });
 
   it("rejects when no active turn (turn already completed)", async () => {
@@ -75,6 +75,6 @@ describe("endTurnService", () => {
     const result = await service({ gameState, playerContext });
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe("No active turn");
+    if (!result.success) expect(result.message).toBe("No active turn");
   });
 });

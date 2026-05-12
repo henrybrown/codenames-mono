@@ -28,7 +28,7 @@ export type EndTurnResult =
         };
       };
     }
-  | { success: false; error: string };
+  | { success: false; message: string };
 
 export type EndTurnService = (input: EndTurnInput) => Promise<EndTurnResult>;
 
@@ -47,7 +47,7 @@ export const createEndTurnService =
     const currentTurn = getCurrentTurn(gameState);
     if (!currentTurn) {
       log.warn("endTurn failed: no active turn");
-      return { success: false, error: "No active turn" };
+      return { success: false, message: "No active turn" };
     }
 
     try {
@@ -76,11 +76,11 @@ export const createEndTurnService =
     } catch (error) {
       if (error instanceof GameplayValidationError) {
         log.warn(`endTurn failed: ${error.message}`);
-        return { success: false, error: error.message };
+        return { success: false, message: error.message };
       }
       log.error("endTurn failed", {
         error: error instanceof Error ? error.message : String(error),
       });
-      return { success: false, error: "Failed to end turn" };
+      return { success: false, message: "Failed to end turn" };
     }
   };
