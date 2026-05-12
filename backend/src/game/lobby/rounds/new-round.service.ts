@@ -37,39 +37,17 @@ export type RoundCreationSuccess = {
 };
 
 /**
- * Round creation error types
- */
-export const ROUND_CREATION_ERROR = {
-  INVALID_GAME_STATE: "invalid-game-state",
-  GAME_NOT_FOUND: "game-not-found",
-  USER_NOT_PLAYER: "user-not-player",
-} as const;
-
-/**
- * Round creation failure details
- */
-export type RoundCreationFailure =
-  | {
-      status: typeof ROUND_CREATION_ERROR.INVALID_GAME_STATE;
-      currentState: string;
-      validationErrors: LobbyValidationError[];
-    }
-  | {
-      status: typeof ROUND_CREATION_ERROR.GAME_NOT_FOUND;
-      gameId: string;
-    }
-  | {
-      status: typeof ROUND_CREATION_ERROR.USER_NOT_PLAYER;
-      gameId: string;
-      userId: number;
-    };
-
-/**
  * Combined result type for round creation
  */
 export type RoundCreationResult =
   | { success: true; data: RoundCreationSuccess }
-  | { success: false; error: RoundCreationFailure };
+  | {
+      success: false;
+      message: string;
+      notFound?: boolean;
+      conflict?: boolean;
+      validationErrors?: LobbyValidationError[];
+    };
 
 /**
  * Dependencies required by the round creation service
@@ -92,10 +70,8 @@ export const roundCreationService = (dependencies: RoundCreationDependencies) =>
     if (!lobbyState) {
       return {
         success: false,
-        error: {
-          status: ROUND_CREATION_ERROR.GAME_NOT_FOUND,
-          gameId: input.gameId,
-        },
+        notFound: true,
+        message: `Game ${input.gameId} not found`,
       };
     }
 
@@ -103,11 +79,7 @@ export const roundCreationService = (dependencies: RoundCreationDependencies) =>
     if (!lobbyState.userContext.canModifyGame) {
       return {
         success: false,
-        error: {
-          status: ROUND_CREATION_ERROR.USER_NOT_PLAYER,
-          gameId: input.gameId,
-          userId: input.userId,
-        },
+        message: "You do not have permission to modify this game",
       };
     }
 
@@ -118,11 +90,9 @@ export const roundCreationService = (dependencies: RoundCreationDependencies) =>
     if (!validationResult.valid) {
       return {
         success: false,
-        error: {
-          status: ROUND_CREATION_ERROR.INVALID_GAME_STATE,
-          currentState: gameData.status,
-          validationErrors: validationResult.errors,
-        },
+        conflict: true,
+        message: validationResult.errors.map((e) => e.message).join(", "),
+        validationErrors: validationResult.errors,
       };
     }
 

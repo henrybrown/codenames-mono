@@ -1,6 +1,7 @@
 import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import type { RoundCreationService } from "./new-round.service";
+import { pickStatus } from "@backend/shared/http/result-status";
 import { z } from "zod";
 
 /**
@@ -46,7 +47,6 @@ export const newRoundErrorSchema = z.object({
   error: z.string(),
   details: z
     .object({
-      code: z.string(),
       validationErrors: z
         .array(
           z.object({
@@ -123,31 +123,12 @@ export const newRoundController = ({ createRound }: Dependencies) => {
       if (!result.success) {
         const errorResponse: NewRoundErrorResponse = {
           success: false,
-          error: "Failed to create new round",
-          details: {
-            code: result.error.status,
-          },
+          error: result.message,
         };
-
-        if (
-          result.error.status === "invalid-game-state" &&
-          result.error.validationErrors
-        ) {
-          errorResponse.details!.validationErrors =
-            result.error.validationErrors;
+        if (result.validationErrors) {
+          errorResponse.details = { validationErrors: result.validationErrors };
         }
-
-        if (result.error.status === "game-not-found") {
-          res.status(404).json(errorResponse);
-          return;
-        }
-
-        if (result.error.status === "invalid-game-state") {
-          res.status(409).json(errorResponse);
-          return;
-        }
-
-        res.status(500).json(errorResponse);
+        res.status(pickStatus(result)).json(errorResponse);
         return;
       }
 
