@@ -1,4 +1,3 @@
-import { UnexpectedLobbyError } from "../errors/lobby.errors";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { LobbyOperations } from "../lobby-actions";
 import type { LobbyAggregateLoader } from "../state";
@@ -14,10 +13,13 @@ export type PlayerResult = {
   statusId: number;
 };
 
-/** Service response including game context */
-export type RemovePlayersServiceResult = {
+export type RemovePlayersSuccess = {
   removedPlayer: PlayerResult;
 };
+
+export type RemovePlayersResult =
+  | { success: true; data: RemovePlayersSuccess }
+  | { success: false; message: string; notFound?: boolean };
 
 /** Required dependencies for creating the RemovePlayersService */
 export type ServiceDependencies = {
@@ -38,37 +40,39 @@ export const removePlayersService = (dependencies: ServiceDependencies) => {
     publicGameId: string,
     userId: number,
     playerIdToRemove: string,
-  ): Promise<RemovePlayersServiceResult> => {
+  ): Promise<RemovePlayersResult> => {
     const lobby = await dependencies.loadLobbyAggregate(publicGameId, userId);
     if (!lobby) {
-      throw new UnexpectedLobbyError(
-        `Game with public ID ${publicGameId} not found`,
-      );
+      return {
+        success: false,
+        notFound: true,
+        message: `Game with public ID ${publicGameId} not found`,
+      };
     }
 
     if (lobby.status !== "LOBBY") {
-      throw new UnexpectedLobbyError(
-        `Cannot remove players from game in '${lobby.status}' state`,
-      );
+      return {
+        success: false,
+        message: `Cannot remove players from game in '${lobby.status}' state`,
+      };
     }
 
-    const playerToRemove = getPlayerByPublicId(
-      lobby,
-      playerIdToRemove,
-    );
+    const playerToRemove = getPlayerByPublicId(lobby, playerIdToRemove);
     if (!playerToRemove) {
-      throw new UnexpectedLobbyError(
-        `Player ${playerIdToRemove} not found in this game`,
-      );
+      return {
+        success: false,
+        message: `Player ${playerIdToRemove} not found in this game`,
+      };
     }
 
     if (!isPlayerOwner(lobby, playerIdToRemove)) {
-      throw new UnexpectedLobbyError(
-        "You do not have permission to remove this player",
-      );
+      return {
+        success: false,
+        message: "You do not have permission to remove this player",
+      };
     }
 
-    return await dependencies.lobbyHandler(async (lobbyOps) => {
+    const result = await dependencies.lobbyHandler(async (lobbyOps) => {
       const removedPlayer = await lobbyOps.removePlayer(playerToRemove._id);
 
       return {
@@ -82,6 +86,8 @@ export const removePlayersService = (dependencies: ServiceDependencies) => {
         },
       };
     });
+
+    return { success: true, data: result };
   };
 
   return removePlayers;

@@ -37,11 +37,15 @@ export const addPlayersController =
         ? validatedRequest.body
         : [validatedRequest.body];
 
-      const { players, gamePublicId } = await addPlayers(
-        gameId,
-        userId,
-        playersToAdd,
-      );
+      const result = await addPlayers(gameId, userId, playersToAdd);
+
+      if (!result.success) {
+        const status = result.notFound === true ? 404 : 400;
+        res.status(status).json({ success: false, error: result.message });
+        return;
+      }
+
+      const { players, gamePublicId } = result.data;
 
       const response: AddPlayersResponse = {
         success: true,

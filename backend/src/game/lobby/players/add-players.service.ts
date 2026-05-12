@@ -18,10 +18,14 @@ export type PlayerAddData = {
   teamName: string;
 }[];
 
-export type AddPlayersServiceResult = {
+export type AddPlayersSuccess = {
   players: PlayerResult[];
   gamePublicId: string;
 };
+
+export type AddPlayersResult =
+  | { success: true; data: AddPlayersSuccess }
+  | { success: false; message: string; notFound?: boolean };
 
 export type ServiceDependencies = {
   lobbyHandler: TransactionalHandler<LobbyOperations>;
@@ -33,41 +37,47 @@ export const addPlayersService = (dependencies: ServiceDependencies) => {
     publicGameId: string,
     userId: number,
     playersToAdd: PlayerAddData,
-  ): Promise<AddPlayersServiceResult> => {
+  ): Promise<AddPlayersResult> => {
     if (!playersToAdd.length) {
-      return { players: [], gamePublicId: publicGameId };
+      return {
+        success: true,
+        data: { players: [], gamePublicId: publicGameId },
+      };
     }
 
     const lobby = await dependencies.loadLobbyAggregate(publicGameId, userId);
     if (!lobby) {
-      throw new UnexpectedLobbyError(
-        `Game with public ID ${publicGameId} not found`,
-      );
+      return {
+        success: false,
+        notFound: true,
+        message: `Game with public ID ${publicGameId} not found`,
+      };
     }
 
     if (lobby.status !== "LOBBY") {
-      throw new UnexpectedLobbyError(
-        `Cannot add players to game in '${lobby.status}' state`,
-      );
+      return {
+        success: false,
+        message: `Cannot add players to game in '${lobby.status}' state`,
+      };
     }
 
     if (lobby.gameType === "MULTI_DEVICE" && playersToAdd.length > 1) {
-      throw new UnexpectedLobbyError(
-        "Multi-device games only allow adding one player at a time",
-      );
+      return {
+        success: false,
+        message: "Multi-device games only allow adding one player at a time",
+      };
     }
 
-    // Multi-device: Prevent user from adding multiple players total
     if (lobby.gameType === "MULTI_DEVICE") {
-      // Check if user already has a player in this game
       const userAlreadyHasPlayer = lobby.teams.some((team) =>
         team.players.some((p) => p._userId === userId),
       );
-
       if (userAlreadyHasPlayer) {
-        throw new UnexpectedLobbyError(
-          "You already have a player in this game. Multi-device games allow one player per user.",
-        );
+        return {
+          success: false,
+          message:
+            "You already have a player in this game. Multi-device games allow one player per user.",
+        };
       }
     }
 
@@ -78,9 +88,10 @@ export const addPlayersService = (dependencies: ServiceDependencies) => {
     );
 
     if (missingTeams.length > 0) {
-      throw new UnexpectedLobbyError(
-        `Unknown team names: ${missingTeams.join(", ")}. Available teams: ${getAvailableTeamNames(lobby).join(", ")}`,
-      );
+      return {
+        success: false,
+        message: `Unknown team names: ${missingTeams.join(", ")}. Available teams: ${getAvailableTeamNames(lobby).join(", ")}`,
+      };
     }
 
     const result = await dependencies.lobbyHandler(async (lobbyOps) => {
@@ -95,6 +106,7 @@ export const addPlayersService = (dependencies: ServiceDependencies) => {
       const newPlayers = await lobbyOps.addPlayers(repositoryRequest);
 
       if (newPlayers.length !== playersToAdd.length) {
+        // Invariant: we asked for N players and got M back. Internal failure.
         throw new UnexpectedLobbyError(
           `Failed to add all players. Expected ${playersToAdd.length}, created ${newPlayers.length}`,
         );
@@ -112,7 +124,6 @@ export const addPlayersService = (dependencies: ServiceDependencies) => {
       };
     });
 
-    // Emit WebSocket events for each added player
     result.players.forEach((player) => {
       const teamId = teamNameToIdMap.get(player.teamName);
       GameEventsEmitter.playerJoined(
@@ -123,7 +134,7 @@ export const addPlayersService = (dependencies: ServiceDependencies) => {
       );
     });
 
-    return result;
+    return { success: true, data: result };
   };
 
   return addPlayers;

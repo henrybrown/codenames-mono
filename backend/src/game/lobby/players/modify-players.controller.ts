@@ -36,11 +36,19 @@ export const modifyPlayersController = ({
         auth: req.auth,
       });
 
-      const { modifiedPlayers } = await modifyPlayersService(
+      const result = await modifyPlayersService(
         validatedReq.params.gameId,
         [{ ...validatedReq.body }],
         validatedReq.auth.userId,
       );
+
+      if (!result.success) {
+        const status = result.notFound === true ? 404 : 400;
+        res.status(status).json({ success: false, error: result.message });
+        return;
+      }
+
+      const { modifiedPlayers } = result.data;
 
       const response = {
         success: true,
@@ -78,11 +86,19 @@ export const modifyPlayersController = ({
       const gameId = validatedReq.params.gameId;
       const playersToModify = validatedReq.body;
 
-      const { modifiedPlayers } = await modifyPlayersService(
+      const result = await modifyPlayersService(
         gameId,
         playersToModify,
         validatedReq.auth.userId,
       );
+
+      if (!result.success) {
+        const status = result.notFound === true ? 404 : 400;
+        res.status(status).json({ success: false, error: result.message });
+        return;
+      }
+
+      const { modifiedPlayers } = result.data;
 
       const response = {
         success: true,

@@ -84,7 +84,7 @@ export const createStartTurnService =
         newTurnPublicId = newTurn.publicId;
       });
 
-      const nextCM = currentRound.players.find(
+      const nextCodemaster = currentRound.players.find(
         (p) => p._teamId === nextTeam._id && p.role === PLAYER_ROLE.CODEMASTER,
       );
 
@@ -92,7 +92,7 @@ export const createStartTurnService =
         gameState.public_id,
         currentRound.number,
         newTurnPublicId,
-        nextCM?.publicId,
+        nextCodemaster?.publicId,
       );
 
       log.info(`startTurn success: new turn for team ${nextTeam.teamName}`);

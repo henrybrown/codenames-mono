@@ -31,11 +31,19 @@ export const removePlayersController =
       const userId = validatedRequest.auth.userId;
       const playerIdToRemove = validatedRequest.params.playerId;
 
-      const { removedPlayer } = await removePlayersService(
+      const result = await removePlayersService(
         gameId,
         userId,
         playerIdToRemove,
       );
+
+      if (!result.success) {
+        const status = result.notFound === true ? 404 : 400;
+        res.status(status).json({ success: false, error: result.message });
+        return;
+      }
+
+      const { removedPlayer } = result.data;
 
       const response = {
         success: true,
