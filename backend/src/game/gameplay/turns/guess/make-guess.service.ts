@@ -9,7 +9,10 @@ import {
 } from "@backend/game/state/helpers";
 import { TurnPhase, GameAggregate, Player } from "@backend/game/state/types";
 import type { GamePlayer } from "@backend/game/access";
-import { winningConditions } from "./make-guess.rules";
+import {
+  checkRoundWinner,
+  checkGameWinner,
+} from "../shared/winning-conditions";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import { GameplayValidationError } from "../../errors/gameplay.errors";
 
@@ -172,7 +175,7 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
         switch (outcome) {
           case CODEBREAKER_OUTCOME.CORRECT_TEAM_CARD: {
             const otherTeamId = getOtherTeamId(state, guessResult.turn._teamId);
-            const roundWinner = winningConditions.checkRoundWinner(
+            const roundWinner = checkRoundWinner(
               state.currentRound!.cards,
               guessResult.turn._teamId,
               otherTeamId,
@@ -181,7 +184,7 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
             if (roundWinner) {
               const afterTurnEnd = await ops.endTurn(guessResult.turn._id);
               const afterRoundEnd = await ops.endRound(afterTurnEnd.currentRound!._id, roundWinner);
-              const gameWinner = winningConditions.checkGameWinner(
+              const gameWinner = checkGameWinner(
                 afterRoundEnd.historicalRounds,
                 afterRoundEnd.game_format,
               );
@@ -194,7 +197,7 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
           case CODEBREAKER_OUTCOME.OTHER_TEAM_CARD: {
             const afterTurnEnd = await ops.endTurn(guessResult.turn._id);
             const otherTeamId = getOtherTeamId(afterTurnEnd, guessResult.turn._teamId);
-            const roundWinner = winningConditions.checkRoundWinner(
+            const roundWinner = checkRoundWinner(
               afterTurnEnd.currentRound!.cards,
               guessResult.turn._teamId,
               otherTeamId,
@@ -202,7 +205,7 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
 
             if (roundWinner) {
               const afterRoundEnd = await ops.endRound(afterTurnEnd.currentRound!._id, roundWinner);
-              const gameWinner = winningConditions.checkGameWinner(
+              const gameWinner = checkGameWinner(
                 afterRoundEnd.historicalRounds,
                 afterRoundEnd.game_format,
               );
@@ -218,7 +221,7 @@ export const makeGuessService = (logger: AppLogger) => (dependencies: MakeGuessD
             const afterTurnEnd = await ops.endTurn(guessResult.turn._id);
             const otherTeamId = getOtherTeamId(afterTurnEnd, guessResult.turn._teamId);
             const afterRoundEnd = await ops.endRound(afterTurnEnd.currentRound!._id, otherTeamId);
-            const gameWinner = winningConditions.checkGameWinner(
+            const gameWinner = checkGameWinner(
               afterRoundEnd.historicalRounds,
               afterRoundEnd.game_format,
             );
