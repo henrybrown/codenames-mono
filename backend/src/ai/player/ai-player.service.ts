@@ -346,7 +346,7 @@ export const createAIPlayerService =
           await emitNarration(context, `Giving clue: "${pipelineResult.clue}" for ${pipelineResult.number} card(s). ${pipelineResult.explanation}`);
         }
 
-        if (!clueResult.success) throw new Error(`Failed to give clue: ${JSON.stringify(clueResult.error)}`);
+        if (!clueResult.success) throw new Error(`Failed to give clue: ${clueResult.message}`);
 
         await updatePipelineStatus(run.id, PIPELINE_STATUS.COMPLETE);
         GameEventsEmitter.aiPipelineComplete(context.gameId, run.id);

@@ -83,8 +83,16 @@ export const gameplayOperations = (
     giveClue: async (word: string, count: number) => {
       const currentState = await reload();
       const result = await giveClueAction(currentState, player, word, count);
+      if (!result.ok) {
+        return result;
+      }
       const freshState = await reload();
-      return { ...result, state: freshState };
+      return {
+        ok: true as const,
+        clue: result.data.clue,
+        turn: result.data.turn,
+        state: freshState,
+      };
     },
 
     /**

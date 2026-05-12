@@ -107,21 +107,9 @@ export const giveClueController = (logger: AppLogger) => (deps: Dependencies) =>
       });
 
       if (!result.success) {
-        log.warn(`Response: ${result.error.status}`);
-        switch (result.error.status) {
-          case "round-not-found":
-            res.status(404).json({ success: false, error: "Round not found" });
-            return;
-          case "invalid-game-state":
-            res.status(409).json({ success: false, error: "Invalid game state for giving clue" });
-            return;
-          case "invalid-clue-word":
-            res.status(400).json({ success: false, error: "Invalid clue word" });
-            return;
-          default:
-            res.status(500).json({ success: false, error: "Unknown error" });
-            return;
-        }
+        log.warn(`Response: 400, ${result.message}`);
+        res.status(400).json({ success: false, error: result.message });
+        return;
       }
 
       log.info(`Response: 200 OK, word=${result.data.clue.word}`);
