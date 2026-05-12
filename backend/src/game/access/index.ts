@@ -25,4 +25,9 @@ export {
   findPlayerByActiveRole,
   isUserPlayerInGame,
 } from "@backend/game/state/helpers";
+export {
+  resolveActingPlayerForRole,
+  resolveActingPlayerForUser,
+  resolveActingPlayerByPublicId,
+} from "./resolve-acting-player";
 export type { GamePlayer } from "./types";
