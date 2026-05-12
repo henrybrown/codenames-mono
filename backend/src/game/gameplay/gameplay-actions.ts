@@ -87,12 +87,54 @@ export const gameplayOperations = (
       return { ...result, state: freshState };
     },
 
-    /** Codebreaker makes a guess. Reloads state, validates, executes, returns fresh state. */
+    /**
+     * Codebreaker makes a guess.
+     *
+     * End-to-end orchestration: validates, records the guess, then runs
+     * applyGuessOutcome to drive any cascading turn-end / round-end /
+     * game-end inside the same transaction. Returns the guess data, the
+     * post-everything game state, and an `aftermath` describing what
+     * fired (used by the service to choose which websocket events to
+     * emit after the transaction commits).
+     */
     makeGuess: async (cardWord: string) => {
       const currentState = await reload();
-      const result = await makeGuessAction(currentState, player, cardWord);
-      const freshState = await reload();
-      return { ...result, state: freshState };
+      const guessResult = await makeGuessAction(currentState, player, cardWord);
+      const postGuessState = await reload();
+
+      const aftermath = await turnActions.applyGuessOutcome(
+        {
+          endTurn: async (turnId) => {
+            const state = await reload();
+            await endTurnAction(state, turnId);
+            return await reload();
+          },
+          endRound: async (roundId, winningTeamId) => {
+            const state = await reload();
+            await endRoundAction(state, roundId, winningTeamId);
+            return await reload();
+          },
+          endGame: async (winningTeamId) => {
+            const state = await reload();
+            await endGameAction(state, winningTeamId);
+            return await reload();
+          },
+        },
+        {
+          outcome: guessResult.outcome,
+          turnId: guessResult.turn._id,
+          guessingTeamId: guessResult.turn._teamId,
+          guessesRemaining: guessResult.turn.guessesRemaining,
+          postGuessState,
+        },
+      );
+
+      const finalState = await reload();
+      return {
+        guess: guessResult,
+        aftermath,
+        state: finalState,
+      };
     },
 
     /** Ends the current turn. Returns fresh state. */

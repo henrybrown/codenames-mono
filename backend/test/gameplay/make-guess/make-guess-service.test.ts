@@ -36,10 +36,20 @@ describe("makeGuessService", () => {
         if (handlerThrows) throw handlerThrows;
         return fn({
           makeGuess: vi.fn<any>().mockResolvedValue({
-            outcome: guessOutcome,
-            card: { _id: 1, word: "APPLE" },
-            guess: { _id: 1, createdAt: new Date() },
-            turn: { _id: 1, _teamId: 1, guessesRemaining: 2 },
+            guess: {
+              card: { _id: 1, word: "APPLE" },
+              guess: { _id: 1, createdAt: new Date() },
+              turn: {
+                _id: 1,
+                _teamId: 1,
+                guessesRemaining: 2,
+                createdAt: new Date(),
+                completedAt: null,
+              },
+              outcome: guessOutcome,
+              createdAt: new Date(),
+            },
+            aftermath: { turnEnded: false, roundEnded: null, gameEnded: null },
             state: gameState,
           }),
           endTurn: vi.fn<any>().mockResolvedValue(gameState),

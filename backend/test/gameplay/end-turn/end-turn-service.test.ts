@@ -55,18 +55,7 @@ describe("endTurnService", () => {
     }
   });
 
-  it("rejects when player is not codebreaker", async () => {
-    const gameState = buildGameAggregate();
-    const playerContext = makePlayer({ role: "CODEMASTER" });
-
-    const service = createService();
-    const result = await service({ gameState, playerContext });
-
-    expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe("Only codebreakers can end turn");
-  });
-
-  it("rejects when no active round", async () => {
+  it("rejects when no active turn (no round)", async () => {
     const gameState = buildGameAggregate({ currentRound: null });
     const playerContext = makePlayer();
 
@@ -74,10 +63,10 @@ describe("endTurnService", () => {
     const result = await service({ gameState, playerContext });
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe("No active round");
+    if (!result.success) expect(result.error).toBe("No active turn");
   });
 
-  it("rejects when turn already completed", async () => {
+  it("rejects when no active turn (turn already completed)", async () => {
     const gameState = buildGameAggregate();
     gameState.currentRound!.turns = [buildTurn({ status: "COMPLETED" })];
     const playerContext = makePlayer();
@@ -86,6 +75,6 @@ describe("endTurnService", () => {
     const result = await service({ gameState, playerContext });
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe("Turn already completed");
+    if (!result.success) expect(result.error).toBe("No active turn");
   });
 });

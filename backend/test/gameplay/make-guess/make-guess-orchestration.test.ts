@@ -1,12 +1,13 @@
 /**
- * Tests for the guess orchestration logic in make-guess.service.ts
+ * Tests for applyGuessOutcome — the post-guess orchestrator.
  *
- * The service's switch statement (lines 191-251) decides what happens after each
- * guess outcome. These tests verify which ops get called for each scenario.
- * The ops interface is the natural mock boundary — they handle DB transactions
- * while the orchestration logic lives in the service.
+ * Given a guess outcome and the resulting state, applyGuessOutcome decides
+ * what cascades (turn-end / round-end / game-end) and calls the matching
+ * ops. These tests verify which ops fire for each outcome scenario by
+ * passing in narrow mock ops and inspecting call counts plus the returned
+ * aftermath shape.
  */
-import { makeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
+import { applyGuessOutcome } from "@backend/game/gameplay/turns/shared/turn-actions";
 import {
   buildGameAggregate,
   buildCard,
@@ -16,391 +17,267 @@ import {
   resetIds,
 } from "../../__test-utils__/fixtures";
 import type { GameAggregate } from "@backend/game/state/types";
-import type { GamePlayer } from "@backend/game/access";
 
-const playerCtx: GamePlayer = {
-  _id: 1,
-  publicId: "player-1",
-  _userId: 101,
-  _teamId: 1,
-  teamName: "Red",
-  publicName: "Bob",
-  role: "CODEBREAKER",
-};
+/**
+ * Helper to build a game state with a specific board configuration.
+ * 'selectedRedCards' of 9 total means all team cards are selected.
+ */
+const buildGameWithBoard = (opts: {
+  selectedRedCards?: number;
+  selectedBlueCards?: number;
+  assassinSelected?: boolean;
+  guessesRemaining?: number;
+  format?: "QUICK" | "BEST_OF_THREE" | "ROUND_ROBIN";
+  historicalRounds?: any[];
+}): GameAggregate => {
+  resetIds();
+  const {
+    selectedRedCards = 0,
+    selectedBlueCards = 0,
+    assassinSelected = false,
+    guessesRemaining = 3,
+    format = "QUICK",
+    historicalRounds = [],
+  } = opts;
 
-vi.mock("@backend/shared/websocket", () => ({
-  GameEventsEmitter: {
-    guessMade: vi.fn(),
-    turnEnded: vi.fn(),
-    turnStarted: vi.fn(),
-  },
-}));
-
-describe("make-guess orchestration", () => {
-  const mockLogger = {
-    for: () => ({
-      withMeta: () => ({
-        create: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
-      }),
-    }),
-  } as any;
-
-  const mockTurnState = vi.fn<(...args: any[]) => any>();
-
-  beforeEach(() => {
-    resetIds();
-    mockTurnState.mockResolvedValue({
-      publicId: "turn-uuid",
-      teamName: "Red",
-      status: "ACTIVE",
-      guessesRemaining: 2,
-      createdAt: new Date(),
-      completedAt: null,
-      clue: { word: "FRUIT", number: 2, createdAt: new Date() },
-      hasGuesses: true,
-      lastGuess: {
-        cardWord: "APPLE",
-        playerName: "Bob",
-        outcome: "CORRECT_TEAM_CARD",
-        createdAt: new Date(),
-      },
-      prevGuesses: [],
-    });
-  });
-
-  /**
-   * Helper to build a game state with a specific board configuration.
-   * 'selectedRedCards' of 9 total means the next correct guess wins the round.
-   */
-  const buildGameWithBoard = (opts: {
-    selectedRedCards?: number;
-    selectedBlueCards?: number;
-    assassinSelected?: boolean;
-    guessesRemaining?: number;
-    format?: "QUICK" | "BEST_OF_THREE" | "ROUND_ROBIN";
-    historicalRounds?: any[];
-  }) => {
-    resetIds();
-    const {
-      selectedRedCards = 0,
-      selectedBlueCards = 0,
-      assassinSelected = false,
-      guessesRemaining = 3,
-      format = "QUICK",
-      historicalRounds = [],
-    } = opts;
-
-    const redCards = Array.from({ length: 9 }, (_, i) =>
-      buildCard({
-        _teamId: 1,
-        teamName: "Red",
-        word: `RED${i}`,
-        cardType: "TEAM",
-        selected: i < selectedRedCards,
-      }),
-    );
-    const blueCards = Array.from({ length: 8 }, (_, i) =>
-      buildCard({
-        _teamId: 2,
-        teamName: "Blue",
-        word: `BLUE${i}`,
-        cardType: "TEAM",
-        selected: i < selectedBlueCards,
-      }),
-    );
-    const bystanders = Array.from({ length: 7 }, (_, i) =>
-      buildCard({
-        _teamId: null,
-        teamName: null,
-        word: `NEUTRAL${i}`,
-        cardType: "BYSTANDER",
-      }),
-    );
-    const assassin = buildCard({
-      _teamId: null,
-      teamName: null,
-      word: "ASSASSIN",
-      cardType: "ASSASSIN",
-      selected: assassinSelected,
-    });
-
-    const cards = [...redCards, ...blueCards, ...bystanders, assassin];
-
-    const turn = buildTurn({
+  const redCards = Array.from({ length: 9 }, (_, i) =>
+    buildCard({
       _teamId: 1,
       teamName: "Red",
-      guessesRemaining,
-      clue: { _id: 1, _turnId: 1, word: "FRUIT", number: 3, createdAt: new Date() },
-    });
+      word: `RED${i}`,
+      cardType: "TEAM",
+      selected: i < selectedRedCards,
+    }),
+  );
+  const blueCards = Array.from({ length: 8 }, (_, i) =>
+    buildCard({
+      _teamId: 2,
+      teamName: "Blue",
+      word: `BLUE${i}`,
+      cardType: "TEAM",
+      selected: i < selectedBlueCards,
+    }),
+  );
+  const bystanders = Array.from({ length: 7 }, (_, i) =>
+    buildCard({
+      _teamId: null,
+      teamName: null,
+      word: `NEUTRAL${i}`,
+      cardType: "BYSTANDER",
+    }),
+  );
+  const assassin = buildCard({
+    _teamId: null,
+    teamName: null,
+    word: "ASSASSIN",
+    cardType: "ASSASSIN",
+    selected: assassinSelected,
+  });
 
-    const redCM = buildPlayer({ _teamId: 1, teamName: "Red", role: "CODEMASTER", publicName: "Alice" });
-    const redCB = buildPlayer({ _teamId: 1, teamName: "Red", role: "CODEBREAKER", publicName: "Bob" });
-    const blueCM = buildPlayer({ _teamId: 2, teamName: "Blue", role: "CODEMASTER", publicName: "Charlie" });
-    const blueCB = buildPlayer({ _teamId: 2, teamName: "Blue", role: "CODEBREAKER", publicName: "Diana" });
+  const cards = [...redCards, ...blueCards, ...bystanders, assassin];
 
-    return buildGameAggregate({
-      game_format: format,
-      currentRound: buildRound({ cards, turns: [turn], players: [redCM, redCB, blueCM, blueCB] }),
-      historicalRounds,
-      teams: [
-        { _id: 1, _gameId: 1, teamName: "Red", players: [redCM, redCB] },
-        { _id: 2, _gameId: 1, teamName: "Blue", players: [blueCM, blueCB] },
-      ],
-    });
-  };
+  const turn = buildTurn({
+    _teamId: 1,
+    teamName: "Red",
+    guessesRemaining,
+    clue: { _id: 1, _turnId: 1, word: "FRUIT", number: 3, createdAt: new Date() },
+  });
 
-  /**
-   * Creates a service with mock ops that track which methods are called.
-   * The mock ops.makeGuess returns a state reflecting the given outcome.
-   */
-  const createServiceWithTracking = (
-    gameState: GameAggregate,
-    outcome: string,
-    postGuessState?: Partial<GameAggregate>,
-  ) => {
-    const ops = {
-      makeGuess: vi.fn<any>(),
-      endTurn: vi.fn<any>(),
-      startTurn: vi.fn<any>(),
-      endRound: vi.fn<any>(),
-      endGame: vi.fn<any>(),
-    };
+  const redCM = buildPlayer({ _teamId: 1, teamName: "Red", role: "CODEMASTER", publicName: "Alice" });
+  const redCB = buildPlayer({ _teamId: 1, teamName: "Red", role: "CODEBREAKER", publicName: "Bob" });
+  const blueCM = buildPlayer({ _teamId: 2, teamName: "Blue", role: "CODEMASTER", publicName: "Charlie" });
+  const blueCB = buildPlayer({ _teamId: 2, teamName: "Blue", role: "CODEBREAKER", publicName: "Diana" });
 
-    const stateAfterGuess = { ...gameState, ...postGuessState } as GameAggregate;
+  return buildGameAggregate({
+    game_format: format,
+    currentRound: buildRound({ cards, turns: [turn], players: [redCM, redCB, blueCM, blueCB] }),
+    historicalRounds,
+    teams: [
+      { _id: 1, _gameId: 1, teamName: "Red", players: [redCM, redCB] },
+      { _id: 2, _gameId: 1, teamName: "Blue", players: [blueCM, blueCB] },
+    ],
+  });
+};
 
-    ops.makeGuess.mockResolvedValue({
-      outcome,
-      card: { _id: 1, word: "TARGET" },
-      guess: { _id: 1, createdAt: new Date() },
-      turn: {
-        _id: gameState.currentRound!.turns[0]._id,
-        _teamId: 1,
-        guessesRemaining: stateAfterGuess.currentRound!.turns[0].guessesRemaining,
-      },
-      state: stateAfterGuess,
+/**
+ * Creates narrow mock ops whose endTurn/endRound/endGame each return the
+ * given post-state (or a customised version). Tracks call counts.
+ */
+const createMockOps = (postState: GameAggregate, endRoundReturns?: GameAggregate) => {
+  const endTurn = vi.fn<any>().mockResolvedValue(postState);
+  const endRound = vi.fn<any>().mockResolvedValue(endRoundReturns ?? postState);
+  const endGame = vi.fn<any>().mockResolvedValue(postState);
+  return { endTurn, endRound, endGame };
+};
+
+const withHistoricalWinner = (
+  state: GameAggregate,
+  winningTeamId: number,
+): GameAggregate => ({
+  ...state,
+  historicalRounds: [
+    {
+      _id: state.currentRound!._id,
+      number: 1,
+      status: "COMPLETED",
+      _winningTeamId: winningTeamId,
+      winningTeamName: winningTeamId === 1 ? "Red" : "Blue",
       createdAt: new Date(),
+    },
+  ],
+});
+
+describe("applyGuessOutcome", () => {
+  it("CORRECT_TEAM_CARD with guesses remaining: no ops called, turn continues", async () => {
+    const gameState = buildGameWithBoard({ selectedRedCards: 6, guessesRemaining: 2 });
+    const ops = createMockOps(gameState);
+
+    const aftermath = await applyGuessOutcome(ops, {
+      outcome: "CORRECT_TEAM_CARD",
+      turnId: gameState.currentRound!.turns[0]._id,
+      guessingTeamId: 1,
+      guessesRemaining: 2,
+      postGuessState: gameState,
     });
 
-    ops.endTurn.mockResolvedValue(stateAfterGuess);
-    ops.startTurn.mockResolvedValue({
-      newTurn: { publicId: "new-turn-uuid" },
-      state: stateAfterGuess,
-    });
-    ops.endRound.mockResolvedValue({
-      ...stateAfterGuess,
-      historicalRounds: [
-        ...(stateAfterGuess.historicalRounds || []),
-        {
-          _id: stateAfterGuess.currentRound!._id,
-          number: 1,
-          status: "COMPLETED",
-          _winningTeamId: 2,
-          winningTeamName: "Blue",
-          createdAt: new Date(),
-        },
-      ],
-    });
-    ops.endGame.mockResolvedValue(stateAfterGuess);
-
-    const gameplayHandler = vi.fn<any>().mockImplementation(
-      async (_state: any, _player: any, fn: any) => fn(ops),
-    );
-
-    const service = makeGuessService(mockLogger)({
-      gameplayHandler,
-      loadTurn: mockTurnState,
-    });
-
-    return { service, ops };
-  };
-
-  it("CORRECT_TEAM_CARD with guesses remaining: only makeGuess called, turn continues", async () => {
-    const gameState = buildGameWithBoard({ selectedRedCards: 5, guessesRemaining: 3 });
-    // After guess: 8 of 9 selected (not all), guessesRemaining decremented to 2
-    const postState = {
-      currentRound: {
-        ...gameState.currentRound!,
-        cards: gameState.currentRound!.cards.map((c) =>
-          c.word === "RED5" ? { ...c, selected: true } : c,
-        ),
-        turns: [{ ...gameState.currentRound!.turns[0], guessesRemaining: 2 }],
-      },
-    };
-
-    const { service, ops } = createServiceWithTracking(gameState, "CORRECT_TEAM_CARD", postState);
-    await service({ gameState, playerContext: playerCtx, cardWord: "RED5" });
-
-    expect(ops.makeGuess).toHaveBeenCalledTimes(1);
     expect(ops.endTurn).not.toHaveBeenCalled();
     expect(ops.endRound).not.toHaveBeenCalled();
     expect(ops.endGame).not.toHaveBeenCalled();
-    expect(ops.startTurn).not.toHaveBeenCalled();
+    expect(aftermath).toEqual({
+      turnEnded: false,
+      roundEnded: null,
+      gameEnded: null,
+    });
   });
 
-  it("CORRECT_TEAM_CARD with 0 guesses remaining: ends turn (next turn started by frontend)", async () => {
-    const gameState = buildGameWithBoard({ selectedRedCards: 5, guessesRemaining: 1 });
-    const postState = {
-      currentRound: {
-        ...gameState.currentRound!,
-        cards: gameState.currentRound!.cards.map((c) =>
-          c.word === "RED5" ? { ...c, selected: true } : c,
-        ),
-        turns: [{ ...gameState.currentRound!.turns[0], guessesRemaining: 0 }],
-      },
-    };
+  it("CORRECT_TEAM_CARD with 0 guesses remaining: ends turn", async () => {
+    const gameState = buildGameWithBoard({ selectedRedCards: 6, guessesRemaining: 0 });
+    const ops = createMockOps(gameState);
 
-    const { service, ops } = createServiceWithTracking(gameState, "CORRECT_TEAM_CARD", postState);
-    await service({ gameState, playerContext: playerCtx, cardWord: "RED5" });
+    const aftermath = await applyGuessOutcome(ops, {
+      outcome: "CORRECT_TEAM_CARD",
+      turnId: gameState.currentRound!.turns[0]._id,
+      guessingTeamId: 1,
+      guessesRemaining: 0,
+      postGuessState: gameState,
+    });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
-    expect(ops.startTurn).not.toHaveBeenCalled();
     expect(ops.endRound).not.toHaveBeenCalled();
     expect(ops.endGame).not.toHaveBeenCalled();
+    expect(aftermath.turnEnded).toBe(true);
+    expect(aftermath.roundEnded).toBeNull();
   });
 
   it("CORRECT_TEAM_CARD reveals last team card: ends turn and round", async () => {
-    // 8 already selected, this is the 9th → round won
-    const gameState = buildGameWithBoard({ selectedRedCards: 8, guessesRemaining: 2 });
-    const postState = {
-      currentRound: {
-        ...gameState.currentRound!,
-        cards: gameState.currentRound!.cards.map((c) =>
-          c.word === "RED8" ? { ...c, selected: true } : c,
-        ),
-      },
-    };
+    // All 9 Red cards selected post-guess → round won, but game format BEST_OF_THREE so no game end
+    const gameState = buildGameWithBoard({ selectedRedCards: 9, guessesRemaining: 2, format: "BEST_OF_THREE" });
+    const ops = createMockOps(gameState);
 
-    const { service, ops } = createServiceWithTracking(gameState, "CORRECT_TEAM_CARD", postState);
-    await service({ gameState, playerContext: playerCtx, cardWord: "RED8" });
+    const aftermath = await applyGuessOutcome(ops, {
+      outcome: "CORRECT_TEAM_CARD",
+      turnId: gameState.currentRound!.turns[0]._id,
+      guessingTeamId: 1,
+      guessesRemaining: 2,
+      postGuessState: gameState,
+    });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
     expect(ops.endRound).toHaveBeenCalledTimes(1);
-    expect(ops.startTurn).not.toHaveBeenCalled();
+    expect(ops.endGame).not.toHaveBeenCalled();
+    expect(aftermath.turnEnded).toBe(true);
+    expect(aftermath.roundEnded).toEqual({ winningTeamId: 1 });
+    expect(aftermath.gameEnded).toBeNull();
   });
 
   it("CORRECT_TEAM_CARD last card in QUICK format: ends turn, round, and game", async () => {
-    const gameState = buildGameWithBoard({
-      selectedRedCards: 8,
+    const gameState = buildGameWithBoard({ selectedRedCards: 9, guessesRemaining: 2, format: "QUICK" });
+    const ops = createMockOps(gameState, withHistoricalWinner(gameState, 1));
+
+    const aftermath = await applyGuessOutcome(ops, {
+      outcome: "CORRECT_TEAM_CARD",
+      turnId: gameState.currentRound!.turns[0]._id,
+      guessingTeamId: 1,
       guessesRemaining: 2,
-      format: "QUICK",
+      postGuessState: gameState,
     });
-    const postState = {
-      currentRound: {
-        ...gameState.currentRound!,
-        cards: gameState.currentRound!.cards.map((c) =>
-          c.word === "RED8" ? { ...c, selected: true } : c,
-        ),
-      },
-    };
-
-    // Mock endRound to return a historical round so checkGameWinner sees it
-    const { service, ops } = createServiceWithTracking(gameState, "CORRECT_TEAM_CARD", postState);
-    ops.endRound.mockResolvedValue({
-      ...gameState,
-      ...postState,
-      historicalRounds: [
-        {
-          _id: 1,
-          number: 1,
-          status: "COMPLETED",
-          _winningTeamId: 1,
-          winningTeamName: "Red",
-          createdAt: new Date(),
-        },
-      ],
-    });
-
-    await service({ gameState, playerContext: playerCtx, cardWord: "RED8" });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
     expect(ops.endRound).toHaveBeenCalledTimes(1);
     expect(ops.endGame).toHaveBeenCalledTimes(1);
+    expect(aftermath.gameEnded).toEqual({ winningTeamId: 1 });
   });
 
-  it("OTHER_TEAM_CARD: ends turn (next turn started by frontend)", async () => {
-    const gameState = buildGameWithBoard({ selectedBlueCards: 3, guessesRemaining: 2 });
-    const postState = {
-      currentRound: {
-        ...gameState.currentRound!,
-        cards: gameState.currentRound!.cards.map((c) =>
-          c.word === "BLUE3" ? { ...c, selected: true } : c,
-        ),
-      },
-    };
+  it("OTHER_TEAM_CARD: ends turn (no round end if cards remain)", async () => {
+    const gameState = buildGameWithBoard({ selectedBlueCards: 4, guessesRemaining: 2 });
+    const ops = createMockOps(gameState);
 
-    const { service, ops } = createServiceWithTracking(gameState, "OTHER_TEAM_CARD", postState);
-    await service({ gameState, playerContext: playerCtx, cardWord: "BLUE3" });
+    const aftermath = await applyGuessOutcome(ops, {
+      outcome: "OTHER_TEAM_CARD",
+      turnId: gameState.currentRound!.turns[0]._id,
+      guessingTeamId: 1,
+      guessesRemaining: 2,
+      postGuessState: gameState,
+    });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
-    expect(ops.startTurn).not.toHaveBeenCalled();
     expect(ops.endRound).not.toHaveBeenCalled();
+    expect(ops.endGame).not.toHaveBeenCalled();
+    expect(aftermath.turnEnded).toBe(true);
   });
 
   it("OTHER_TEAM_CARD reveals last opposing card: ends turn and round (other team wins)", async () => {
-    // Blue has 7 of 8 selected. Guessing the 8th completes their set → Blue wins
-    const gameState = buildGameWithBoard({ selectedBlueCards: 7, guessesRemaining: 2 });
-    const postState = {
-      currentRound: {
-        ...gameState.currentRound!,
-        cards: gameState.currentRound!.cards.map((c) =>
-          c.word === "BLUE7" ? { ...c, selected: true } : c,
-        ),
-      },
-    };
+    // All 8 Blue cards selected post-guess → Blue wins the round
+    const gameState = buildGameWithBoard({ selectedBlueCards: 8, guessesRemaining: 2, format: "BEST_OF_THREE" });
+    const ops = createMockOps(gameState);
 
-    const { service, ops } = createServiceWithTracking(gameState, "OTHER_TEAM_CARD", postState);
-    await service({ gameState, playerContext: playerCtx, cardWord: "BLUE7" });
+    const aftermath = await applyGuessOutcome(ops, {
+      outcome: "OTHER_TEAM_CARD",
+      turnId: gameState.currentRound!.turns[0]._id,
+      guessingTeamId: 1,
+      guessesRemaining: 2,
+      postGuessState: gameState,
+    });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
     expect(ops.endRound).toHaveBeenCalledTimes(1);
-    expect(ops.startTurn).not.toHaveBeenCalled();
+    expect(aftermath.roundEnded).toEqual({ winningTeamId: 2 });
   });
 
-  it("BYSTANDER_CARD: ends turn (next turn started by frontend)", async () => {
+  it("BYSTANDER_CARD: ends turn only", async () => {
     const gameState = buildGameWithBoard({ guessesRemaining: 2 });
+    const ops = createMockOps(gameState);
 
-    const { service, ops } = createServiceWithTracking(gameState, "BYSTANDER_CARD");
-    await service({ gameState, playerContext: playerCtx, cardWord: "NEUTRAL0" });
-
-    expect(ops.endTurn).toHaveBeenCalledTimes(1);
-    expect(ops.startTurn).not.toHaveBeenCalled();
-    expect(ops.endRound).not.toHaveBeenCalled();
-    expect(ops.endGame).not.toHaveBeenCalled();
-  });
-
-  it("ASSASSIN_CARD: ends turn, ends round (other team wins), ends game", async () => {
-    const gameState = buildGameWithBoard({ guessesRemaining: 2 });
-    const postState = {
-      currentRound: {
-        ...gameState.currentRound!,
-        cards: gameState.currentRound!.cards.map((c) =>
-          c.word === "ASSASSIN" ? { ...c, selected: true } : c,
-        ),
-      },
-    };
-
-    const { service, ops } = createServiceWithTracking(gameState, "ASSASSIN_CARD", postState);
-    // endRound returns state with historical round showing other team won
-    ops.endRound.mockResolvedValue({
-      ...gameState,
-      ...postState,
-      historicalRounds: [
-        {
-          _id: 1,
-          number: 1,
-          status: "COMPLETED",
-          _winningTeamId: 2,
-          winningTeamName: "Blue",
-          createdAt: new Date(),
-        },
-      ],
+    const aftermath = await applyGuessOutcome(ops, {
+      outcome: "BYSTANDER_CARD",
+      turnId: gameState.currentRound!.turns[0]._id,
+      guessingTeamId: 1,
+      guessesRemaining: 2,
+      postGuessState: gameState,
     });
 
-    await service({ gameState, playerContext: playerCtx, cardWord: "ASSASSIN" });
+    expect(ops.endTurn).toHaveBeenCalledTimes(1);
+    expect(ops.endRound).not.toHaveBeenCalled();
+    expect(ops.endGame).not.toHaveBeenCalled();
+    expect(aftermath.turnEnded).toBe(true);
+  });
+
+  it("ASSASSIN_CARD in QUICK format: ends turn, round (other team wins), and game", async () => {
+    const gameState = buildGameWithBoard({ assassinSelected: true, guessesRemaining: 2, format: "QUICK" });
+    const ops = createMockOps(gameState, withHistoricalWinner(gameState, 2));
+
+    const aftermath = await applyGuessOutcome(ops, {
+      outcome: "ASSASSIN_CARD",
+      turnId: gameState.currentRound!.turns[0]._id,
+      guessingTeamId: 1,
+      guessesRemaining: 2,
+      postGuessState: gameState,
+    });
 
     expect(ops.endTurn).toHaveBeenCalledTimes(1);
     expect(ops.endRound).toHaveBeenCalledTimes(1);
     expect(ops.endGame).toHaveBeenCalledTimes(1);
-    expect(ops.startTurn).not.toHaveBeenCalled();
+    expect(aftermath.roundEnded).toEqual({ winningTeamId: 2 });
+    expect(aftermath.gameEnded).toEqual({ winningTeamId: 2 });
   });
 });
