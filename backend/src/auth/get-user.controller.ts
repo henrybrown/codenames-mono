@@ -2,6 +2,10 @@ import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import { Kysely } from "kysely";
 import type { DB } from "@backend/shared/db/db.types";
+import {
+  sendError,
+  sendSuccess,
+} from "@backend/shared/http-middleware/controller-helpers";
 
 /**
  * Dependencies for the get user controller
@@ -22,19 +26,13 @@ export const getUserController =
 
       // Auth middleware already validated JWT and attached req.auth
       if (!req.auth) {
-        res.status(401).json({
-          success: false,
-          error: "Unauthorized",
-        });
+        sendError(res, 401, "Unauthorized");
         return;
       }
 
       // Only allow users to get their own info
       if (req.auth.username !== username) {
-        res.status(403).json({
-          success: false,
-          error: "Forbidden - You can only access your own user information",
-        });
+        sendError(res, 403, "Forbidden - You can only access your own user information");
         return;
       }
 
@@ -45,20 +43,14 @@ export const getUserController =
         .executeTakeFirst();
 
       if (!user) {
-        res.status(404).json({
-          success: false,
-          error: "User not found",
-        });
+        sendError(res, 404, "User not found");
         return;
       }
 
-      res.status(200).json({
-        success: true,
-        data: {
-          userId: user.id,
-          username: user.username,
-          createdAt: user.created_at,
-        },
+      sendSuccess(res, 200, {
+        userId: user.id,
+        username: user.username,
+        createdAt: user.created_at,
       });
     } catch (error) {
       next(error);

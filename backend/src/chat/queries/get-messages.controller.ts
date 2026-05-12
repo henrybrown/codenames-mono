@@ -2,6 +2,11 @@ import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import type { getMessagesService } from "./get-messages.service";
 import { z } from "zod";
+import {
+  requireUserId,
+  sendError,
+  sendSuccess,
+} from "@backend/shared/http-middleware/controller-helpers";
 
 /**
  * Request validation schemas
@@ -31,40 +36,22 @@ export const getMessagesController =
     try {
       const { gameId } = getMessagesParamsSchema.parse(req.params);
       const query = getMessagesQuerySchema.parse(req.query);
-      const userId = req.auth?.userId;
-
-      if (!userId) {
-        res.status(401).json({
-          success: false,
-          error: "Authentication required",
-        });
-        return;
-      }
+      const userId = requireUserId(req, res);
+      if (userId === null) return;
 
       const result = await deps.getMessages(gameId, userId, query);
 
       if (result.status === "game-not-found") {
-        res.status(404).json({
-          success: false,
-          error: "Game not found or you are not a player in this game",
-        });
+        sendError(res, 404, "Game not found or you are not a player in this game");
         return;
       }
 
       if (result.status === "unauthorized") {
-        res.status(403).json({
-          success: false,
-          error: "You do not have access to this game",
-        });
+        sendError(res, 403, "You do not have access to this game");
         return;
       }
 
-      res.status(200).json({
-        success: true,
-        data: {
-          messages: result.messages,
-        },
-      });
+      sendSuccess(res, 200, { messages: result.messages });
     } catch (error) {
       next(error);
     }

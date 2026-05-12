@@ -2,6 +2,11 @@ import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import type { getStatusService } from "./get-status.service";
 import { z } from "zod";
+import {
+  requireUserId,
+  sendError,
+  sendSuccess,
+} from "@backend/shared/http-middleware/controller-helpers";
 
 /**
  * Request validation schema
@@ -24,38 +29,22 @@ export const getStatusController = (deps: GetStatusControllerDeps) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { gameId } = getStatusParamsSchema.parse(req.params);
-      const userId = req.auth?.userId;
-
-      if (!userId) {
-        res.status(401).json({
-          success: false,
-          error: "Authentication required",
-        });
-        return;
-      }
+      const userId = requireUserId(req, res);
+      if (userId === null) return;
 
       const result = await deps.getStatus(gameId, userId);
 
       if (result.status === "game-not-found") {
-        res.status(404).json({
-          success: false,
-          error: "Game not found or you are not a player in this game",
-        });
+        sendError(res, 404, "Game not found or you are not a player in this game");
         return;
       }
 
       if (result.status === "unauthorized") {
-        res.status(403).json({
-          success: false,
-          error: "You do not have access to this game",
-        });
+        sendError(res, 403, "You do not have access to this game");
         return;
       }
 
-      res.status(200).json({
-        success: true,
-        data: result.aiStatus,
-      });
+      sendSuccess(res, 200, result.aiStatus);
     } catch (error) {
       next(error);
     }

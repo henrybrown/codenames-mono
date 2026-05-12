@@ -4,6 +4,11 @@ import type { submitMessageService } from "./submit-message.service";
 import { z } from "zod";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import { MESSAGE_TYPE } from "@backend/shared/data-access/repositories/game-messages.repository";
+import {
+  requireUserId,
+  sendError,
+  sendSuccess,
+} from "@backend/shared/http-middleware/controller-helpers";
 
 /**
  * Request validation schemas
@@ -32,39 +37,23 @@ export const submitMessageController = (deps: SubmitMessageControllerDeps) =>
     try {
       const { gameId } = submitMessageParamsSchema.parse(req.params);
       const body = submitMessageBodySchema.parse(req.body);
-      const userId = req.auth?.userId;
-
-      if (!userId) {
-        res.status(401).json({
-          success: false,
-          error: "Authentication required",
-        });
-        return;
-      }
+      const userId = requireUserId(req, res);
+      if (userId === null) return;
 
       const result = await deps.submitMessage(gameId, userId, body);
 
       if (result.status === "invalid-input") {
-        res.status(400).json({
-          success: false,
-          error: result.error,
-        });
+        sendError(res, 400, result.error);
         return;
       }
 
       if (result.status === "game-not-found") {
-        res.status(404).json({
-          success: false,
-          error: "Game not found or you are not a player in this game",
-        });
+        sendError(res, 404, "Game not found or you are not a player in this game");
         return;
       }
 
       if (result.status === "unauthorized") {
-        res.status(403).json({
-          success: false,
-          error: "You do not have access to this game",
-        });
+        sendError(res, 403, "You do not have access to this game");
         return;
       }
 
@@ -75,10 +64,7 @@ export const submitMessageController = (deps: SubmitMessageControllerDeps) =>
         result.audienceTeamId,
       );
 
-      res.status(201).json({
-        success: true,
-        data: result.message,
-      });
+      sendSuccess(res, 201, result.message);
     } catch (error) {
       next(error);
     }
