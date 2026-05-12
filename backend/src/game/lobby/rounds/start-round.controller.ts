@@ -1,6 +1,7 @@
 import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import { StartRoundService } from "./start-round.service";
+import { pickStatus } from "@backend/shared/http/result-status";
 import { z } from "zod";
 
 /**
@@ -46,7 +47,6 @@ export type StartRoundErrorResponse = {
   success: false;
   error: string;
   details?: {
-    code: string;
     validationErrors?: { path: string; message: string }[];
   };
 };
@@ -104,29 +104,12 @@ export const startRoundController = ({ startRound }: Dependencies) => {
       if (!result.success) {
         const errorResponse: StartRoundErrorResponse = {
           success: false,
-          error: "Failed to start round",
-          details: {
-            code: result.error.status,
-          },
+          error: result.message,
         };
-
-        if (
-          result.error.status === "invalid-game-state" &&
-          result.error.validationErrors
-        ) {
-          errorResponse.details!.validationErrors =
-            result.error.validationErrors;
+        if (result.validationErrors) {
+          errorResponse.details = { validationErrors: result.validationErrors };
         }
-
-        const statusCode =
-          result.error.status === "game-not-found" ||
-          result.error.status === "round-not-found"
-            ? 404
-            : result.error.status === "invalid-game-state"
-              ? 409
-              : 500;
-
-        res.status(statusCode).json(errorResponse);
+        res.status(pickStatus(result)).json(errorResponse);
         return;
       }
 

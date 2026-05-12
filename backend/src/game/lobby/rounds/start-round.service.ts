@@ -23,44 +23,17 @@ export type StartRoundSuccess = {
 };
 
 /**
- * Round start error types
- */
-export const START_ROUND_ERROR = {
-  INVALID_GAME_STATE: "invalid-game-state",
-  GAME_NOT_FOUND: "game-not-found",
-  USER_NOT_PLAYER: "user-not-player",
-  ROUND_NOT_FOUND: "round-not-found",
-} as const;
-
-/**
- * Round start failure details
- */
-export type StartRoundFailure =
-  | {
-      status: typeof START_ROUND_ERROR.INVALID_GAME_STATE;
-      currentState: string;
-      validationErrors: LobbyValidationError[];
-    }
-  | {
-      status: typeof START_ROUND_ERROR.GAME_NOT_FOUND;
-      gameId: string;
-    }
-  | {
-      status: typeof START_ROUND_ERROR.USER_NOT_PLAYER;
-      gameId: string;
-      userId: number;
-    }
-  | {
-      status: typeof START_ROUND_ERROR.ROUND_NOT_FOUND;
-      roundNumber: number;
-    };
-
-/**
  * Combined result type for round start
  */
 export type StartRoundResult =
   | { success: true; data: StartRoundSuccess }
-  | { success: false; error: StartRoundFailure };
+  | {
+      success: false;
+      message: string;
+      notFound?: boolean;
+      conflict?: boolean;
+      validationErrors?: LobbyValidationError[];
+    };
 
 /**
  * Dependencies required by the start round service
@@ -83,10 +56,8 @@ export const startRoundService = (dependencies: StartRoundDependencies) => {
     if (!lobbyState) {
       return {
         success: false,
-        error: {
-          status: START_ROUND_ERROR.GAME_NOT_FOUND,
-          gameId: input.gameId,
-        },
+        notFound: true,
+        message: `Game ${input.gameId} not found`,
       };
     }
 
@@ -94,11 +65,7 @@ export const startRoundService = (dependencies: StartRoundDependencies) => {
     if (!lobbyState.userContext.canModifyGame) {
       return {
         success: false,
-        error: {
-          status: START_ROUND_ERROR.USER_NOT_PLAYER,
-          gameId: input.gameId,
-          userId: input.userId,
-        },
+        message: "You do not have permission to modify this game",
       };
     }
 
@@ -107,21 +74,16 @@ export const startRoundService = (dependencies: StartRoundDependencies) => {
     if (!gameData.currentRound) {
       return {
         success: false,
-        error: {
-          status: START_ROUND_ERROR.ROUND_NOT_FOUND,
-          roundNumber: input.roundNumber,
-        },
+        notFound: true,
+        message: `Round ${input.roundNumber} not found`,
       };
     }
 
     if (gameData.currentRound.number !== input.roundNumber) {
       return {
         success: false,
-        error: {
-          status: START_ROUND_ERROR.INVALID_GAME_STATE,
-          currentState: JSON.stringify(gameData),
-          validationErrors: [],
-        },
+        conflict: true,
+        message: `Round ${input.roundNumber} is not the current round (current is ${gameData.currentRound.number})`,
       };
     }
 
@@ -130,11 +92,9 @@ export const startRoundService = (dependencies: StartRoundDependencies) => {
     if (!validationResult.valid) {
       return {
         success: false,
-        error: {
-          status: START_ROUND_ERROR.INVALID_GAME_STATE,
-          currentState: gameData.status,
-          validationErrors: validationResult.errors,
-        },
+        conflict: true,
+        message: validationResult.errors.map((e) => e.message).join(", "),
+        validationErrors: validationResult.errors,
       };
     }
 
