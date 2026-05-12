@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Response, NextFunction } from "express";
 import type { Request as JWTRequest } from "express-jwt";
 import { createGameService } from "./create-game.service";
 import {
@@ -6,6 +6,7 @@ import {
   createGameResponseSchema,
   CreateGameResponse,
 } from "./create.game.validation";
+import { requireUserId } from "@backend/shared/http-middleware/controller-helpers";
 
 /** Dependencies required by the create game controller */
 export type Dependencies = {
@@ -26,11 +27,8 @@ export const createGameController =
       // Runtime validation of request object
       const parsedReq = createGameRequestSchema.parse(req.body);
 
-      // Get user ID from JWT auth
-      const userId = req.auth?.userId;
-      if (!userId) {
-        throw new Error("User authentication required");
-      }
+      const userId = requireUserId(req, res);
+      if (userId === null) return;
 
       const gameCreationResult = await createGame(
         parsedReq.gameType,

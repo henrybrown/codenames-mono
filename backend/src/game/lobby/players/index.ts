@@ -5,7 +5,8 @@ import type { LobbyOperations } from "../lobby-actions";
 import { addPlayersService } from "./add-players.service";
 import { addPlayersController } from "./add-players.controller";
 import { modifyPlayersService } from "./modify-players.service";
-import { modifyPlayersController } from "./modify-players.controller";
+import { modifySinglePlayerController } from "./modify-single-player.controller";
+import { modifyBatchPlayersController } from "./modify-batch-players.controller";
 import { removePlayersService } from "./remove-players.service";
 import { removePlayersController } from "./remove-players.controller";
 
@@ -25,7 +26,10 @@ export const createPlayers = (deps: PlayersDependencies) => {
     lobbyHandler: deps.lobbyHandler,
     loadLobbyAggregate: deps.loadLobbyAggregate,
   });
-  const { controllers: modifyController } = modifyPlayersController({
+  const modifySingle = modifySinglePlayerController({
+    modifyPlayersService: modifyService,
+  });
+  const modifyBatch = modifyBatchPlayersController({
     modifyPlayersService: modifyService,
   });
 
@@ -40,7 +44,8 @@ export const createPlayers = (deps: PlayersDependencies) => {
   return {
     controllers: {
       add: addController,
-      modify: modifyController,
+      modifySingle,
+      modifyBatch,
       remove: removeController,
     },
   };

@@ -70,8 +70,8 @@ export const initialize = (
 
   /** Player routes */
   router.post("/games/:gameId/players", auth, blockingGameAction("add-players"), players.controllers.add);
-  router.patch("/games/:gameId/players", auth, blockingGameAction("modify-players"), players.controllers.modify.batch);
-  router.patch("/games/:gameId/players/:playerId", auth, blockingGameAction("modify-player"), players.controllers.modify.single);
+  router.patch("/games/:gameId/players", auth, blockingGameAction("modify-players"), players.controllers.modifyBatch);
+  router.patch("/games/:gameId/players/:playerId", auth, blockingGameAction("modify-player"), players.controllers.modifySingle);
   router.delete("/games/:gameId/players/:playerId", auth, blockingGameAction("remove-player"), players.controllers.remove);
 
   /** Game start */

@@ -6,6 +6,8 @@ import {
   startGameRequestSchema,
   startGameResponseSchema,
 } from "./start-game.validation";
+import { pickStatus } from "@backend/shared/http/result-status";
+import { sendError } from "@backend/shared/http-middleware/controller-helpers";
 
 /** Dependencies required by the start game controller */
 export type Dependencies = {
@@ -45,11 +47,7 @@ export const startGameController =
         const validatedResponse = startGameResponseSchema.parse(response);
         res.status(200).json(validatedResponse);
       } else {
-        // All errors from service are treated as 409 Conflict
-        res.status(409).json({
-          success: false,
-          error: result.message,
-        });
+        sendError(res, pickStatus(result), result.message);
       }
     } catch (error) {
       next(error);
