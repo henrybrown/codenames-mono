@@ -35,7 +35,7 @@
     "@tanstack/react-table": "^8.20.5",
     "axios": "^1.7.7",
     "framer-motion": "^12.23.24",
-    "kysely": "0.28.16",
+    "kysely": "0.28.17",
     "kysely-codegen": "0.20.0",
     "lucide-react": "^0.515.0",
     "react": "^19.2.0",
