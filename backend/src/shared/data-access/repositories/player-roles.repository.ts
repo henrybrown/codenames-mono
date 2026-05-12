@@ -49,6 +49,9 @@ export type RoleAssignmentCreator = (
   input: PlayerRoleInput | PlayerRoleInput[],
 ) => Promise<RoleAssignmentResult[]>;
 
+/** Returns a map of role name → internal role id. */
+export type RoleIdsByNameFinder = () => Promise<Record<PlayerRole, number>>;
+
 /**
  * ==================
  * REPOSITORY FUNCTIONS
@@ -156,6 +159,51 @@ export const assignPlayerRoles =
         "Failed to create player role assignments",
         { cause: error },
       );
+    }
+  };
+
+/**
+ * Creates a function that loads the static role-name → id mapping
+ * from the player_roles table.
+ *
+ * Returns the full set of known roles as a Record keyed by PlayerRole.
+ * CODEMASTER and CODEBREAKER are required and assertion-checked;
+ * SPECTATOR is loaded if present but not required.
+ */
+export const findRoleIdsByName =
+  (db: Kysely<DB>): RoleIdsByNameFinder =>
+  async () => {
+    try {
+      const rows = await db
+        .selectFrom("player_roles")
+        .select(["id", "role_name"])
+        .execute();
+
+      const map: Partial<Record<PlayerRole, number>> = {};
+      for (const row of rows) {
+        const role = mapRoleNameToEnum(row.role_name);
+        if (role !== PLAYER_ROLE.NONE) {
+          map[role] = row.id;
+        }
+      }
+
+      const required: PlayerRole[] = [
+        PLAYER_ROLE.CODEMASTER,
+        PLAYER_ROLE.CODEBREAKER,
+      ];
+      const missing = required.filter((role) => map[role] === undefined);
+      if (missing.length > 0) {
+        throw new UnexpectedRepositoryError(
+          `player_roles table is missing required roles: ${missing.join(", ")}`,
+        );
+      }
+
+      return map as Record<PlayerRole, number>;
+    } catch (error) {
+      if (error instanceof UnexpectedRepositoryError) throw error;
+      throw new UnexpectedRepositoryError("Failed to load player role IDs", {
+        cause: error,
+      });
     }
   };
 

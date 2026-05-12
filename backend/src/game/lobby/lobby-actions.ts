@@ -49,6 +49,7 @@ export const lobbyOperations = (trx: TransactionContext) => ({
     playerRolesRepository.assignPlayerRoles(trx),
     (gameId: number) =>
       playersRepository.getRoleHistory(trx)(gameId, "CODEMASTER"),
+    playerRolesRepository.findRoleIdsByName(trx),
   ),
   dealCards: dealCardsActions.dealCardsToRound(
     cardsRepository.getRandomWords(trx),

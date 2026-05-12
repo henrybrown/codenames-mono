@@ -1,4 +1,8 @@
-import { RoleAssignmentCreator } from "@backend/shared/data-access/repositories/players.repository";
+import { PLAYER_ROLE } from "@codenames/shared/types";
+import type {
+  RoleAssignmentCreator,
+  RoleIdsByNameFinder,
+} from "@backend/shared/data-access/repositories/player-roles.repository";
 import type { AssignRolesValidLobbyState } from "./assign-roles.rules";
 
 /**
@@ -12,20 +16,29 @@ type RoleAssignmentInput = {
 };
 
 /**
- * Factory function that creates a random role assignment action with repository dependencies
+ * Factory function that creates a random role assignment action.
+ *
+ * Resolves the role-name → role-id mapping once per invocation (the
+ * player_roles table is a small reference table), then assigns one
+ * codemaster per team and codebreaker for everyone else.
+ *
+ * Codemaster selection prefers players who haven't been codemaster
+ * before in this game; falls back to random across the full roster
+ * if everyone already has been.
  */
 export const assignRolesRandomly = (
   assignPlayerRoles: RoleAssignmentCreator,
   getPreviousCodemasters: (gameId: number) => Promise<number[]>,
+  findRoleIdsByName: RoleIdsByNameFinder,
 ) => {
-  /**
-   * Randomly assigns roles for a pre-validated game state
-   * Players who haven't been codemaster get priority, then random selection
-   */
   return async (gameState: AssignRolesValidLobbyState) => {
-    const assignments: RoleAssignmentInput[] = [];
+    const roleIds = await findRoleIdsByName();
+    const codemasterId = roleIds[PLAYER_ROLE.CODEMASTER];
+    const codebreakerId = roleIds[PLAYER_ROLE.CODEBREAKER];
 
     const previousCodemasters = await getPreviousCodemasters(gameState._id);
+
+    const assignments: RoleAssignmentInput[] = [];
 
     for (const team of gameState.teams) {
       // Filter to players who haven't been codemaster yet
@@ -33,19 +46,27 @@ export const assignRolesRandomly = (
         (player) => !previousCodemasters.includes(player._id),
       );
 
-      // Select random codemaster from eligible players
-      const selectedCodemaster =
-        eligiblePlayers[Math.floor(Math.random() * eligiblePlayers.length)];
+      // If all players have been codemaster, fall back to the full
+      // roster. Without this, eligiblePlayers can be empty and the
+      // random pick returns undefined, which then breaks the role
+      // assignment below when reading `selectedCodemaster._id`.
+      const codemasterPool =
+        eligiblePlayers.length > 0 ? eligiblePlayers : team.players;
 
-      // Create role assignments for all players on this team
-      team.players.forEach((player) => {
+      const selectedCodemaster =
+        codemasterPool[Math.floor(Math.random() * codemasterPool.length)];
+
+      for (const player of team.players) {
         assignments.push({
           playerId: player._id,
-          roundId: gameState.currentRound!._id,
-          roleId: player._id === selectedCodemaster._id ? 1 : 2, //TODO: Fix lookup from role code -> role name
+          roundId: gameState.currentRound._id,
+          roleId:
+            player._id === selectedCodemaster._id
+              ? codemasterId
+              : codebreakerId,
           teamId: player._teamId,
         });
-      });
+      }
     }
 
     // Persist role assignments to database
