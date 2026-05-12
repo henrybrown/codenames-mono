@@ -521,7 +521,7 @@ export const createAIPlayerService =
             cardWord: candidate.word,
           });
 
-          if (!result.success) throw new Error(`Failed to make guess: ${JSON.stringify(result.error)}`);
+          if (!result.success) throw new Error(`Failed to make guess: ${result.message}`);
 
           const outcome = result.data.guess.outcome;
 

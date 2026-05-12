@@ -104,10 +104,16 @@ export const gameplayOperations = (
      * post-everything game state, and an `aftermath` describing what
      * fired (used by the service to choose which websocket events to
      * emit after the transaction commits).
+     *
+     * Expected business failures propagate as { ok: false, message }.
      */
     makeGuess: async (cardWord: string) => {
       const currentState = await reload();
-      const guessResult = await makeGuessAction(currentState, player, cardWord);
+      const result = await makeGuessAction(currentState, player, cardWord);
+      if (!result.ok) {
+        return result;
+      }
+      const guessData = result.data;
       const postGuessState = await reload();
 
       const aftermath = await turnActions.applyGuessOutcome(
@@ -129,17 +135,18 @@ export const gameplayOperations = (
           },
         },
         {
-          outcome: guessResult.outcome,
-          turnId: guessResult.turn._id,
-          guessingTeamId: guessResult.turn._teamId,
-          guessesRemaining: guessResult.turn.guessesRemaining,
+          outcome: guessData.outcome,
+          turnId: guessData.turn._id,
+          guessingTeamId: guessData.turn._teamId,
+          guessesRemaining: guessData.turn.guessesRemaining,
           postGuessState,
         },
       );
 
       const finalState = await reload();
       return {
-        guess: guessResult,
+        ok: true as const,
+        guess: guessData,
         aftermath,
         state: finalState,
       };

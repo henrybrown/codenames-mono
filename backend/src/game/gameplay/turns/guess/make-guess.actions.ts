@@ -2,7 +2,7 @@ import {
   CODEBREAKER_OUTCOME,
   GAME_EVENT_TYPE,
 } from "@codenames/shared/types";
-import { GameplayValidationError } from "../../errors/gameplay.errors";
+import { UnexpectedGameplayError } from "../../errors/gameplay.errors";
 import { GameAggregate } from "@backend/game/state/types";
 import type { validateMakeGuess } from "./make-guess.rules";
 import { CardUpdater } from "@backend/shared/data-access/repositories/cards.repository";
@@ -14,6 +14,26 @@ import type { CreateEventInput } from "@backend/shared/data-access/repositories/
 
 import { getCurrentTurnOrThrow } from "@backend/game/state/helpers";
 import type { ActingPlayer } from "../types";
+
+/**
+ * Result of attempting a guess.
+ *
+ * `ok: false` is for expected business failures (invalid card, wrong
+ * game state). Genuine internal failures throw UnexpectedGameplayError
+ * → 500 via middleware.
+ */
+export type MakeGuessActionResult =
+  | {
+      ok: true;
+      data: {
+        card: any;
+        guess: Awaited<ReturnType<GuessCreator>>;
+        turn: Awaited<ReturnType<TurnGuessUpdater>>;
+        outcome: string;
+        createdAt: Date;
+      };
+    }
+  | { ok: false; message: string };
 
 /**
  * Validates a specific card can be guessed
@@ -58,7 +78,7 @@ function determineOutcome(card: any, guessingTeamId: number): string {
         ? CODEBREAKER_OUTCOME.CORRECT_TEAM_CARD
         : CODEBREAKER_OUTCOME.OTHER_TEAM_CARD;
     default:
-      throw new Error(`Unknown card type: ${card.cardType}`);
+      throw new UnexpectedGameplayError(`Unknown card type: ${card.cardType}`);
   }
 }
 
@@ -76,17 +96,18 @@ export const createMakeGuessAction = (deps: {
     gameState: GameAggregate,
     player: ActingPlayer,
     cardWord: string,
-  ) => {
+  ): Promise<MakeGuessActionResult> => {
     const validation = deps.validateMakeGuess(gameState, player._teamId);
     if (!validation.valid) {
-      throw new GameplayValidationError("make guess", validation.errors);
+      return {
+        ok: false,
+        message: validation.errors.map((e) => e.message).join(", "),
+      };
     }
 
     const cardValidation = validateGuessCard(gameState, cardWord);
     if (!cardValidation.valid) {
-      throw new GameplayValidationError("guess card", [
-        { path: "cardWord", message: cardValidation.error! },
-      ]);
+      return { ok: false, message: cardValidation.error! };
     }
 
     const currentTurn = getCurrentTurnOrThrow(gameState);
@@ -127,11 +148,14 @@ export const createMakeGuessAction = (deps: {
     });
 
     return {
-      card,
-      guess,
-      turn: updatedTurn,
-      outcome,
-      createdAt: guess.createdAt,
+      ok: true,
+      data: {
+        card,
+        guess,
+        turn: updatedTurn,
+        outcome,
+        createdAt: guess.createdAt,
+      },
     };
   };
 };

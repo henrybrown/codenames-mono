@@ -1,7 +1,6 @@
 import { makeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import { buildGameAggregate, buildTurn } from "../../__test-utils__/fixtures";
 import type { GamePlayer } from "@backend/game/access";
-import { GameplayValidationError } from "@backend/game/gameplay/errors/gameplay.errors";
 
 const playerCtx: GamePlayer = {
   _id: 1,
@@ -29,29 +28,32 @@ describe("makeGuessService", () => {
 
   const mockTurnState = vi.fn<(...args: any[]) => any>();
 
-  const createService = (guessOutcome = "CORRECT_TEAM_CARD", handlerThrows: Error | null = null) => {
+  const createService = (opsMakeGuessResult?: any, handlerThrows: Error | null = null) => {
     const gameState = buildGameAggregate();
     const gameplayHandler = vi.fn<(...args: any[]) => any>().mockImplementation(
       async (_state: any, _player: any, fn: any) => {
         if (handlerThrows) throw handlerThrows;
         return fn({
-          makeGuess: vi.fn<any>().mockResolvedValue({
-            guess: {
-              card: { _id: 1, word: "APPLE" },
-              guess: { _id: 1, createdAt: new Date() },
-              turn: {
-                _id: 1,
-                _teamId: 1,
-                guessesRemaining: 2,
+          makeGuess: vi.fn<any>().mockResolvedValue(
+            opsMakeGuessResult ?? {
+              ok: true,
+              guess: {
+                card: { _id: 1, word: "APPLE" },
+                guess: { _id: 1, createdAt: new Date() },
+                turn: {
+                  _id: 1,
+                  _teamId: 1,
+                  guessesRemaining: 2,
+                  createdAt: new Date(),
+                  completedAt: null,
+                },
+                outcome: "CORRECT_TEAM_CARD",
                 createdAt: new Date(),
-                completedAt: null,
               },
-              outcome: guessOutcome,
-              createdAt: new Date(),
+              aftermath: { turnEnded: false, roundEnded: null, gameEnded: null },
+              state: gameState,
             },
-            aftermath: { turnEnded: false, roundEnded: null, gameEnded: null },
-            state: gameState,
-          }),
+          ),
           endTurn: vi.fn<any>().mockResolvedValue(gameState),
           startTurn: vi.fn<any>().mockResolvedValue({ newTurn: { publicId: "new-turn-uuid" }, state: gameState }),
           endRound: vi.fn<any>().mockResolvedValue(gameState),
@@ -69,7 +71,7 @@ describe("makeGuessService", () => {
       completedAt: null,
       clue: { word: "FRUIT", number: 2, createdAt: new Date() },
       hasGuesses: true,
-      lastGuess: { cardWord: "APPLE", playerName: "Bob", outcome: guessOutcome, createdAt: new Date() },
+      lastGuess: { cardWord: "APPLE", playerName: "Bob", outcome: "CORRECT_TEAM_CARD", createdAt: new Date() },
       prevGuesses: [],
     });
 
@@ -80,7 +82,7 @@ describe("makeGuessService", () => {
   };
 
   it("returns success with guess data on correct team card", async () => {
-    const service = createService("CORRECT_TEAM_CARD");
+    const service = createService();
     const gameState = buildGameAggregate();
 
     const result = await service({ gameState, playerContext: playerCtx, cardWord: "APPLE" });
@@ -93,7 +95,7 @@ describe("makeGuessService", () => {
     }
   });
 
-  it("returns round-not-found when no current round", async () => {
+  it("returns failure with message when no current round", async () => {
     const service = createService();
     const gameState = buildGameAggregate({ currentRound: null });
 
@@ -101,42 +103,38 @@ describe("makeGuessService", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.status).toBe("round-not-found");
+      expect(result.message).toBe("No current round");
     }
   });
 
-  it("returns invalid-card when handler throws card validation error", async () => {
-    const service = createService("CORRECT_TEAM_CARD", new GameplayValidationError("guess card", [
-      { path: "cardWord", message: "Card already selected" },
-    ]));
+  it("propagates message from action when card is invalid", async () => {
+    const service = createService({ ok: false, message: 'Card "APPLE" has already been selected' });
 
     const gameState = buildGameAggregate();
     const result = await service({ gameState, playerContext: playerCtx, cardWord: "APPLE" });
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.status).toBe("invalid-card");
+      expect(result.message).toBe('Card "APPLE" has already been selected');
     }
   });
 
-  it("returns invalid-game-state when handler throws game state error", async () => {
-    const service = createService("CORRECT_TEAM_CARD", new GameplayValidationError("make guess", [
-      { path: "status", message: "Game not in progress" },
-    ]));
+  it("propagates message from action when game state is invalid", async () => {
+    const service = createService({ ok: false, message: "Game not in progress" });
 
     const gameState = buildGameAggregate();
     const result = await service({ gameState, playerContext: playerCtx, cardWord: "APPLE" });
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.status).toBe("invalid-game-state");
+      expect(result.message).toBe("Game not in progress");
     }
   });
 
   it("re-throws non-gameplay errors", async () => {
-    const service = createService("CORRECT_TEAM_CARD", new Error("Network error"));
+    const service = createService(undefined, new Error("Network error"));
     const gameState = buildGameAggregate();
 
-    await expect(service({ gameState, cardWord: "APPLE" })).rejects.toThrow("Network error");
+    await expect(service({ gameState, cardWord: "APPLE" } as any)).rejects.toThrow("Network error");
   });
 });
