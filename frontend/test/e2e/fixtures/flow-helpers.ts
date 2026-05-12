@@ -2,8 +2,7 @@ import { type Page, type Locator, expect } from "@playwright/test";
 import { openDashboardIfMobile } from "./dashboard-helpers";
 
 /**
- * UI-flow helpers. Game-helpers handles API state setup; this module handles
- * user-driven UI interaction + UI assertions.
+ * UI-flow helpers. This module handles user-driven UI interaction + UI assertions.
  *
  * Key constraint: the game page renders multiple dashboard layouts
  * simultaneously (CSS hides one). IDs are intentionally duplicated. Helpers
