@@ -25,8 +25,8 @@ export const createSubmitMessage =
     });
 
     return {
-      controller,
-      service,
+      controllers: { submitMessage: controller },
+      services: { submitMessage: service },
     };
   };
 

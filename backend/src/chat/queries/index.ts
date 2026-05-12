@@ -25,8 +25,8 @@ export const createGetMessages =
     });
 
     return {
-      controller,
-      service,
+      controllers: { getMessages: controller },
+      services: { getMessages: service },
     };
   };
 

@@ -23,7 +23,10 @@ export const makeGuess = (logger: AppLogger) => (dependencies: MakeGuessDependen
     loadGameAggregate: dependencies.loadGameAggregate,
   });
 
-  return { controller, service };
+  return {
+    controllers: { makeGuess: controller },
+    services: { makeGuess: service },
+  };
 };
 
 export default makeGuess;

@@ -23,7 +23,10 @@ export const giveClue = (logger: AppLogger) => (dependencies: GiveClueDependenci
     loadGameAggregate: dependencies.loadGameAggregate,
   });
 
-  return { controller, service };
+  return {
+    controllers: { giveClue: controller },
+    services: { giveClue: service },
+  };
 };
 
 export default giveClue;

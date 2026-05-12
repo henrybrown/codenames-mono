@@ -90,8 +90,8 @@ export const initialize = (deps: ChatModuleDependencies) => {
   router.use(httpLogger(logger));
   router.use(auth);
   router.use("/games/:gameId", requireMember);
-  router.get("/games/:gameId/messages", getMessagesFeature.controller);
-  router.post("/games/:gameId/messages", submitMessageFeature.controller);
+  router.get("/games/:gameId/messages", getMessagesFeature.controllers.getMessages);
+  router.post("/games/:gameId/messages", submitMessageFeature.controllers.submitMessage);
   app.use("/api", router);
 
   logger.info("Chat module initialized");

@@ -3,10 +3,8 @@ import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregat
 import type { TurnLoader } from "@backend/game/state/load-turn-aggregate";
 import type { AppLogger } from "@backend/shared/logging";
 
-import { giveClueService } from "./clue/give-clue.service";
-import { giveClueController } from "./clue/give-clue.controller";
-import { makeGuessService as createMakeGuessService } from "./guess/make-guess.service";
-import { makeGuessController as createMakeGuessController } from "./guess/make-guess.controller";
+import { giveClue } from "./clue";
+import { makeGuess } from "./guess";
 import { createEndTurnService } from "./end-turn.service";
 import { createEndTurnController } from "./end-turn.controller";
 import { createStartTurnService } from "./start-turn.service";
@@ -21,27 +19,21 @@ export interface TurnsDependencies {
 }
 
 export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
-  /** Give clue */
-  const clueService = giveClueService(logger)({
+  /** Give clue (sub-feature) */
+  const clue = giveClue(logger)({
     gameplayHandler: deps.gameplayHandler,
     loadTurn: deps.loadTurn,
-  });
-  const clueController = giveClueController(logger)({
-    giveClue: clueService,
     loadGameAggregate: deps.loadGameAggregate,
   });
 
-  /** Make guess */
-  const guessService = createMakeGuessService(logger)({
+  /** Make guess (sub-feature) */
+  const guess = makeGuess(logger)({
     gameplayHandler: deps.gameplayHandler,
     loadTurn: deps.loadTurn,
-  });
-  const guessController = createMakeGuessController(logger)({
-    makeGuess: guessService,
     loadGameAggregate: deps.loadGameAggregate,
   });
 
-  /** End turn */
+  /** End turn (inline — no sub-feature folder yet) */
   const endService = createEndTurnService(logger)({
     gameplayHandler: deps.gameplayHandler,
   });
@@ -50,7 +42,7 @@ export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
     loadGameAggregate: deps.loadGameAggregate,
   });
 
-  /** Start turn */
+  /** Start turn (inline — no sub-feature folder yet) */
   const startService = createStartTurnService(logger)({
     gameplayHandler: deps.gameplayHandler,
   });
@@ -61,14 +53,14 @@ export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
 
   return {
     controllers: {
-      giveClue: clueController,
-      makeGuess: guessController,
+      ...clue.controllers,
+      ...guess.controllers,
       endTurn: endController,
       startTurn: startController,
     },
     services: {
-      giveClue: clueService,
-      makeGuess: guessService,
+      ...clue.services,
+      ...guess.services,
       endTurn: endService,
       startTurn: startService,
     },
