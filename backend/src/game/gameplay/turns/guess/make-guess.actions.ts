@@ -1,30 +1,15 @@
 import {
-  ROUND_STATE,
   CODEBREAKER_OUTCOME,
-  GAME_STATE,
   GAME_EVENT_TYPE,
 } from "@codenames/shared/types";
 import { GameplayValidationError } from "../../errors/gameplay.errors";
 import { GameAggregate } from "@backend/game/state/types";
-import type {
-  validateMakeGuess,
-  validateEndTurn,
-  validateStartTurn,
-  validateEndRound,
-} from "./make-guess.rules";
+import type { validateMakeGuess } from "./make-guess.rules";
 import { CardUpdater } from "@backend/shared/data-access/repositories/cards.repository";
 import {
   GuessCreator,
   TurnGuessUpdater,
-  TurnStatusUpdater,
-  TurnCreator,
 } from "@backend/shared/data-access/repositories/turns.repository";
-import {
-  RoundStatusUpdater,
-  RoundWinnerUpdater,
-} from "@backend/shared/data-access/repositories/rounds.repository";
-
-import { GameStatusUpdater } from "@backend/shared/data-access/repositories/games.repository";
 import type { CreateEventInput } from "@backend/shared/data-access/repositories/game-events.repository";
 
 import { getCurrentTurnOrThrow } from "@backend/game/state/helpers";
@@ -151,91 +136,4 @@ export const createMakeGuessAction = (deps: {
   };
 };
 
-/**
- * Creates the end turn action
- */
-export const createEndTurnAction = (deps: {
-  updateTurnStatus: TurnStatusUpdater;
-  validateEndTurn: typeof validateEndTurn;
-}) => {
-  return async (gameState: GameAggregate, turnId: number) => {
-    const validation = deps.validateEndTurn(gameState);
-    if (!validation.valid) {
-      throw new GameplayValidationError("end turn", validation.errors);
-    }
-
-    return await deps.updateTurnStatus(turnId, "COMPLETED");
-  };
-};
-
-/**
- * Creates the start turn action
- */
-export const createStartTurnAction = (deps: {
-  createTurn: TurnCreator;
-  validateStartTurn: typeof validateStartTurn;
-}) => {
-  return async (gameState: GameAggregate, roundId: number, teamId: number) => {
-    const validation = deps.validateStartTurn(gameState);
-    if (!validation.valid) {
-      throw new GameplayValidationError("start turn", validation.errors);
-    }
-
-    return await deps.createTurn({
-      roundId,
-      teamId,
-      guessesRemaining: 0,
-    });
-  };
-};
-
-/**
- * Creates the end round action
- */
-export const createEndRoundAction = (deps: {
-  updateRoundStatus: RoundStatusUpdater;
-  updateRoundWinner: RoundWinnerUpdater;
-  validateEndRound: typeof validateEndRound;
-}) => {
-  return async (
-    gameState: GameAggregate,
-    roundId: number,
-    winningTeamId: number,
-  ) => {
-    const validation = deps.validateEndRound(gameState);
-    if (!validation.valid) {
-      throw new GameplayValidationError("end round", validation.errors);
-    }
-
-    await deps.updateRoundStatus({
-      roundId,
-      status: ROUND_STATE.COMPLETED,
-    });
-
-    return await deps.updateRoundWinner({
-      roundId,
-      winningTeamId,
-    });
-  };
-};
-
-/**
- * Creates the end game action that transitions game to completed state
- */
-export const createEndGameAction = (updateGameStatus: GameStatusUpdater) => {
-  /**
-   * Ends the game by updating its status to COMPLETED
-   *
-   * @param gameState - Current game state
-   * @param winningTeamId - ID of the team that won
-   * @returns Updated game data with COMPLETED status
-   */
-  return async (gameState: GameAggregate, winningTeamId: number) => {
-    return await updateGameStatus(gameState._id, GAME_STATE.COMPLETED);
-  };
-};
-
 export type MakeGuessAction = ReturnType<typeof createMakeGuessAction>;
-export type EndTurnAction = ReturnType<typeof createEndTurnAction>;
-export type StartTurnAction = ReturnType<typeof createStartTurnAction>;
-export type EndRoundAction = ReturnType<typeof createEndRoundAction>;

@@ -10,6 +10,7 @@ import * as gameEventsRepository from "@backend/shared/data-access/repositories/
 import * as giveClueActions from "./turns/clue/give-clue.actions";
 import * as makeGuessActions from "./turns/guess/make-guess.actions";
 import * as makeGuessRules from "./turns/guess/make-guess.rules";
+import * as turnActions from "./turns/shared/turn-actions";
 import { validate as validateGiveClue, validateClueWord } from "./turns/clue/give-clue.rules";
 
 import { createGameAggregateLoader } from "@backend/game/state";
@@ -57,23 +58,23 @@ export const gameplayOperations = (
     validateMakeGuess: makeGuessRules.validateMakeGuess,
   });
 
-  const endTurnAction = makeGuessActions.createEndTurnAction({
+  const endTurnAction = turnActions.createEndTurnAction({
     updateTurnStatus: turnRepository.updateTurnStatus(trx),
     validateEndTurn: makeGuessRules.validateEndTurn,
   });
 
-  const startTurnAction = makeGuessActions.createStartTurnAction({
+  const startTurnAction = turnActions.createStartTurnAction({
     createTurn: turnRepository.createTurn(trx),
     validateStartTurn: makeGuessRules.validateStartTurn,
   });
 
-  const endRoundAction = makeGuessActions.createEndRoundAction({
+  const endRoundAction = turnActions.createEndRoundAction({
     updateRoundStatus: roundsRepository.updateRoundStatus(trx),
     updateRoundWinner: roundsRepository.updateRoundWinner(trx),
     validateEndRound: makeGuessRules.validateEndRound,
   });
 
-  const endGameAction = makeGuessActions.createEndGameAction(
+  const endGameAction = turnActions.createEndGameAction(
     gameRepository.updateGameStatus(trx),
   );
 

@@ -1,4 +1,8 @@
-import { winningConditions } from "@backend/game/gameplay/turns/guess/make-guess.rules";
+import {
+  checkRoundWinner,
+  checkGameWinner,
+  getTeamScores,
+} from "@backend/game/gameplay/turns/shared/winning-conditions";
 import { buildCard } from "../../__test-utils__/fixtures";
 
 describe("winningConditions", () => {
@@ -12,7 +16,7 @@ describe("winningConditions", () => {
         buildCard({ _teamId: null, cardType: "BYSTANDER", selected: false }),
       ];
 
-      const winner = winningConditions.checkRoundWinner(cards, 1, 2);
+      const winner = checkRoundWinner(cards, 1, 2);
       expect(winner).toBe(1);
     });
 
@@ -24,7 +28,7 @@ describe("winningConditions", () => {
         buildCard({ _teamId: null, cardType: "BYSTANDER", selected: false }),
       ];
 
-      const winner = winningConditions.checkRoundWinner(cards, 1, 2);
+      const winner = checkRoundWinner(cards, 1, 2);
       expect(winner).toBe(2);
     });
 
@@ -35,7 +39,7 @@ describe("winningConditions", () => {
         buildCard({ _teamId: 2, teamName: "Blue", selected: false }),
       ];
 
-      const winner = winningConditions.checkRoundWinner(cards, 1, 2);
+      const winner = checkRoundWinner(cards, 1, 2);
       expect(winner).toBeNull();
     });
   });
@@ -46,7 +50,7 @@ describe("winningConditions", () => {
         { _id: 1, number: 1, status: "COMPLETED" as const, _winningTeamId: 1, winningTeamName: "Red", createdAt: new Date() },
       ];
 
-      const winner = winningConditions.checkGameWinner(rounds, "QUICK");
+      const winner = checkGameWinner(rounds, "QUICK");
       expect(winner).toBe(1);
     });
 
@@ -57,7 +61,7 @@ describe("winningConditions", () => {
         { _id: 3, number: 3, status: "COMPLETED" as const, _winningTeamId: 1, winningTeamName: "Red", createdAt: new Date() },
       ];
 
-      const winner = winningConditions.checkGameWinner(rounds, "BEST_OF_THREE");
+      const winner = checkGameWinner(rounds, "BEST_OF_THREE");
       expect(winner).toBe(1);
     });
 
@@ -67,7 +71,7 @@ describe("winningConditions", () => {
         { _id: 2, number: 2, status: "COMPLETED" as const, _winningTeamId: 2, winningTeamName: "Blue", createdAt: new Date() },
       ];
 
-      const winner = winningConditions.checkGameWinner(rounds, "BEST_OF_THREE");
+      const winner = checkGameWinner(rounds, "BEST_OF_THREE");
       expect(winner).toBeNull();
     });
   });
@@ -80,7 +84,7 @@ describe("winningConditions", () => {
         { _id: 3, number: 3, status: "COMPLETED" as const, _winningTeamId: 1, winningTeamName: "Red", createdAt: new Date() },
       ];
 
-      const scores = winningConditions.getTeamScores(rounds);
+      const scores = getTeamScores(rounds);
       expect(scores[1]).toBe(2);
       expect(scores[2]).toBe(1);
     });
