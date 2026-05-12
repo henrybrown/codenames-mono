@@ -1,20 +1,26 @@
 /**
  * Start Turn Service
- * Creates a new turn for the next team after previous turn has ended
+ * Creates a new turn for the next team after previous turn has ended.
+ *
+ * `playerContext` is optional: in single-device games no turn is active,
+ * so the controller can't always resolve a player by role. When omitted,
+ * the service falls back to the first member of the first team. The
+ * actor isn't used for game-rule decisions here — the gameplay handler
+ * only needs an attribution target.
  */
 
 import type { GameplayHandler } from "../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
 import type { GameAggregate } from "@backend/game/state/types";
 import type { GamePlayer } from "@backend/game/access";
-import { PLAYER_ROLE } from "@codenames/shared/types";
+import { PLAYER_ROLE, type PlayerRole } from "@codenames/shared/types";
 import { GameplayValidationError } from "../errors/gameplay.errors";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import { getOtherTeamId } from "@backend/game/state/helpers";
 
 export type StartTurnInput = {
   gameState: GameAggregate;
-  playerContext: GamePlayer;
+  playerContext?: GamePlayer;
 };
 
 export type StartTurnResult =
@@ -27,13 +33,38 @@ export type StartTurnDependencies = {
   gameplayHandler: GameplayHandler;
 };
 
+/**
+ * Fallback actor for single-device games when the caller doesn't supply
+ * a playerContext. Returns null if the game has no players (shouldn't
+ * happen in practice — services only run after start-game succeeds).
+ */
+const firstTeamFirstPlayer = (gameState: GameAggregate): GamePlayer | null => {
+  const first = gameState.teams[0]?.players?.[0];
+  if (!first) return null;
+  return {
+    _id: first._id,
+    publicId: first.publicId,
+    _userId: first._userId,
+    _teamId: first._teamId,
+    publicName: first.publicName,
+    teamName: first.teamName,
+    role: first.role as PlayerRole,
+  };
+};
+
 export const createStartTurnService =
   (logger: AppLogger) =>
   (deps: StartTurnDependencies): StartTurnService =>
   async (input) => {
-    const { gameState, playerContext } = input;
+    const { gameState } = input;
     const log = logger.for({}).withMeta({ gameId: gameState.public_id }).create();
     log.info(`startTurn called`);
+
+    const playerContext = input.playerContext ?? firstTeamFirstPlayer(gameState);
+    if (!playerContext) {
+      log.warn("startTurn failed: no player available to attribute action");
+      return { success: false, message: "No player available to start the turn" };
+    }
 
     const currentRound = gameState.currentRound;
     if (!currentRound) {

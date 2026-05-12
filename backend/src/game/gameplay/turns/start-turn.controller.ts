@@ -2,9 +2,16 @@
  * Start Turn Controller
  * API endpoint to manually start the next turn.
  *
- * Called between turns (no active turn exists yet). Resolves the
- * acting player context the same way the other turn controllers do
- * so the gameplay handler has an ActingPlayer to thread through.
+ * Called between turns (no active turn exists yet). Multi-device games
+ * always have an authenticated user → resolved to a player record.
+ * Single-device games may pass `playerId` in the body, or the body may
+ * be empty; in the empty case the service falls back to the first
+ * team's first player (start-turn doesn't read the actor for game-rule
+ * decisions, so any member is fine for attribution).
+ *
+ * Doesn't use `withTurnContext` because that helper requires a resolved
+ * player; here the single-device fallback legally returns no player and
+ * we let the service handle it.
  */
 
 import type { Response, NextFunction } from "express";
@@ -13,12 +20,21 @@ import type { StartTurnService } from "./start-turn.service";
 import type { AppLogger } from "@backend/shared/logging";
 import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import {
-  findPlayerByUserId,
-  findPlayerByPublicId,
+  resolveActingPlayerByPublicId,
+  resolveActingPlayerForUser,
   type GamePlayer,
 } from "@backend/game/access";
-import { GAME_TYPE, type PlayerRole } from "@codenames/shared/types";
+import { GAME_TYPE } from "@codenames/shared/types";
 import { z } from "zod";
+import {
+  endpointLogger,
+  sendError,
+  sendSuccess,
+} from "@backend/shared/http-middleware/controller-helpers";
+import {
+  startTurnSingleDeviceBody,
+  startTurnMultiDeviceBody,
+} from "./start-turn.validation";
 
 const paramsSchema = z.object({
   gameId: z.string().min(1),
@@ -29,21 +45,6 @@ const authSchema = z.object({
   userId: z.number().int().positive(),
 });
 
-/**
- * Single-device: no active turn means we can't resolve a player by
- * role. The caller passes the public id of whichever player should
- * be marked as the actor (typically the codebreaker whose countdown
- * fired). Field is optional — single-device games without a body
- * just fall back to the first team's first player.
- */
-const singleDeviceBody = z.object({
-  playerId: z.string().min(1).optional(),
-});
-
-const multiDeviceBody = z.object({
-  playerId: z.string().min(1),
-});
-
 export type StartTurnControllerDeps = {
   startTurn: StartTurnService;
   loadGameAggregate: GameAggregateLoader;
@@ -51,14 +52,13 @@ export type StartTurnControllerDeps = {
 
 export const createStartTurnController =
   (logger: AppLogger) => (deps: StartTurnControllerDeps) => {
-    return async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
-      const log = logger.for({}).withMeta({ endpoint: "POST /turns" }).create();
-
+    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      const log = endpointLogger(logger, "POST /turns");
       try {
         const paramsResult = paramsSchema.safeParse(req.params);
         const authResult = authSchema.safeParse(req.auth);
         if (!paramsResult.success || !authResult.success) {
-          res.status(400).json({ success: false, error: "Invalid request parameters" });
+          sendError(res, 400, "Invalid request parameters");
           return;
         }
         const { gameId, roundNumber } = paramsResult.data;
@@ -66,72 +66,57 @@ export const createStartTurnController =
 
         const aggregate = await deps.loadGameAggregate(gameId);
         if (!aggregate) {
-          res.status(404).json({ success: false, error: "Game not found" });
+          sendError(res, 404, "Game not found");
           return;
         }
 
         if (aggregate.currentRound && aggregate.currentRound.number !== roundNumber) {
-          res.status(409).json({ success: false, error: "Round number mismatch" });
+          sendError(res, 409, "Round number mismatch");
           return;
         }
 
-        let playerContext: GamePlayer | null;
+        let playerContext: GamePlayer | undefined;
         if (aggregate.game_type === GAME_TYPE.SINGLE_DEVICE) {
-          const bodyResult = singleDeviceBody.safeParse(req.body ?? {});
+          const bodyResult = startTurnSingleDeviceBody.safeParse(req.body ?? {});
           if (!bodyResult.success) {
-            res.status(400).json({ success: false, error: "Invalid request body" });
+            sendError(res, 400, "Invalid request body");
             return;
           }
           if (bodyResult.data.playerId) {
-            playerContext = findPlayerByPublicId(aggregate, bodyResult.data.playerId);
-          } else {
-            /** Fallback: any player on the first team. Start-turn doesn't read
-             *  the actor for game-rule decisions (it just needs an ActingPlayer
-             *  to satisfy the handler signature), so picking the first member
-             *  of the first team is safe in single-device. */
-            const firstTeam = aggregate.teams[0];
-            playerContext = firstTeam?.players?.[0]
-              ? {
-                  _id: firstTeam.players[0]._id,
-                  publicId: firstTeam.players[0].publicId,
-                  _userId: firstTeam.players[0]._userId,
-                  _teamId: firstTeam.players[0]._teamId,
-                  publicName: firstTeam.players[0].publicName,
-                  teamName: firstTeam.players[0].teamName,
-                  role: firstTeam.players[0].role as PlayerRole,
-                }
-              : null;
+            const found = resolveActingPlayerByPublicId(aggregate, bodyResult.data.playerId);
+            if (!found) {
+              sendError(res, 404, "No player available to start the turn");
+              return;
+            }
+            playerContext = found;
           }
-          if (!playerContext) {
-            res.status(404).json({ success: false, error: "No player available to start the turn" });
-            return;
-          }
+          // No body / no playerId: service falls back to first team's first player.
         } else {
-          const bodyResult = multiDeviceBody.safeParse(req.body);
+          const bodyResult = startTurnMultiDeviceBody.safeParse(req.body);
           if (!bodyResult.success) {
-            res.status(400).json({ success: false, error: "playerId is required" });
+            sendError(res, 400, "playerId is required");
             return;
           }
-          playerContext = findPlayerByUserId(aggregate, userId);
-          if (!playerContext) {
-            res.status(403).json({ success: false, error: "Not a player in this game" });
+          const found = resolveActingPlayerForUser(aggregate, userId);
+          if (!found) {
+            sendError(res, 403, "Not a player in this game");
             return;
           }
+          playerContext = found;
         }
 
         const result = await deps.startTurn({ gameState: aggregate, playerContext });
 
         if (!result.success) {
           log.warn(`Response: ${result.message}`);
-          res.status(400).json({ success: false, error: result.message });
+          sendError(res, 400, result.message);
           return;
         }
 
         log.info("Response: 201 Created");
-        res.status(201).json(result);
+        sendSuccess(res, 201, result.data);
       } catch (error) {
-        logger.error("Error in startTurn controller", { error: error instanceof Error ? error.message : String(error) });
-        res.status(500).json({ success: false, error: "Internal server error" });
+        next(error);
       }
     };
   };
