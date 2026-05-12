@@ -43,7 +43,9 @@ export type { GameMessage } from "./game-message";
  * errors exactly at the chat boundary.
  */
 export type GameplayFeature = {
-  loadGameAggregate: GameAggregateLoader;
+  state: {
+    loadGameAggregate: GameAggregateLoader;
+  };
 };
 
 export type ChatModuleDependencies = {
@@ -76,12 +78,12 @@ export const initialize = (deps: ChatModuleDependencies) => {
 
   /** Sub-features */
   const getMessagesFeature = createGetMessages(logger)({
-    loadGameAggregate: gameplay.loadGameAggregate,
+    loadGameAggregate: gameplay.state.loadGameAggregate,
     findMessagesByGame: repositories.findMessagesByGame,
   });
 
   const submitMessageFeature = createSubmitMessage(logger)({
-    loadGameAggregate: gameplay.loadGameAggregate,
+    loadGameAggregate: gameplay.state.loadGameAggregate,
     createGameMessage: repositories.createGameMessage,
   });
 
@@ -97,8 +99,14 @@ export const initialize = (deps: ChatModuleDependencies) => {
   logger.info("Chat module initialized");
 
   return {
-    getMessages: getMessagesFeature,
-    submitMessage: submitMessageFeature,
+    controllers: {
+      ...getMessagesFeature.controllers,
+      ...submitMessageFeature.controllers,
+    },
+    services: {
+      ...getMessagesFeature.services,
+      ...submitMessageFeature.services,
+    },
   };
 };
 

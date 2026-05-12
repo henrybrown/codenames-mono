@@ -101,10 +101,14 @@ export const initialize = (
   app.use("/api", gameplayErrorHandler(logger));
 
   return {
-    giveClueService: turns.services.giveClue,
-    makeGuessService: turns.services.makeGuess,
-    endTurnService: turns.services.endTurn,
-    startTurnService: turns.services.startTurn,
-    loadGameAggregate,
+    services: {
+      giveClue: turns.services.giveClue,
+      makeGuess: turns.services.makeGuess,
+      endTurn: turns.services.endTurn,
+      startTurn: turns.services.startTurn,
+    },
+    state: {
+      loadGameAggregate,
+    },
   };
 };

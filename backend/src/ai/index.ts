@@ -51,10 +51,14 @@ export type { AIPlayerService } from "./player";
  * exactly at the AI boundary.
  */
 export type GameplayFeature = {
-  giveClue: GiveClueService;
-  makeGuess: MakeGuessService;
-  endTurn: EndTurnService;
-  loadGameAggregate: GameAggregateLoader;
+  services: {
+    giveClue: GiveClueService;
+    makeGuess: MakeGuessService;
+    endTurn: EndTurnService;
+  };
+  state: {
+    loadGameAggregate: GameAggregateLoader;
+  };
 };
 
 export type AIModuleDependencies = {
@@ -102,10 +106,10 @@ export const initialize = (deps: AIModuleDependencies) => {
   const player = createPlayer(logger)({
     pipeline,
     // gameplay services
-    giveClue:          gameplay.giveClue,
-    makeGuess:         gameplay.makeGuess,
-    endTurn:           gameplay.endTurn,
-    loadGameAggregate: gameplay.loadGameAggregate,
+    giveClue:          gameplay.services.giveClue,
+    makeGuess:         gameplay.services.makeGuess,
+    endTurn:           gameplay.services.endTurn,
+    loadGameAggregate: gameplay.state.loadGameAggregate,
     // ai feature repositories
     createPipelineRun:       repositories.createPipelineRun,
     findRunningPipeline:     repositories.findRunningPipeline,
@@ -123,7 +127,7 @@ export const initialize = (deps: AIModuleDependencies) => {
   /** Move feature (HTTP) */
   const aiMoveFeature = aiMove(logger)({
     aiPlayerService: player,
-    loadGameAggregate: gameplay.loadGameAggregate,
+    loadGameAggregate: gameplay.state.loadGameAggregate,
     db,   // move/ still takes db internally — separate clean-up pass
     llm,  // move/get-status reads health off llm — separate clean-up pass
   });
@@ -144,7 +148,7 @@ export const initialize = (deps: AIModuleDependencies) => {
   logger.info("AI module initialized");
 
   return {
-    aiPlayerService: player,
-    llm,
+    services: { aiPlayer: player },
+    state: { llm },
   };
 };

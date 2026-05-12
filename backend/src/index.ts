@@ -125,12 +125,7 @@ const auth = initializeAuth(app, dbInstance, {
 
 // Initialize features
 const lobby = initializeLobby(app, dbInstance, authHandlers, appLogger);
-const {
-  giveClueService,
-  makeGuessService,
-  endTurnService,
-  loadGameAggregate,
-} = initializeGameplay(
+const gameplay = initializeGameplay(
   app,
   dbInstance,
   authHandlers,
@@ -159,10 +154,14 @@ const ai = initializeAI({
     },
   },
   gameplay: {
-    giveClue:  giveClueService,
-    makeGuess: makeGuessService,
-    endTurn:   endTurnService,
-    loadGameAggregate,
+    services: {
+      giveClue:  gameplay.services.giveClue,
+      makeGuess: gameplay.services.makeGuess,
+      endTurn:   gameplay.services.endTurn,
+    },
+    state: {
+      loadGameAggregate: gameplay.state.loadGameAggregate,
+    },
   },
 });
 
@@ -173,7 +172,7 @@ const chat = initializeChat({
   auth: authHandlers,
   httpLogger: httpLoggerHandler,
   appLogger,
-  gameplay: { loadGameAggregate },
+  gameplay: { state: { loadGameAggregate: gameplay.state.loadGameAggregate } },
 });
 
 app.get("/api/health", (req, res) => {
@@ -198,6 +197,6 @@ initializeWebSocketServer({
 httpServer.listen(PORT, () => {
   startupLogger.info(`${env.NODE_ENV} server running on port ${PORT}`);
   startupLogger.info(`WebSocket ready`);
-  startupLogger.info(`AI: ${ai.llm.model}`);
+  startupLogger.info(`AI: ${ai.state.llm.model}`);
   startupLogger.info(`Server running on port ${PORT}`);
 });
