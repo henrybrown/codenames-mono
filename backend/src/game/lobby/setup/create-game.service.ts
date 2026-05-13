@@ -25,24 +25,16 @@ export type ServiceDependencies = {
 /** Creates a game creation service */
 export const createGameService = (dependencies: ServiceDependencies) => {
   /**
-   * Generates a unique public ID for the game
+   * Generates a public ID for the game.
+   *
+   * shortid produces collision-resistant IDs (default alphabet × 7
+   * chars ≈ 64^7 keyspace). If a collision against an existing DB
+   * row does occur, the transactional check below (`getGame(publicId)`)
+   * surfaces it as UnexpectedSetupError → 500 and the client retries.
+   * No app-level retry loop here — the previous one was dead code
+   * (`for { return publicId; }` returned on the first iteration).
    */
-  const generateUniquePublicId = async (): Promise<string> => {
-    const MAX_COLLISIONS = 10;
-
-    for (
-      let collisionCount = 0;
-      collisionCount < MAX_COLLISIONS;
-      collisionCount++
-    ) {
-      const publicId = shortid.generate();
-      return publicId;
-    }
-
-    throw new UnexpectedSetupError(
-      `Failed to generate unique game ID after ${MAX_COLLISIONS} attempts`,
-    );
-  };
+  const generateUniquePublicId = (): string => shortid.generate();
 
   /**
    * Creates a new game with specified configuration
@@ -57,7 +49,7 @@ export const createGameService = (dependencies: ServiceDependencies) => {
     userId: number,
     aiMode: boolean = false,
   ): Promise<GameCreationResult> => {
-    const publicId = await generateUniquePublicId();
+    const publicId = generateUniquePublicId();
 
     return await dependencies.setupHandler(async (setupOps) => {
       // Check for collisions within the transaction

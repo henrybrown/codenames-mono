@@ -6,6 +6,7 @@ import { TransactionalHandler } from "@backend/shared/data-access/transaction-ha
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import { createAIBotsForTeams } from "./start-game-ai-helper";
 import type { UserCreator } from "@backend/shared/data-access/repositories/users.repository";
+import { UnexpectedLobbyError } from "../errors/lobby.errors";
 
 export type GameStartSuccess = {
   _id: number;
@@ -82,7 +83,7 @@ export const startGameService = (dependencies: ServiceDependencies) => {
       const updatedGame = await lobbyOps.updateGameStatus(lobby._id, GAME_STATE.IN_PROGRESS);
 
       if (updatedGame.status !== GAME_STATE.IN_PROGRESS) {
-        throw new Error(
+        throw new UnexpectedLobbyError(
           `Failed to start game. Expected status '${GAME_STATE.IN_PROGRESS}', got '${updatedGame.status}'`,
         );
       }

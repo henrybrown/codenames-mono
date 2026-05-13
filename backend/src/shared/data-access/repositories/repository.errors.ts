@@ -7,7 +7,7 @@
  */
 export class UnexpectedRepositoryError extends Error {
   /**
-   * Creates a new UnexpectedAuthError
+   * Creates a new UnexpectedRepositoryError
    *
    * @param message - Error message describing what went wrong
    * @param options - Standard Error options (cause, etc.)
@@ -28,7 +28,7 @@ export class UnexpectedRepositoryError extends Error {
  */
 export class RepositoryBulkUpdateError extends UnexpectedRepositoryError {
   /**
-   * Creates a new UnexpectedAuthError
+   * Creates a new RepositoryBulkUpdateError
    *
    * @param message - Error message describing what went wrong
    * @param options - Standard Error options (cause, etc.)

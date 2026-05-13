@@ -7,7 +7,7 @@
  */
 export class UnexpectedLobbyError extends Error {
   /**
-   * Creates a new UnexpectedAuthError
+   * Creates a new UnexpectedLobbyError
    *
    * @param message - Error message describing what went wrong
    * @param options - Standard Error options (cause, etc.)

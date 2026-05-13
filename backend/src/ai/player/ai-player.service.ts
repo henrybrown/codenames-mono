@@ -27,6 +27,7 @@ import { MESSAGE_TYPE } from "@backend/shared/data-access/repositories/game-mess
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import type { GameFinder } from "@backend/shared/data-access/repositories/games.repository";
 import type { AppLogger } from "@backend/shared/logging";
+import { UnexpectedGameplayError } from "@backend/game/gameplay/errors/gameplay.errors";
 
 export type AIPlayerDependencies = {
   pipeline: CodenamesPipeline;
@@ -301,19 +302,19 @@ export const createAIPlayerService =
         await emitNarration(context, "Analyzing the board and thinking of a clever clue...");
 
         const loaded = await loadGameStateForAI(context.gameId, context.playerId);
-        if (!loaded || !loaded.aggregate.currentRound) throw new Error("Failed to get game state");
+        if (!loaded || !loaded.aggregate.currentRound) throw new UnexpectedGameplayError("Failed to get game state");
         const { aggregate, player } = loaded;
 
         const cards = aggregate.currentRound!.cards;
         const myTeam = player.teamName;
-        if (!myTeam) throw new Error("No team found");
+        if (!myTeam) throw new UnexpectedGameplayError("No team found");
 
         const friendlyWords = cards.filter((c: any) => c.teamName === myTeam && !c.selected).map((c: any) => c.word);
         const opponentWords = cards.filter((c: any) => c.teamName && c.teamName !== myTeam && !c.selected).map((c: any) => c.word);
         const assassinWord = cards.find((c: any) => c.cardType === "ASSASSIN" && !c.selected)?.word || "UNKNOWN";
         const neutralWords = cards.filter((c: any) => c.cardType === "BYSTANDER" && !c.selected).map((c: any) => c.word);
 
-        if (friendlyWords.length === 0) throw new Error("No cards left");
+        if (friendlyWords.length === 0) throw new UnexpectedGameplayError("No cards left");
 
         const previousClues = aggregate.currentRound!.turns
           .filter((t: any) => t.clue && t.clue.word)
@@ -346,7 +347,7 @@ export const createAIPlayerService =
           await emitNarration(context, `Giving clue: "${pipelineResult.clue}" for ${pipelineResult.number} card(s). ${pipelineResult.explanation}`);
         }
 
-        if (!clueResult.success) throw new Error(`Failed to give clue: ${clueResult.message}`);
+        if (!clueResult.success) throw new UnexpectedGameplayError(`Failed to give clue: ${clueResult.message}`);
 
         await updatePipelineStatus(run.id, PIPELINE_STATUS.COMPLETE);
         GameEventsEmitter.aiPipelineComplete(context.gameId, run.id);
@@ -411,14 +412,14 @@ export const createAIPlayerService =
 
       try {
         const loadedTop = await loadGameStateForAI(context.gameId, context.playerId);
-        if (!loadedTop || !loadedTop.aggregate.currentRound) throw new Error("Failed to get game state");
+        if (!loadedTop || !loadedTop.aggregate.currentRound) throw new UnexpectedGameplayError("Failed to get game state");
         const aggregateTop = loadedTop.aggregate;
 
         const currentTurn = aggregateTop.currentRound!.turns.at(-1);
-        if (!currentTurn || !currentTurn.clue) throw new Error("No clue found");
+        if (!currentTurn || !currentTurn.clue) throw new UnexpectedGameplayError("No clue found");
 
         const remainingWords = aggregateTop.currentRound!.cards.filter((c: any) => !c.selected).map((c: any) => c.word);
-        if (remainingWords.length === 0) throw new Error("No cards available");
+        if (remainingWords.length === 0) throw new UnexpectedGameplayError("No cards available");
 
         const myTeam = currentTurn.teamName;
         const clueNumber = currentTurn.clue.number;
@@ -440,13 +441,13 @@ export const createAIPlayerService =
           await emitNarration(context, "I couldn't score any words. Passing.");
 
           const loadedEnd = await loadGameStateForAI(context.gameId, context.playerId);
-          if (!loadedEnd) throw new Error("Failed to load state for end turn");
+          if (!loadedEnd) throw new UnexpectedGameplayError("Failed to load state for end turn");
 
           const endTurnResult = await endTurn({
             gameState: loadedEnd.aggregate,
             playerContext: loadedEnd.player,
           });
-          if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.message}`);
+          if (!endTurnResult.success) throw new UnexpectedGameplayError(`Failed to end turn: ${endTurnResult.message}`);
 
           await updatePipelineStatus(run.id, PIPELINE_STATUS.COMPLETE);
           GameEventsEmitter.aiPipelineComplete(context.gameId, run.id);
@@ -513,7 +514,7 @@ export const createAIPlayerService =
 
           // Re-load state for each guess (state changes after each guess)
           const loadedGuess = await loadGameStateForAI(context.gameId, context.playerId);
-          if (!loadedGuess) throw new Error("Failed to load state for guess");
+          if (!loadedGuess) throw new UnexpectedGameplayError("Failed to load state for guess");
 
           const result = await makeGuess({
             gameState: loadedGuess.aggregate,
@@ -521,7 +522,7 @@ export const createAIPlayerService =
             cardWord: candidate.word,
           });
 
-          if (!result.success) throw new Error(`Failed to make guess: ${result.message}`);
+          if (!result.success) throw new UnexpectedGameplayError(`Failed to make guess: ${result.message}`);
 
           const outcome = result.data.guess.outcome;
 
@@ -544,23 +545,23 @@ export const createAIPlayerService =
         // End-of-turn handling
         if (stopReason === "completed") {
           const loadedEnd = await loadGameStateForAI(context.gameId, context.playerId);
-          if (!loadedEnd) throw new Error("Failed to load state for end turn");
+          if (!loadedEnd) throw new UnexpectedGameplayError("Failed to load state for end turn");
 
           const endTurnResult = await endTurn({
             gameState: loadedEnd.aggregate,
             playerContext: loadedEnd.player,
           });
-          if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.message}`);
+          if (!endTurnResult.success) throw new UnexpectedGameplayError(`Failed to end turn: ${endTurnResult.message}`);
           await emitNarration(context, `Perfect! Found all ${correctGuesses} cards. Ending my turn.`);
         } else if (stopReason === "low-confidence") {
           const loadedEnd = await loadGameStateForAI(context.gameId, context.playerId);
-          if (!loadedEnd) throw new Error("Failed to load state for end turn");
+          if (!loadedEnd) throw new UnexpectedGameplayError("Failed to load state for end turn");
 
           const endTurnResult = await endTurn({
             gameState: loadedEnd.aggregate,
             playerContext: loadedEnd.player,
           });
-          if (!endTurnResult.success) throw new Error(`Failed to end turn: ${endTurnResult.message}`);
+          if (!endTurnResult.success) throw new UnexpectedGameplayError(`Failed to end turn: ${endTurnResult.message}`);
           await emitNarration(
             context,
             correctGuesses > 0
