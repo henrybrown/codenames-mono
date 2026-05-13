@@ -13,6 +13,6 @@
     "outDir": "./dist"
   },
   "include": ["src/**/*", "test/**/*"],
-  "exclude": ["node_modules", "dist", "test/mock-game-data.ts"],
+  "exclude": ["node_modules", "dist"],
   "references": [{ "path": "../shared" }]
 }
