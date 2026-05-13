@@ -268,8 +268,6 @@ export class GameEventsEmitter {
       teamId,
       timestamp: new Date().toISOString(),
     };
-    // TODO: Implement team-based filtering when emitting
-    // For now, emit to entire game room and let client filter
     emitToGame(gameId, WebSocketEvent.GAME_MESSAGE_CREATED, payload);
   }
 }
