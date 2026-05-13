@@ -9,5 +9,3 @@ export const GAME_EVENT_TYPE = {
   GIVE_CLUE: 'give_clue',
   MAKE_GUESS: 'make_guess',
 } as const;
-
-export type GameEventType = typeof GAME_EVENT_TYPE[keyof typeof GAME_EVENT_TYPE];
