@@ -1,75 +1,27 @@
-import { Request, Response, NextFunction } from "express";
-import { UnauthorizedError } from "express-jwt";
-import { UnexpectedAuthError } from "./auth.errors";
-import { NoResultError } from "kysely";
+import {
+  createFeatureErrorHandler,
+  type FeatureErrorApiResponse,
+} from "@backend/shared/http-middleware/feature-error-handler.middleware";
 import type { AppLogger } from "@backend/shared/logging";
+import { UnexpectedAuthError } from "./auth.errors";
+
+export type { FeatureErrorApiResponse as AuthErrorApiResponse };
 
 /**
- * Error response structure returned to clients
+ * Middleware that handles authentication-specific errors.
+ *
+ * Catches UnexpectedAuthError + NoResultError (DB lookup failures) →
+ * 500. UnauthorizedError (JWT) → 401. Anything else → next(err) so
+ * the top-level handler can deal with it.
+ *
+ * Response is enriched with stack/cause when in development mode.
+ *
+ * 4xx client errors are returned by controllers themselves; this is a
+ * safety net for genuinely unexpected errors only.
  */
-type AuthErrorApiResponse = {
-  succces: boolean;
-  error: string;
-  details?: { stack?: string; cause?: any; req?: Request };
-};
-
-/**
- * Middleware that handles authentication-specific errors
- *
- * This middleware catches domain-specific errors from the auth feature
- * and returns 500 code. 4xx client errors are returned by controllers
- * if relavent.
- *
- * It handles:
- * - UnexpectedAuthError: Internal auth service errors
- * - NoResultError: Database lookup failures
- * - UnauthorizedError: jwt token error
- *
- * Response is sanitized with additional information when in developmenet mode.
- *
- * Other errors are passed to the next error handler in the chain.
- *
- * @param err - The error object
- * @param req - Express request object
- * @param res - Express response object
- * @param next - Express next function
- */
-export const authErrorHandler = (logger: AppLogger) => (
-  err: Error,
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): void => {
-  const errorResponse: AuthErrorApiResponse = {
-    succces: false,
-    error: "Unexpected error",
-  };
-
-  if (process.env.NODE_ENV === "development") {
-    const errorDetails = {
-      stack: err.stack,
-      error: err.message,
-      cause: err.cause,
-      reqBody: req.body,
-    };
-
-    errorResponse.details = errorDetails;
-  }
-
-  logger.error(`${req.method} ${req.path}: ${err.message}`, errorResponse);
-
-  if (err instanceof UnauthorizedError) {
-    res.status(401).json(errorResponse);
-    return;
-  }
-
-  if (
-    err instanceof UnexpectedAuthError ||
-    err instanceof NoResultError
-  ) {
-    res.status(500).json(errorResponse);
-    return;
-  }
-
-  next(err);
-};
+export const authErrorHandler = (logger: AppLogger) =>
+  createFeatureErrorHandler({
+    featureName: "auth",
+    errorClass: UnexpectedAuthError,
+    logger,
+  });
