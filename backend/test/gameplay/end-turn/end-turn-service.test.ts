@@ -20,8 +20,8 @@ describe("endTurnService", () => {
       async (_state: any, _player: any, fn: any) => {
         const gameState = buildGameAggregate();
         return fn({
-          endTurn: vi.fn<any>().mockResolvedValue(gameState),
-          startTurn: vi.fn<any>().mockResolvedValue({ newTurn: { publicId: "new-turn-uuid" }, state: gameState }),
+          endTurn: vi.fn<any>().mockResolvedValue({ ok: true, state: gameState }),
+          startTurn: vi.fn<any>().mockResolvedValue({ ok: true, newTurn: { publicId: "new-turn-uuid" }, state: gameState }),
         });
       },
     );

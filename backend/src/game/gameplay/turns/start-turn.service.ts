@@ -14,7 +14,6 @@ import type { AppLogger } from "@backend/shared/logging";
 import type { GameAggregate } from "@backend/game/state/types";
 import type { GamePlayer } from "@backend/game/access";
 import { PLAYER_ROLE, type PlayerRole } from "@codenames/shared/types";
-import { GameplayValidationError } from "../errors/gameplay.errors";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import { getOtherTeamId } from "@backend/game/state/helpers";
 
@@ -108,43 +107,42 @@ export const createStartTurnService =
       return { success: false, message: "Could not find next team" };
     }
 
-    try {
-      let newTurnPublicId = "";
-      await deps.gameplayHandler(gameState, playerContext, async (ops) => {
-        const { newTurn } = await ops.startTurn(currentRound._id, nextTeam._id);
-        newTurnPublicId = newTurn.publicId;
-      });
+    // ops.startTurn returns a Result; validation failures surface as
+    // { ok: false, message } instead of throwing. Genuine internal
+    // errors still throw and propagate to the global error middleware.
+    const result = await deps.gameplayHandler(
+      gameState,
+      playerContext,
+      async (ops) => ops.startTurn(currentRound._id, nextTeam._id),
+    );
 
-      const nextCodemaster = currentRound.players.find(
-        (p) => p._teamId === nextTeam._id && p.role === PLAYER_ROLE.CODEMASTER,
-      );
-
-      GameEventsEmitter.turnStarted(
-        gameState.public_id,
-        currentRound.number,
-        newTurnPublicId,
-        nextCodemaster?.publicId,
-      );
-
-      log.info(`startTurn success: new turn for team ${nextTeam.teamName}`);
-      return {
-        success: true,
-        data: {
-          turn: {
-            id: newTurnPublicId,
-            teamName: nextTeam.teamName,
-            status: "ACTIVE",
-          },
-        },
-      };
-    } catch (error) {
-      if (error instanceof GameplayValidationError) {
-        log.warn(`startTurn failed: ${error.message}`);
-        return { success: false, message: error.message };
-      }
-      log.error("startTurn failed", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return { success: false, message: "Failed to start turn" };
+    if (!result.ok) {
+      log.warn(`startTurn failed: ${result.message}`);
+      return { success: false, message: result.message };
     }
+
+    const newTurnPublicId = result.newTurn.publicId;
+
+    const nextCodemaster = currentRound.players.find(
+      (p) => p._teamId === nextTeam._id && p.role === PLAYER_ROLE.CODEMASTER,
+    );
+
+    GameEventsEmitter.turnStarted(
+      gameState.public_id,
+      currentRound.number,
+      newTurnPublicId,
+      nextCodemaster?.publicId,
+    );
+
+    log.info(`startTurn success: new turn for team ${nextTeam.teamName}`);
+    return {
+      success: true,
+      data: {
+        turn: {
+          id: newTurnPublicId,
+          teamName: nextTeam.teamName,
+          status: "ACTIVE",
+        },
+      },
+    };
   };

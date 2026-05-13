@@ -118,14 +118,29 @@ export const gameplayOperations = (
 
       const aftermath = await turnActions.applyGuessOutcome(
         {
+          // Inner adapters between Result-typed actions and the
+          // GuessOutcomeOps interface (which expects Promise<GameAggregate>).
+          // Validation never *should* fail at this point — we control
+          // the state shape — so a Result-false here is an invariant
+          // violation → UnexpectedGameplayError → 500.
           endTurn: async (turnId) => {
             const state = await reload();
-            await endTurnAction(state, turnId);
+            const result = await endTurnAction(state, turnId);
+            if (!result.ok) {
+              throw new UnexpectedGameplayError(
+                `endTurn failed unexpectedly during applyGuessOutcome: ${result.message}`,
+              );
+            }
             return await reload();
           },
           endRound: async (roundId, winningTeamId) => {
             const state = await reload();
-            await endRoundAction(state, roundId, winningTeamId);
+            const result = await endRoundAction(state, roundId, winningTeamId);
+            if (!result.ok) {
+              throw new UnexpectedGameplayError(
+                `endRound failed unexpectedly during applyGuessOutcome: ${result.message}`,
+              );
+            }
             return await reload();
           },
           endGame: async (winningTeamId) => {
@@ -152,25 +167,46 @@ export const gameplayOperations = (
       };
     },
 
-    /** Ends the current turn. Returns fresh state. */
+    /**
+     * Ends the current turn. Validation failures propagate as
+     * `{ ok: false, message }` so the caller (end-turn service) can
+     * return 400 with the message instead of 500.
+     */
     endTurn: async (turnId: number) => {
       const state = await reload();
-      await endTurnAction(state, turnId);
-      return await reload();
+      const result = await endTurnAction(state, turnId);
+      if (!result.ok) return result;
+      const freshState = await reload();
+      return { ok: true as const, state: freshState };
     },
 
-    /** Starts a new turn for a team. Returns fresh state + the new turn record. */
+    /**
+     * Starts a new turn for a team. Validation failures propagate as
+     * `{ ok: false, message }` so the caller (start-turn service) can
+     * return 400 with the message instead of 500.
+     */
     startTurn: async (roundId: number, teamId: number) => {
       const state = await reload();
-      const newTurn = await startTurnAction(state, roundId, teamId);
+      const result = await startTurnAction(state, roundId, teamId);
+      if (!result.ok) return result;
       const freshState = await reload();
-      return { newTurn, state: freshState };
+      return { ok: true as const, newTurn: result.data, state: freshState };
     },
 
-    /** Ends the current round with a winner. Returns fresh state. */
+    /**
+     * Ends the current round with a winner. Internal-only — only ever
+     * called from within `applyGuessOutcome` via the inner callbacks.
+     * Validation shouldn't fail here; if it does it's an invariant
+     * violation → UnexpectedGameplayError → 500.
+     */
     endRound: async (roundId: number, winningTeamId: number) => {
       const state = await reload();
-      await endRoundAction(state, roundId, winningTeamId);
+      const result = await endRoundAction(state, roundId, winningTeamId);
+      if (!result.ok) {
+        throw new UnexpectedGameplayError(
+          `endRound validation failed unexpectedly: ${result.message}`,
+        );
+      }
       return await reload();
     },
 

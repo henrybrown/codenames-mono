@@ -7,7 +7,6 @@ import type { GameplayHandler } from "../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
 import type { GameAggregate } from "@backend/game/state/types";
 import type { GamePlayer } from "@backend/game/access";
-import { GameplayValidationError } from "../errors/gameplay.errors";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import { getCurrentTurn } from "@backend/game/state/helpers";
 
@@ -50,37 +49,36 @@ export const createEndTurnService =
       return { success: false, message: "No active turn" };
     }
 
-    try {
-      await deps.gameplayHandler(gameState, playerContext, async (ops) => {
-        await ops.endTurn(currentTurn._id);
-      });
+    // ops.endTurn returns a Result; validation failures surface as
+    // { ok: false, message } instead of throwing. Genuine internal
+    // errors still throw and propagate to the global error middleware.
+    const result = await deps.gameplayHandler(
+      gameState,
+      playerContext,
+      async (ops) => ops.endTurn(currentTurn._id),
+    );
 
-      GameEventsEmitter.turnEnded(
-        gameState.public_id,
-        gameState.currentRound!.number,
-        currentTurn.publicId,
-      );
-
-      log.info(`endTurn success: turnId=${currentTurn.publicId}`);
-      return {
-        success: true,
-        data: {
-          turn: {
-            id: currentTurn.publicId,
-            teamName: currentTurn.teamName,
-            status: "COMPLETED",
-            completedAt: new Date(),
-          },
-        },
-      };
-    } catch (error) {
-      if (error instanceof GameplayValidationError) {
-        log.warn(`endTurn failed: ${error.message}`);
-        return { success: false, message: error.message };
-      }
-      log.error("endTurn failed", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return { success: false, message: "Failed to end turn" };
+    if (!result.ok) {
+      log.warn(`endTurn failed: ${result.message}`);
+      return { success: false, message: result.message };
     }
+
+    GameEventsEmitter.turnEnded(
+      gameState.public_id,
+      gameState.currentRound!.number,
+      currentTurn.publicId,
+    );
+
+    log.info(`endTurn success: turnId=${currentTurn.publicId}`);
+    return {
+      success: true,
+      data: {
+        turn: {
+          id: currentTurn.publicId,
+          teamName: currentTurn.teamName,
+          status: "COMPLETED",
+          completedAt: new Date(),
+        },
+      },
+    };
   };

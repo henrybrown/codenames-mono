@@ -1,29 +1,15 @@
 /**
- * Domain-specific error for gameplay operations
- * Used to differentiate gameplay errors from other feature errors for error handling middleware
- * and logging purposes.
+ * Domain-specific error for gameplay operations.
+ *
+ * Indicates genuine internal failures: invariant violations, missing
+ * data mid-transaction, unreachable code paths. Maps to 500 via the
+ * gameplay error middleware. Should never be thrown for client-
+ * correctable problems — services return Result types for those.
  */
 export class UnexpectedGameplayError extends Error {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
     this.name = "UnexpectedGameplayError";
     Object.setPrototypeOf(this, UnexpectedGameplayError.prototype);
-  }
-}
-
-/**
- * Thrown when an action's business rule validation fails
- * Indicates the game state doesn't allow this action
- */
-export class GameplayValidationError extends UnexpectedGameplayError {
-  constructor(
-    action: string,
-    validationErrors: { path: string; message: string }[],
-    options?: ErrorOptions,
-  ) {
-    const errorSummary = validationErrors.map((e) => e.message).join(", ");
-    super(`Cannot ${action}: ${errorSummary}`, options);
-    this.name = "GameplayValidationError";
-    Object.setPrototypeOf(this, GameplayValidationError.prototype);
   }
 }

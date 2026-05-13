@@ -28,7 +28,7 @@ describe("startTurnService", () => {
     const gameplayHandler = vi.fn<(...args: any[]) => any>().mockImplementation(
       async (_state: any, _player: any, fn: any) => {
         return fn({
-          startTurn: vi.fn<any>().mockResolvedValue({ newTurn: { publicId: "new-turn-uuid" }, state: buildGameAggregate() }),
+          startTurn: vi.fn<any>().mockResolvedValue({ ok: true, newTurn: { publicId: "new-turn-uuid" }, state: buildGameAggregate() }),
         });
       },
     );
