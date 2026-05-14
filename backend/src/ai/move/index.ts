@@ -19,14 +19,12 @@ export interface AiMoveDependencies {
 }
 
 export const aiMove = (logger: AppLogger) => (deps: AiMoveDependencies) => {
-  /** Trigger move */
   const triggerService = triggerMoveService(logger)({
     aiPlayerService: deps.aiPlayerService,
     loadGameAggregate: deps.loadGameAggregate,
   });
   const triggerController = triggerMoveController({ triggerMove: triggerService });
 
-  /** Get status */
   const statusService = getStatusService({
     findRunningPipeline: aiPipelineRunsRepository.findRunningByGameId(deps.db),
     loadGameAggregate: deps.loadGameAggregate,
