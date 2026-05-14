@@ -106,7 +106,7 @@
 - [x] `backend/src/game/access/index.ts` —
 - [x] `backend/src/game/access/require-game-player.middleware.ts` —
 - [x] `backend/src/game/access/require-game-role.middleware.ts` —
-- [ ] `backend/src/game/access/resolve-acting-player.ts` —
+- [x] `backend/src/game/access/resolve-acting-player.ts` —
 - [ ] `backend/src/game/access/types.ts` —
 
 ### backend/src/game/gameplay/
