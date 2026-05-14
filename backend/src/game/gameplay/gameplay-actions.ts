@@ -15,17 +15,19 @@ import { bindEndRoundAction } from "./rounds";
 import { bindEndGameAction } from "./games";
 
 /**
- * Creates the service-facing ops registry for a single gameplay
- * transaction.
+ * Creates the service-facing gameplay operation registry which all run 
+ * within the same db transaction to ensure atomicity.
  *
  * `state()` loads fresh game state within the current transaction. Each
  * op calls it internally before running its action, so every op sees
  * the latest committed state. Services that need post-op state call
  * `ops.state()` themselves — same method, no extra plumbing.
  *
- * Player is owned by the handler — services don't pass it through. The
- * acting player feeds into give-clue / make-guess; end-turn /
- * start-turn / end-round / end-game don't read it.
+ * Player is owned by the handler, as a gameplay service will only ever be running 
+ * operations as a single game player.
+ * 
+ * Current state is fetched from the db before each op - this ensures state is
+ * accurate but caching may need to be implemented in the future.
  */
 const buildOps = (
   trx: TransactionContext,

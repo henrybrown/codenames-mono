@@ -21,12 +21,12 @@ export interface MakeGuessDependencies {
 export const makeGuess = (logger: AppLogger) => (dependencies: MakeGuessDependencies) => {
   const service = makeGuessService(logger)({
     gameplayHandler: dependencies.gameplayHandler,
+    loadGameAggregate: dependencies.loadGameAggregate,
     loadTurn: dependencies.loadTurn,
   });
 
   const controller = makeGuessController(logger)({
     makeGuess: service,
-    loadGameAggregate: dependencies.loadGameAggregate,
   });
 
   return {

@@ -1,75 +1,82 @@
+/**
+ * Give Clue Controller — HTTP only.
+ *
+ * Decodes the request into a domain input, calls the service, encodes
+ * the result. No aggregate loading, no player resolution, no business
+ * checks. The service owns all of that.
+ */
+
+import type { Response, NextFunction } from "express";
+import type { Request } from "express-jwt";
+import { z } from "zod";
 import type { GiveClueService } from "./give-clue.service";
 import type { AppLogger } from "@backend/shared/logging";
-import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import {
-  resolveActingPlayerForRole,
-  resolveActingPlayerForUser,
-} from "@backend/game/access";
-import { GAME_TYPE } from "@codenames/shared/types";
-import {
-  withTurnContext,
-  type ResolvePlayer,
-} from "../shared/with-turn-context";
-import {
-  giveClueSingleDeviceBody,
-  giveClueMultiDeviceBody,
-} from "./give-clue.validation";
+  endpointLogger,
+  sendError,
+  sendSuccess,
+} from "@backend/shared/http-middleware/controller-helpers";
+import { pickStatus } from "@backend/shared/http/result-status";
+import { PLAYER_ROLE } from "@codenames/shared/types";
 
-export type Dependencies = {
+const requestSchema = z.object({
+  params: z.object({
+    gameId: z.string().min(1),
+    roundNumber: z.string().transform(Number).refine((n) => n > 0),
+  }),
+  body: z.object({
+    word: z.string().min(1).max(50),
+    targetCardCount: z.number().int().min(1).max(25),
+    // Single-device identifies actor by role; multi-device by playerId.
+    // Service decides which to use based on the loaded aggregate's game_type.
+    role: z.enum([PLAYER_ROLE.CODEMASTER, PLAYER_ROLE.CODEBREAKER]).optional(),
+    playerId: z.string().min(1).optional(),
+  }),
+  auth: z.object({
+    userId: z.number().int().positive(),
+  }),
+});
+
+export type GiveClueControllerDeps = {
   giveClue: GiveClueService;
-  loadGameAggregate: GameAggregateLoader;
 };
 
-type CluePayload = { word: string; targetCardCount: number };
+export const giveClueController =
+  (logger: AppLogger) =>
+  (deps: GiveClueControllerDeps) =>
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const log = endpointLogger(logger, "POST /clues");
+    try {
+      const parsed = requestSchema.safeParse({
+        params: req.params,
+        body: req.body,
+        auth: req.auth,
+      });
+      if (!parsed.success) {
+        sendError(res, 400, "Invalid request");
+        return;
+      }
 
-const resolveCluePlayer: ResolvePlayer<CluePayload> = (req, aggregate, userId) => {
-  if (aggregate.game_type === GAME_TYPE.SINGLE_DEVICE) {
-    const bodyResult = giveClueSingleDeviceBody.safeParse(req.body);
-    if (!bodyResult.success) {
-      return { ok: false, status: 400, error: "Invalid request body" };
-    }
-    const player = resolveActingPlayerForRole(aggregate, bodyResult.data.role);
-    if (!player) {
-      return { ok: false, status: 404, error: "No player for that role on the active turn" };
-    }
-    return {
-      ok: true,
-      player,
-      body: { word: bodyResult.data.word, targetCardCount: bodyResult.data.targetCardCount },
-    };
-  }
-
-  const bodyResult = giveClueMultiDeviceBody.safeParse(req.body);
-  if (!bodyResult.success) {
-    return { ok: false, status: 400, error: "Invalid request body" };
-  }
-  // Middleware already verified user is the codemaster; this just resolves the record.
-  const player = resolveActingPlayerForUser(aggregate, userId);
-  if (!player) {
-    // Defensive: middleware should have caught this.
-    return { ok: false, status: 403, error: "Not a player in this game" };
-  }
-  return {
-    ok: true,
-    player,
-    body: { word: bodyResult.data.word, targetCardCount: bodyResult.data.targetCardCount },
-  };
-};
-
-export const giveClueController = (logger: AppLogger) => (deps: Dependencies) =>
-  withTurnContext({ logger, loadGameAggregate: deps.loadGameAggregate })<CluePayload, unknown>(
-    "POST /clues",
-    resolveCluePlayer,
-    async (ctx, body) => {
+      const { params, body, auth } = parsed.data;
       const result = await deps.giveClue({
-        gameState: ctx.aggregate,
-        playerContext: ctx.playerContext,
+        gameId: params.gameId,
+        roundNumber: params.roundNumber,
+        userId: auth.userId,
         word: body.word,
         targetCardCount: body.targetCardCount,
+        role: body.role,
+        playerId: body.playerId,
       });
+
       if (!result.success) {
-        return { ok: false, status: 400, error: result.message };
+        log.warn(`Response: ${result.message}`);
+        sendError(res, pickStatus(result), result.message);
+        return;
       }
-      return { ok: true, data: result.data };
-    },
-  );
+
+      log.info("Response: 200");
+      sendSuccess(res, 200, result.data);
+    } catch (error) {
+      next(error);
+    }
+  };

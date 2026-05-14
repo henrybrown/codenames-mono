@@ -337,8 +337,10 @@ export const createAIPlayerService =
         await emitNarration(context, `I've got it! The clue is "${pipelineResult.clue}" for ${pipelineResult.number}`);
 
         const clueResult = await giveClue({
-          gameState: aggregate,
-          playerContext: player,
+          gameId: context.gameId,
+          roundNumber: context.roundNumber,
+          userId: context.userId,
+          role: context.role,
           word: pipelineResult.clue,
           targetCardCount: pipelineResult.number,
         });
@@ -444,8 +446,10 @@ export const createAIPlayerService =
           if (!loadedEnd) throw new UnexpectedGameplayError("Failed to load state for end turn");
 
           const endTurnResult = await endTurn({
-            gameState: loadedEnd.aggregate,
-            playerContext: loadedEnd.player,
+            gameId: context.gameId,
+            roundNumber: context.roundNumber,
+            userId: context.userId,
+            role: context.role,
           });
           if (!endTurnResult.success) throw new UnexpectedGameplayError(`Failed to end turn: ${endTurnResult.message}`);
 
@@ -517,8 +521,10 @@ export const createAIPlayerService =
           if (!loadedGuess) throw new UnexpectedGameplayError("Failed to load state for guess");
 
           const result = await makeGuess({
-            gameState: loadedGuess.aggregate,
-            playerContext: loadedGuess.player,
+            gameId: context.gameId,
+            roundNumber: context.roundNumber,
+            userId: context.userId,
+            role: context.role,
             cardWord: candidate.word,
           });
 
@@ -548,8 +554,10 @@ export const createAIPlayerService =
           if (!loadedEnd) throw new UnexpectedGameplayError("Failed to load state for end turn");
 
           const endTurnResult = await endTurn({
-            gameState: loadedEnd.aggregate,
-            playerContext: loadedEnd.player,
+            gameId: context.gameId,
+            roundNumber: context.roundNumber,
+            userId: context.userId,
+            role: context.role,
           });
           if (!endTurnResult.success) throw new UnexpectedGameplayError(`Failed to end turn: ${endTurnResult.message}`);
           await emitNarration(context, `Perfect! Found all ${correctGuesses} cards. Ending my turn.`);
@@ -558,8 +566,10 @@ export const createAIPlayerService =
           if (!loadedEnd) throw new UnexpectedGameplayError("Failed to load state for end turn");
 
           const endTurnResult = await endTurn({
-            gameState: loadedEnd.aggregate,
-            playerContext: loadedEnd.player,
+            gameId: context.gameId,
+            roundNumber: context.roundNumber,
+            userId: context.userId,
+            role: context.role,
           });
           if (!endTurnResult.success) throw new UnexpectedGameplayError(`Failed to end turn: ${endTurnResult.message}`);
           await emitNarration(

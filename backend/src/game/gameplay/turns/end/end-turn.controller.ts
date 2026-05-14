@@ -1,70 +1,74 @@
 /**
- * End Turn Controller
- * API endpoint for codebreakers to end their turn.
+ * End Turn Controller — HTTP only.
+ *
+ * Decodes the request, calls the service, encodes the response.
+ * The service owns aggregate loading, round-number checks, and
+ * player resolution.
  */
 
+import type { Response, NextFunction } from "express";
+import type { Request } from "express-jwt";
+import { z } from "zod";
 import type { EndTurnService } from "./end-turn.service";
 import type { AppLogger } from "@backend/shared/logging";
-import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import {
-  resolveActingPlayerForRole,
-  resolveActingPlayerForUser,
-} from "@backend/game/access";
-import { GAME_TYPE } from "@codenames/shared/types";
-import {
-  withTurnContext,
-  type ResolvePlayer,
-} from "../shared/with-turn-context";
-import {
-  endTurnSingleDeviceBody,
-  endTurnMultiDeviceBody,
-} from "./end-turn.validation";
+  endpointLogger,
+  sendError,
+  sendSuccess,
+} from "@backend/shared/http-middleware/controller-helpers";
+import { pickStatus } from "@backend/shared/http/result-status";
+import { PLAYER_ROLE } from "@codenames/shared/types";
+
+const requestSchema = z.object({
+  params: z.object({
+    gameId: z.string().min(1),
+    roundNumber: z.string().transform(Number).refine((n) => n > 0),
+  }),
+  body: z.object({
+    // Both optional; service picks the right one based on game_type.
+    role: z.enum([PLAYER_ROLE.CODEMASTER, PLAYER_ROLE.CODEBREAKER]).optional(),
+    playerId: z.string().min(1).optional(),
+  }),
+  auth: z.object({
+    userId: z.number().int().positive(),
+  }),
+});
 
 export type EndTurnControllerDeps = {
   endTurn: EndTurnService;
-  loadGameAggregate: GameAggregateLoader;
 };
 
-type EndTurnPayload = Record<string, never>;
-
-const resolveEndTurnPlayer: ResolvePlayer<EndTurnPayload> = (req, aggregate, userId) => {
-  if (aggregate.game_type === GAME_TYPE.SINGLE_DEVICE) {
-    const bodyResult = endTurnSingleDeviceBody.safeParse(req.body);
-    if (!bodyResult.success) {
-      return { ok: false, status: 400, error: "Invalid request body" };
-    }
-    const player = resolveActingPlayerForRole(aggregate, bodyResult.data.role);
-    if (!player) {
-      return { ok: false, status: 404, error: "No player for that role on the active turn" };
-    }
-    return { ok: true, player, body: {} };
-  }
-
-  const bodyResult = endTurnMultiDeviceBody.safeParse(req.body);
-  if (!bodyResult.success) {
-    return { ok: false, status: 400, error: "playerId is required" };
-  }
-  // Middleware already verified user is a member; this resolves the player record.
-  const player = resolveActingPlayerForUser(aggregate, userId);
-  if (!player) {
-    // Defensive: middleware should have caught this.
-    return { ok: false, status: 403, error: "Not a player in this game" };
-  }
-  return { ok: true, player, body: {} };
-};
-
-export const createEndTurnController = (logger: AppLogger) => (deps: EndTurnControllerDeps) =>
-  withTurnContext({ logger, loadGameAggregate: deps.loadGameAggregate })<EndTurnPayload, unknown>(
-    "POST /end-turn",
-    resolveEndTurnPlayer,
-    async (ctx) => {
+export const createEndTurnController =
+  (logger: AppLogger) =>
+  (deps: EndTurnControllerDeps) =>
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const log = endpointLogger(logger, "POST /end-turn");
+    try {
+      const parsed = requestSchema.safeParse({
+        params: req.params,
+        body: req.body ?? {},
+        auth: req.auth,
+      });
+      if (!parsed.success) {
+        sendError(res, 400, "Invalid request");
+        return;
+      }
+      const { params, body, auth } = parsed.data;
       const result = await deps.endTurn({
-        gameState: ctx.aggregate,
-        playerContext: ctx.playerContext,
+        gameId: params.gameId,
+        roundNumber: params.roundNumber,
+        userId: auth.userId,
+        role: body.role,
+        playerId: body.playerId,
       });
       if (!result.success) {
-        return { ok: false, status: 400, error: result.message };
+        log.warn(`Response: ${result.message}`);
+        sendError(res, pickStatus(result), result.message);
+        return;
       }
-      return { ok: true, data: result.data };
-    },
-  );
+      log.info("Response: 200");
+      sendSuccess(res, 200, result.data);
+    } catch (error) {
+      next(error);
+    }
+  };

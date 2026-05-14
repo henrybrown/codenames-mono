@@ -17,10 +17,10 @@ export interface EndTurnDependencies {
 export const endTurn = (logger: AppLogger) => (deps: EndTurnDependencies) => {
   const service = createEndTurnService(logger)({
     gameplayHandler: deps.gameplayHandler,
+    loadGameAggregate: deps.loadGameAggregate,
   });
   const controller = createEndTurnController(logger)({
     endTurn: service,
-    loadGameAggregate: deps.loadGameAggregate,
   });
   return {
     controllers: { endTurn: controller },

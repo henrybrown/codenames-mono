@@ -17,10 +17,10 @@ export interface StartTurnDependencies {
 export const startTurn = (logger: AppLogger) => (deps: StartTurnDependencies) => {
   const service = createStartTurnService(logger)({
     gameplayHandler: deps.gameplayHandler,
+    loadGameAggregate: deps.loadGameAggregate,
   });
   const controller = createStartTurnController(logger)({
     startTurn: service,
-    loadGameAggregate: deps.loadGameAggregate,
   });
   return {
     controllers: { startTurn: controller },

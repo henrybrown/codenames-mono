@@ -19,12 +19,12 @@ export interface GiveClueDependencies {
 export const giveClue = (logger: AppLogger) => (dependencies: GiveClueDependencies) => {
   const service = giveClueService(logger)({
     gameplayHandler: dependencies.gameplayHandler,
+    loadGameAggregate: dependencies.loadGameAggregate,
     loadTurn: dependencies.loadTurn,
   });
 
   const controller = giveClueController(logger)({
     giveClue: service,
-    loadGameAggregate: dependencies.loadGameAggregate,
   });
 
   return {

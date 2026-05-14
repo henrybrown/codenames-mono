@@ -1,18 +1,31 @@
 /**
  * End Turn Service
- * Allows codebreakers to manually end their turn
+ *
+ * Owns the full end-turn workflow: load the aggregate, validate the
+ * round number, resolve the acting player, end the current turn,
+ * emit the event.
  */
 
 import type { GameplayHandler } from "../../gameplay-actions";
+import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import type { AppLogger } from "@backend/shared/logging";
 import type { GameAggregate } from "@backend/game/state/types";
 import type { GamePlayer } from "@backend/game/access";
+import type { PlayerRole } from "@codenames/shared/types";
+import { GAME_TYPE } from "@codenames/shared/types";
+import {
+  resolveActingPlayerForRole,
+  resolveActingPlayerForUser,
+} from "@backend/game/access";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import { getCurrentTurn } from "@backend/game/state/helpers";
 
 export type EndTurnInput = {
-  gameState: GameAggregate;
-  playerContext: GamePlayer;
+  gameId: string;
+  roundNumber: number;
+  userId: number;
+  role?: PlayerRole;
+  playerId?: string;
 };
 
 export type EndTurnResult =
@@ -27,33 +40,68 @@ export type EndTurnResult =
         };
       };
     }
-  | { success: false; message: string };
+  | {
+      success: false;
+      message: string;
+      notFound?: boolean;
+      conflict?: boolean;
+    };
 
 export type EndTurnService = (input: EndTurnInput) => Promise<EndTurnResult>;
 
 export type EndTurnDependencies = {
   gameplayHandler: GameplayHandler;
+  loadGameAggregate: GameAggregateLoader;
+};
+
+const resolvePlayer = (
+  aggregate: GameAggregate,
+  input: EndTurnInput,
+): GamePlayer | null => {
+  if (aggregate.game_type === GAME_TYPE.SINGLE_DEVICE) {
+    if (!input.role) return null;
+    return resolveActingPlayerForRole(aggregate, input.role);
+  }
+  return resolveActingPlayerForUser(aggregate, input.userId);
 };
 
 export const createEndTurnService =
   (logger: AppLogger) =>
   (deps: EndTurnDependencies): EndTurnService =>
   async (input) => {
-    const { gameState, playerContext } = input;
-    const log = logger.for({}).withMeta({ gameId: gameState.public_id }).create();
+    const log = logger.for({}).withMeta({ gameId: input.gameId }).create();
     log.info(`endTurn called`);
 
-    const currentTurn = getCurrentTurn(gameState);
+    const aggregate = await deps.loadGameAggregate(input.gameId);
+    if (!aggregate) {
+      return { success: false, message: "Game not found", notFound: true };
+    }
+
+    if (!aggregate.currentRound) {
+      return { success: false, message: "No current round" };
+    }
+
+    if (aggregate.currentRound.number !== input.roundNumber) {
+      return { success: false, message: "Round is not current", conflict: true };
+    }
+
+    const playerContext = resolvePlayer(aggregate, input);
+    if (!playerContext) {
+      const message =
+        aggregate.game_type === GAME_TYPE.SINGLE_DEVICE
+          ? "No player for that role on the active turn"
+          : "Not a player in this game";
+      return { success: false, message, notFound: true };
+    }
+
+    const currentTurn = getCurrentTurn(aggregate);
     if (!currentTurn) {
       log.warn("endTurn failed: no active turn");
       return { success: false, message: "No active turn" };
     }
 
-    // ops.endTurn returns a Result; validation failures surface as
-    // { ok: false, message } instead of throwing. Genuine internal
-    // errors still throw and propagate to the global error middleware.
-    const result = await deps.gameplayHandler(
-      gameState,
+    const handlerResult = await deps.gameplayHandler(
+      aggregate,
       playerContext,
       async (ops) => {
         const r = await ops.endTurn(currentTurn._id);
@@ -62,14 +110,14 @@ export const createEndTurnService =
       },
     );
 
-    if (!result.ok) {
-      log.warn(`endTurn failed: ${result.message}`);
-      return { success: false, message: result.message };
+    if (!handlerResult.ok) {
+      log.warn(`endTurn failed: ${handlerResult.message}`);
+      return { success: false, message: handlerResult.message };
     }
 
     GameEventsEmitter.turnEnded(
-      gameState.public_id,
-      gameState.currentRound!.number,
+      aggregate.public_id,
+      aggregate.currentRound.number,
       currentTurn.publicId,
     );
 

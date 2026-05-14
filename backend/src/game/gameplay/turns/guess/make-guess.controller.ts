@@ -1,66 +1,71 @@
+/**
+ * Make Guess Controller — HTTP only.
+ */
+
+import type { Response, NextFunction } from "express";
+import type { Request } from "express-jwt";
+import { z } from "zod";
 import type { MakeGuessService } from "./make-guess.service";
 import type { AppLogger } from "@backend/shared/logging";
-import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import {
-  resolveActingPlayerForRole,
-  resolveActingPlayerForUser,
-} from "@backend/game/access";
-import { GAME_TYPE } from "@codenames/shared/types";
-import {
-  withTurnContext,
-  type ResolvePlayer,
-} from "../shared/with-turn-context";
-import {
-  makeGuessSingleDeviceBody,
-  makeGuessMultiDeviceBody,
-} from "./make-guess.validation";
+  endpointLogger,
+  sendError,
+  sendSuccess,
+} from "@backend/shared/http-middleware/controller-helpers";
+import { pickStatus } from "@backend/shared/http/result-status";
+import { PLAYER_ROLE } from "@codenames/shared/types";
 
-export type Dependencies = {
+const requestSchema = z.object({
+  params: z.object({
+    gameId: z.string().min(1),
+    roundNumber: z.string().transform(Number).refine((n) => n > 0),
+  }),
+  body: z.object({
+    cardWord: z.string().min(1).max(50),
+    role: z.enum([PLAYER_ROLE.CODEMASTER, PLAYER_ROLE.CODEBREAKER]).optional(),
+    playerId: z.string().min(1).optional(),
+  }),
+  auth: z.object({
+    userId: z.number().int().positive(),
+  }),
+});
+
+export type MakeGuessControllerDeps = {
   makeGuess: MakeGuessService;
-  loadGameAggregate: GameAggregateLoader;
 };
 
-type GuessPayload = { cardWord: string };
-
-const resolveGuessPlayer: ResolvePlayer<GuessPayload> = (req, aggregate, userId) => {
-  if (aggregate.game_type === GAME_TYPE.SINGLE_DEVICE) {
-    const bodyResult = makeGuessSingleDeviceBody.safeParse(req.body);
-    if (!bodyResult.success) {
-      return { ok: false, status: 400, error: "Invalid request body" };
-    }
-    const player = resolveActingPlayerForRole(aggregate, bodyResult.data.role);
-    if (!player) {
-      return { ok: false, status: 404, error: "No player for that role on the active turn" };
-    }
-    return { ok: true, player, body: { cardWord: bodyResult.data.cardWord } };
-  }
-
-  const bodyResult = makeGuessMultiDeviceBody.safeParse(req.body);
-  if (!bodyResult.success) {
-    return { ok: false, status: 400, error: "Invalid request body" };
-  }
-  // Middleware already verified user is a member; this resolves the player record.
-  const player = resolveActingPlayerForUser(aggregate, userId);
-  if (!player) {
-    // Defensive: middleware should have caught this.
-    return { ok: false, status: 403, error: "Not a player in this game" };
-  }
-  return { ok: true, player, body: { cardWord: bodyResult.data.cardWord } };
-};
-
-export const makeGuessController = (logger: AppLogger) => (deps: Dependencies) =>
-  withTurnContext({ logger, loadGameAggregate: deps.loadGameAggregate })<GuessPayload, unknown>(
-    "POST /guesses",
-    resolveGuessPlayer,
-    async (ctx, body) => {
+export const makeGuessController =
+  (logger: AppLogger) =>
+  (deps: MakeGuessControllerDeps) =>
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const log = endpointLogger(logger, "POST /guesses");
+    try {
+      const parsed = requestSchema.safeParse({
+        params: req.params,
+        body: req.body,
+        auth: req.auth,
+      });
+      if (!parsed.success) {
+        sendError(res, 400, "Invalid request");
+        return;
+      }
+      const { params, body, auth } = parsed.data;
       const result = await deps.makeGuess({
-        gameState: ctx.aggregate,
-        playerContext: ctx.playerContext,
+        gameId: params.gameId,
+        roundNumber: params.roundNumber,
+        userId: auth.userId,
         cardWord: body.cardWord,
+        role: body.role,
+        playerId: body.playerId,
       });
       if (!result.success) {
-        return { ok: false, status: 400, error: result.message };
+        log.warn(`Response: ${result.message}`);
+        sendError(res, pickStatus(result), result.message);
+        return;
       }
-      return { ok: true, data: result.data };
-    },
-  );
+      log.info("Response: 200");
+      sendSuccess(res, 200, result.data);
+    } catch (error) {
+      next(error);
+    }
+  };

@@ -1,9 +1,15 @@
+import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import type { TurnLoader } from "@backend/game/state/load-turn-aggregate";
 import type { GameplayHandler } from "../../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
 import type { GameAggregate } from "@backend/game/state/types";
 import type { GamePlayer } from "@backend/game/access";
-import type { TurnOutcome } from "@codenames/shared/types";
+import type { PlayerRole, TurnOutcome } from "@codenames/shared/types";
+import { GAME_TYPE } from "@codenames/shared/types";
+import {
+  resolveActingPlayerForRole,
+  resolveActingPlayerForUser,
+} from "@backend/game/access";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import { getCurrentTurn } from "@backend/game/state/helpers";
 import {
@@ -18,9 +24,12 @@ import { UnexpectedGameplayError } from "../../errors/gameplay.errors";
 /* -------------------------------------------------------------------------- */
 
 export type MakeGuessInput = {
-  gameState: GameAggregate;
-  playerContext: GamePlayer;
+  gameId: string;
+  roundNumber: number;
+  userId: number;
   cardWord: string;
+  role?: PlayerRole;
+  playerId?: string;
 };
 
 export type MakeGuessSuccess = {
@@ -34,11 +43,32 @@ export type MakeGuessSuccess = {
 
 export type MakeGuessResult =
   | { success: true; data: MakeGuessSuccess }
-  | { success: false; message: string };
+  | {
+      success: false;
+      message: string;
+      notFound?: boolean;
+      conflict?: boolean;
+    };
 
 export type MakeGuessDependencies = {
   gameplayHandler: GameplayHandler;
+  loadGameAggregate: GameAggregateLoader;
   loadTurn: TurnLoader;
+};
+
+/* -------------------------------------------------------------------------- */
+/* Player resolution                                                          */
+/* -------------------------------------------------------------------------- */
+
+const resolvePlayer = (
+  aggregate: GameAggregate,
+  input: MakeGuessInput,
+): GamePlayer | null => {
+  if (aggregate.game_type === GAME_TYPE.SINGLE_DEVICE) {
+    if (!input.role) return null;
+    return resolveActingPlayerForRole(aggregate, input.role);
+  }
+  return resolveActingPlayerForUser(aggregate, input.userId);
 };
 
 /* -------------------------------------------------------------------------- */
@@ -74,17 +104,34 @@ export const makeGuessService =
   (logger: AppLogger) =>
   (deps: MakeGuessDependencies) =>
   async (input: MakeGuessInput): Promise<MakeGuessResult> => {
-    const { gameState, playerContext, cardWord } = input;
-    const log = logger.for({}).withMeta({ gameId: gameState.public_id }).create();
+    const { cardWord } = input;
+    const log = logger.for({}).withMeta({ gameId: input.gameId }).create();
     log.info(`makeGuess called: cardWord=${cardWord}`);
 
-    if (!gameState.currentRound) {
-      log.warn("makeGuess failed: no current round");
+    const aggregate = await deps.loadGameAggregate(input.gameId);
+    if (!aggregate) {
+      return { success: false, message: "Game not found", notFound: true };
+    }
+
+    if (!aggregate.currentRound) {
       return { success: false, message: "No current round" };
     }
 
+    if (aggregate.currentRound.number !== input.roundNumber) {
+      return { success: false, message: "Round is not current", conflict: true };
+    }
+
+    const playerContext = resolvePlayer(aggregate, input);
+    if (!playerContext) {
+      const message =
+        aggregate.game_type === GAME_TYPE.SINGLE_DEVICE
+          ? "No player for that role on the active turn"
+          : "Not a player in this game";
+      return { success: false, message, notFound: true };
+    }
+
     const result = await deps.gameplayHandler(
-      gameState,
+      aggregate,
       playerContext,
       async (ops) => {
         const guessResult = await ops.makeGuess(cardWord);
@@ -162,7 +209,7 @@ export const makeGuessService =
 
     const responseTurnPublicId =
       getCurrentTurn(result.state)?.publicId
-      ?? gameState.currentRound.turns.find((t) => t._id === result.guess.turn._id)?.publicId
+      ?? aggregate.currentRound.turns.find((t) => t._id === result.guess.turn._id)?.publicId
       ?? "";
 
     const turnData = responseTurnPublicId
@@ -170,14 +217,14 @@ export const makeGuessService =
           deps.loadTurn,
           responseTurnPublicId,
           result.state.currentRound?.players
-            ?? gameState.currentRound.players
+            ?? aggregate.currentRound.players
             ?? [],
         )
       : null;
 
     GameEventsEmitter.guessMade(
-      gameState.public_id,
-      gameState.currentRound.number,
+      aggregate.public_id,
+      aggregate.currentRound.number,
       responseTurnPublicId,
       playerContext.publicId,
     );
@@ -185,8 +232,8 @@ export const makeGuessService =
     const turnEnded = result.strategy.strategy !== "continue";
     if (turnEnded && responseTurnPublicId) {
       GameEventsEmitter.turnEnded(
-        gameState.public_id,
-        gameState.currentRound.number,
+        aggregate.public_id,
+        aggregate.currentRound.number,
         responseTurnPublicId,
       );
     }
