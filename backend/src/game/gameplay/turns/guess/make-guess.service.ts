@@ -9,6 +9,8 @@ import {
   buildCompleteTurnData,
   type CompleteTurnData,
 } from "../shared/present-turn";
+import { determineOutcomeStrategy } from "./determine-outcome-strategy";
+import { UnexpectedGameplayError } from "../../errors/gameplay.errors";
 
 /* -------------------------------------------------------------------------- */
 /* Types                                                                      */
@@ -83,7 +85,80 @@ export const makeGuessService =
     const result = await deps.gameplayHandler(
       gameState,
       playerContext,
-      async (ops) => ops.makeGuess(cardWord),
+      async (ops) => {
+        const guessResult = await ops.makeGuess(cardWord);
+        if (!guessResult.ok) return guessResult;
+
+        const strategy = determineOutcomeStrategy({
+          outcome: guessResult.guess.outcome,
+          turnId: guessResult.guess.turn._id,
+          guessingTeamId: guessResult.guess.turn._teamId,
+          guessesRemaining: guessResult.guess.turn.guessesRemaining,
+          postGuessState: guessResult.state,
+        });
+
+        let finalState = guessResult.state;
+        switch (strategy.strategy) {
+          case "continue":
+            break;
+          case "end-turn": {
+            const r = await ops.endTurn(strategy.turnId);
+            if (!r.ok) {
+              throw new UnexpectedGameplayError(
+                `Failed to endTurn during cascade: ${r.message}`,
+              );
+            }
+            finalState = r.state;
+            break;
+          }
+          case "end-round": {
+            const t = await ops.endTurn(strategy.turnId);
+            if (!t.ok) {
+              throw new UnexpectedGameplayError(
+                `Failed to endTurn during cascade: ${t.message}`,
+              );
+            }
+            const r = await ops.endRound(
+              strategy.roundId,
+              strategy.roundWinningTeamId,
+            );
+            if (!r.ok) {
+              throw new UnexpectedGameplayError(
+                `Failed to endRound during cascade: ${r.message}`,
+              );
+            }
+            finalState = r.state;
+            break;
+          }
+          case "end-game": {
+            const t = await ops.endTurn(strategy.turnId);
+            if (!t.ok) {
+              throw new UnexpectedGameplayError(
+                `Failed to endTurn during cascade: ${t.message}`,
+              );
+            }
+            const r = await ops.endRound(
+              strategy.roundId,
+              strategy.roundWinningTeamId,
+            );
+            if (!r.ok) {
+              throw new UnexpectedGameplayError(
+                `Failed to endRound during cascade: ${r.message}`,
+              );
+            }
+            const g = await ops.endGame(strategy.gameWinningTeamId);
+            finalState = g.state;
+            break;
+          }
+        }
+
+        return {
+          ok: true as const,
+          guess: guessResult.guess,
+          strategy,
+          state: finalState,
+        };
+      },
     );
 
     if (!result.ok) {
@@ -113,7 +188,8 @@ export const makeGuessService =
       playerContext.publicId,
     );
 
-    if (result.aftermath.turnEnded && responseTurnPublicId) {
+    const turnEnded = result.strategy.strategy !== "continue";
+    if (turnEnded && responseTurnPublicId) {
       GameEventsEmitter.turnEnded(
         gameState.public_id,
         gameState.currentRound.number,
@@ -122,7 +198,7 @@ export const makeGuessService =
     }
 
     log.info(
-      `makeGuess success: cardWord=${cardWord}, outcome=${result.guess.outcome}, turnEnded=${result.aftermath.turnEnded}, roundEnded=${!!result.aftermath.roundEnded}, gameEnded=${!!result.aftermath.gameEnded}`,
+      `makeGuess success: cardWord=${cardWord}, outcome=${result.guess.outcome}, strategy=${result.strategy.strategy}`,
     );
     return {
       success: true,

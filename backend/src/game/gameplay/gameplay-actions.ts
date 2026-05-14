@@ -10,7 +10,6 @@ import * as gameEventsRepository from "@backend/shared/data-access/repositories/
 import * as giveClueActions from "./turns/clue/give-clue.action";
 import * as makeGuessActions from "./turns/guess/make-guess.action";
 import * as makeGuessRules from "./turns/guess/make-guess.rules";
-import { applyGuessOutcome } from "./turns/guess/apply-guess-outcome";
 import * as rounds from "./rounds";
 import * as games from "./games";
 import { createEndTurnAction, validateEndTurn } from "./turns/end";
@@ -102,12 +101,10 @@ export const gameplayOperations = (
     /**
      * Codebreaker makes a guess.
      *
-     * End-to-end orchestration: validates, records the guess, then runs
-     * applyGuessOutcome to drive any cascading turn-end / round-end /
-     * game-end inside the same transaction. Returns the guess data, the
-     * post-everything game state, and an `aftermath` describing what
-     * fired (used by the service to choose which websocket events to
-     * emit after the transaction commits).
+     * Records the guess only — the post-guess cascade (turn-end /
+     * round-end / game-end) is the service's responsibility. The
+     * service reads the post-guess state, computes an OutcomeStrategy,
+     * and applies it via the appropriate ops in sequence.
      *
      * Expected business failures propagate as { ok: false, message }.
      */
@@ -117,57 +114,11 @@ export const gameplayOperations = (
       if (!result.ok) {
         return result;
       }
-      const guessData = result.data;
-      const postGuessState = await reload();
-
-      const aftermath = await applyGuessOutcome(
-        {
-          // Inner adapters between Result-typed actions and the
-          // GuessOutcomeOps interface (which expects Promise<GameAggregate>).
-          // Validation never *should* fail at this point — we control
-          // the state shape — so a Result-false here is an invariant
-          // violation → UnexpectedGameplayError → 500.
-          endTurn: async (turnId) => {
-            const state = await reload();
-            const result = await endTurnAction(state, turnId);
-            if (!result.ok) {
-              throw new UnexpectedGameplayError(
-                `endTurn failed unexpectedly during applyGuessOutcome: ${result.message}`,
-              );
-            }
-            return await reload();
-          },
-          endRound: async (roundId, winningTeamId) => {
-            const state = await reload();
-            const result = await endRoundAction(state, roundId, winningTeamId);
-            if (!result.ok) {
-              throw new UnexpectedGameplayError(
-                `endRound failed unexpectedly during applyGuessOutcome: ${result.message}`,
-              );
-            }
-            return await reload();
-          },
-          endGame: async (winningTeamId) => {
-            const state = await reload();
-            await endGameAction(state, winningTeamId);
-            return await reload();
-          },
-        },
-        {
-          outcome: guessData.outcome,
-          turnId: guessData.turn._id,
-          guessingTeamId: guessData.turn._teamId,
-          guessesRemaining: guessData.turn.guessesRemaining,
-          postGuessState,
-        },
-      );
-
-      const finalState = await reload();
+      const freshState = await reload();
       return {
         ok: true as const,
-        guess: guessData,
-        aftermath,
-        state: finalState,
+        guess: result.data,
+        state: freshState,
       };
     },
 
@@ -198,27 +149,25 @@ export const gameplayOperations = (
     },
 
     /**
-     * Ends the current round with a winner. Internal-only — only ever
-     * called from within `applyGuessOutcome` via the inner callbacks.
-     * Validation shouldn't fail here; if it does it's an invariant
-     * violation → UnexpectedGameplayError → 500.
+     * Ends the current round with a winner. Validation failures
+     * propagate as `{ ok: false, message }` — the caller decides
+     * whether they represent an invariant violation (cascade) or an
+     * expected user-visible failure.
      */
     endRound: async (roundId: number, winningTeamId: number) => {
       const state = await reload();
       const result = await endRoundAction(state, roundId, winningTeamId);
-      if (!result.ok) {
-        throw new UnexpectedGameplayError(
-          `endRound validation failed unexpectedly: ${result.message}`,
-        );
-      }
-      return await reload();
+      if (!result.ok) return result;
+      const freshState = await reload();
+      return { ok: true as const, state: freshState };
     },
 
     /** Ends the game. Returns fresh state. */
     endGame: async (winningTeamId: number) => {
       const state = await reload();
       await endGameAction(state, winningTeamId);
-      return await reload();
+      const freshState = await reload();
+      return { ok: true as const, state: freshState };
     },
   };
 };
