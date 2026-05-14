@@ -77,13 +77,6 @@ const startTurnSchema = gameplayBaseSchema.extend({
   teams: z.array(teamSchema).min(2, "Must have at least 2 teams"),
 });
 
-const endRoundSchema = gameplayBaseSchema.extend({
-  status: z.literal(GAME_STATE.IN_PROGRESS),
-  currentRound: currentRoundSchema.extend({
-    status: z.literal(ROUND_STATE.IN_PROGRESS),
-  }),
-});
-
 /**
  * Branded types for each action
  */
@@ -94,7 +87,6 @@ export type EndTurnValidGameState = ValidatedGameState<typeof endTurnSchema>;
 export type StartTurnValidGameState = ValidatedGameState<
   typeof startTurnSchema
 >;
-export type EndRoundValidGameState = ValidatedGameState<typeof endRoundSchema>;
 
 /**
  * Helper function to validate turn state for guessing
@@ -156,11 +148,5 @@ export const validateStartTurn = (
   data: GameAggregate,
 ): GameplayValidationResult<StartTurnValidGameState> => {
   return validateWithZodSchema(startTurnSchema, data);
-};
-
-export const validateEndRound = (
-  data: GameAggregate,
-): GameplayValidationResult<EndRoundValidGameState> => {
-  return validateWithZodSchema(endRoundSchema, data);
 };
 

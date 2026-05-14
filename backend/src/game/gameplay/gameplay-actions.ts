@@ -11,6 +11,8 @@ import * as giveClueActions from "./turns/clue/give-clue.actions";
 import * as makeGuessActions from "./turns/guess/make-guess.actions";
 import * as makeGuessRules from "./turns/guess/make-guess.rules";
 import * as turnActions from "./turns/shared/turn-actions";
+import * as rounds from "./rounds";
+import * as games from "./games";
 import { validate as validateGiveClue, validateClueWord } from "./turns/clue/give-clue.rules";
 
 import { createGameAggregateLoader } from "@backend/game/state";
@@ -68,13 +70,13 @@ export const gameplayOperations = (
     validateStartTurn: makeGuessRules.validateStartTurn,
   });
 
-  const endRoundAction = turnActions.createEndRoundAction({
+  const endRoundAction = rounds.createEndRoundAction({
     updateRoundStatus: roundsRepository.updateRoundStatus(trx),
     updateRoundWinner: roundsRepository.updateRoundWinner(trx),
-    validateEndRound: makeGuessRules.validateEndRound,
+    validateEndRound: rounds.validateEndRound,
   });
 
-  const endGameAction = turnActions.createEndGameAction(
+  const endGameAction = games.createEndGameAction(
     gameRepository.updateGameStatus(trx),
   );
 

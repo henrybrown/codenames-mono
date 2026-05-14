@@ -2,7 +2,7 @@ import {
   checkRoundWinner,
   checkGameWinner,
   getTeamScores,
-} from "@backend/game/gameplay/turns/shared/winning-conditions";
+} from "@backend/game/gameplay/rounds/winning-conditions";
 import { buildCard } from "../../__test-utils__/fixtures";
 
 describe("winningConditions", () => {

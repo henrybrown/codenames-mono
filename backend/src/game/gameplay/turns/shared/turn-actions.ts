@@ -2,8 +2,8 @@
  * Turn-management action factories + post-guess orchestration.
  *
  * These actions are the building blocks the gameplay handler uses to
- * mutate turn/round/game state. Each factory takes its repo deps +
- * validator and returns a function that validates then executes.
+ * mutate turn state. Each factory takes its repo deps + validator and
+ * returns a function that validates then executes.
  *
  * Validation failures return `{ ok: false; message }` Results so
  * callers can decide how to surface them — most are user-correctable
@@ -14,30 +14,17 @@
  * turn ends, the round ends, the game ends — and runs the matching
  * ops. All within the caller's transaction.
  */
-import {
-  ROUND_STATE,
-  GAME_STATE,
-  CODEBREAKER_OUTCOME,
-} from "@codenames/shared/types";
+import { CODEBREAKER_OUTCOME } from "@codenames/shared/types";
 import type { GameAggregate } from "@backend/game/state/types";
 import type {
   validateEndTurn,
   validateStartTurn,
-  validateEndRound,
 } from "../guess/make-guess.rules";
 import type {
   TurnStatusUpdater,
   TurnCreator,
 } from "@backend/shared/data-access/repositories/turns.repository";
-import type {
-  RoundStatusUpdater,
-  RoundWinnerUpdater,
-} from "@backend/shared/data-access/repositories/rounds.repository";
-import type { GameStatusUpdater } from "@backend/shared/data-access/repositories/games.repository";
-import {
-  checkRoundWinner,
-  checkGameWinner,
-} from "./winning-conditions";
+import { checkRoundWinner, checkGameWinner } from "../../rounds";
 import { getOtherTeamId } from "@backend/game/state/helpers";
 
 /* -------------------------------------------------------------------------- */
@@ -98,49 +85,6 @@ export const createStartTurnAction = (deps: {
   };
 };
 export type StartTurnAction = ReturnType<typeof createStartTurnAction>;
-
-/* -------------------------------------------------------------------------- */
-/* End round                                                                  */
-/* -------------------------------------------------------------------------- */
-
-export type EndRoundActionResult =
-  | { ok: true; data: Awaited<ReturnType<RoundWinnerUpdater>> }
-  | { ok: false; message: string };
-
-export const createEndRoundAction = (deps: {
-  updateRoundStatus: RoundStatusUpdater;
-  updateRoundWinner: RoundWinnerUpdater;
-  validateEndRound: typeof validateEndRound;
-}) => {
-  return async (
-    gameState: GameAggregate,
-    roundId: number,
-    winningTeamId: number,
-  ): Promise<EndRoundActionResult> => {
-    const validation = deps.validateEndRound(gameState);
-    if (!validation.valid) {
-      return {
-        ok: false,
-        message: validation.errors.map((e) => e.message).join(", "),
-      };
-    }
-    await deps.updateRoundStatus({ roundId, status: ROUND_STATE.COMPLETED });
-    const updated = await deps.updateRoundWinner({ roundId, winningTeamId });
-    return { ok: true, data: updated };
-  };
-};
-export type EndRoundAction = ReturnType<typeof createEndRoundAction>;
-
-/* -------------------------------------------------------------------------- */
-/* End game                                                                   */
-/* -------------------------------------------------------------------------- */
-
-export const createEndGameAction = (updateGameStatus: GameStatusUpdater) => {
-  return async (gameState: GameAggregate, _winningTeamId: number) => {
-    return await updateGameStatus(gameState._id, GAME_STATE.COMPLETED);
-  };
-};
-export type EndGameAction = ReturnType<typeof createEndGameAction>;
 
 /* -------------------------------------------------------------------------- */
 /* applyGuessOutcome — the post-guess orchestrator                            */
