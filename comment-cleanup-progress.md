@@ -53,7 +53,7 @@
 
 ### backend/src/ai/pipeline/prompts/
 
-- [ ] `backend/src/ai/pipeline/prompts/guesser.hosted.ts` —
+- [x] `backend/src/ai/pipeline/prompts/guesser.hosted.ts` —
 - [ ] `backend/src/ai/pipeline/prompts/guesser.local.ts` —
 - [ ] `backend/src/ai/pipeline/prompts/index.ts` —
 - [ ] `backend/src/ai/pipeline/prompts/spymaster.hosted.ts` —
