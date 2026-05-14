@@ -19,7 +19,7 @@
 
 ### backend/src/ai/
 
-- [ ] `backend/src/ai/index.ts` —
+- [x] `backend/src/ai/index.ts` —
 
 ### backend/src/ai/models/
 

@@ -36,7 +36,6 @@ import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-g
 import type { EndTurnService } from "@backend/game/gameplay/turns/end";
 import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 
-// Public re-exports
 export { createPipeline } from "./pipeline";
 export type { CodenamesPipeline } from "./pipeline";
 export type { LLMService, LLMProvider } from "./models";
@@ -62,7 +61,6 @@ export type GameplayFeature = {
 };
 
 export type AIModuleDependencies = {
-  // Infra
   app: Express;
   db: Kysely<DB>;
   httpClient: HttpClient;
@@ -70,7 +68,6 @@ export type AIModuleDependencies = {
   httpLogger: HttpLoggerHandler;
   appLogger: AppLogger;
   llmConfig: LLMConfig;
-  // game ops
   gameplay: GameplayFeature;
 };
 
@@ -82,7 +79,6 @@ export const initialize = (deps: AIModuleDependencies) => {
     .withMeta({ model: llmConfig.model })
     .create();
 
-  /** Repositories — bound once from db, threaded down as typed functions */
   const repositories = {
     createPipelineRun:       aiPipelineRunsRepo.createRun(db),
     findRunningPipeline:     aiPipelineRunsRepo.findRunningByGameId(db),
@@ -95,22 +91,17 @@ export const initialize = (deps: AIModuleDependencies) => {
     findGameByPublicId:      gamesRepo.findGameByPublicId(db),
   };
 
-  /** Models (LLM client + health monitor) */
   const { llm } = createModels(logger)({ config: llmConfig, httpClient });
 
-  /** Pipeline (spymaster + guesser orchestration) */
   const promptStyle: PromptStyle = llmConfig.providerName === "ollama" ? "local" : "hosted";
   const pipeline = createPipeline(logger)({ llm, promptStyle });
 
-  /** AI player (event-driven decision loop) */
   const player = createPlayer(logger)({
     pipeline,
-    // gameplay services
     giveClue:          gameplay.services.giveClue,
     makeGuess:         gameplay.services.makeGuess,
     endTurn:           gameplay.services.endTurn,
     loadGameAggregate: gameplay.state.loadGameAggregate,
-    // ai feature repositories
     createPipelineRun:       repositories.createPipelineRun,
     findRunningPipeline:     repositories.findRunningPipeline,
     updatePipelineStatus:    repositories.updatePipelineStatus,
@@ -124,7 +115,6 @@ export const initialize = (deps: AIModuleDependencies) => {
 
   player.initialize();
 
-  /** Move feature (HTTP) */
   const aiMoveFeature = aiMove(logger)({
     aiPlayerService: player,
     loadGameAggregate: gameplay.state.loadGameAggregate,
@@ -132,7 +122,6 @@ export const initialize = (deps: AIModuleDependencies) => {
     llm,  // move/get-status reads health off llm — separate clean-up pass
   });
 
-  /** Routes */
   const router = Router();
   router.use(httpLogger(logger));
   router.post(
