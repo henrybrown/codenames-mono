@@ -8,23 +8,14 @@ import {
   sendSuccess,
 } from "@backend/shared/http-middleware/controller-helpers";
 
-/**
- * Request validation schema
- */
 const getStatusParamsSchema = z.object({
   gameId: z.string().min(1, "Game ID is required"),
 });
 
-/**
- * Dependencies required by the controller
- */
 export interface GetStatusControllerDeps {
   getStatus: ReturnType<typeof getStatusService>;
 }
 
-/**
- * Creates the get status controller
- */
 export const getStatusController = (deps: GetStatusControllerDeps) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
