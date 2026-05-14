@@ -29,15 +29,16 @@ describe("giveClueService", () => {
   const mockTurnState = vi.fn<(...args: any[]) => any>();
 
   const createService = (opsGiveClueResult?: any) => {
+    const opsGameState = buildGameAggregate();
     const gameplayHandler = vi.fn<(...args: any[]) => any>().mockImplementation(
       async (_state: any, _player: any, fn: any) => {
         return fn({
+          state: opsGameState,
           giveClue: vi.fn<any>().mockResolvedValue(
             opsGiveClueResult ?? {
               ok: true,
               clue: { word: "FRUIT", number: 2, createdAt: new Date() },
               turn: { _id: 1 },
-              state: buildGameAggregate(),
             },
           ),
         });

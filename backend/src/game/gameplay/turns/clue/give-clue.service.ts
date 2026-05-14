@@ -59,7 +59,16 @@ export const giveClueService =
     const result = await deps.gameplayHandler(
       gameState,
       playerContext,
-      async (ops) => ops.giveClue(word, targetCardCount),
+      async (ops) => {
+        const r = await ops.giveClue(word, targetCardCount);
+        if (!r.ok) return r;
+        return {
+          ok: true as const,
+          clue: r.clue,
+          turn: r.turn,
+          state: ops.state,
+        };
+      },
     );
 
     if (!result.ok) {

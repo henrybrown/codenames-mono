@@ -34,6 +34,7 @@ describe("makeGuessService", () => {
       async (_state: any, _player: any, fn: any) => {
         if (handlerThrows) throw handlerThrows;
         return fn({
+          state: gameState,
           makeGuess: vi.fn<any>().mockResolvedValue(
             opsMakeGuessResult ?? {
               ok: true,
@@ -50,14 +51,12 @@ describe("makeGuessService", () => {
                 outcome: "CORRECT_TEAM_CARD",
                 createdAt: new Date(),
               },
-              aftermath: { turnEnded: false, roundEnded: null, gameEnded: null },
-              state: gameState,
             },
           ),
-          endTurn: vi.fn<any>().mockResolvedValue(gameState),
-          startTurn: vi.fn<any>().mockResolvedValue({ newTurn: { publicId: "new-turn-uuid" }, state: gameState }),
-          endRound: vi.fn<any>().mockResolvedValue(gameState),
-          endGame: vi.fn<any>().mockResolvedValue(gameState),
+          endTurn: vi.fn<any>().mockResolvedValue({ ok: true }),
+          startTurn: vi.fn<any>().mockResolvedValue({ ok: true, newTurn: { publicId: "new-turn-uuid" } }),
+          endRound: vi.fn<any>().mockResolvedValue({ ok: true }),
+          endGame: vi.fn<any>().mockResolvedValue({ ok: true }),
         });
       },
     );

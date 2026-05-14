@@ -2,172 +2,108 @@ import { Kysely } from "kysely";
 import { DB } from "@backend/shared/db/db.types";
 import { TransactionContext } from "@backend/shared/data-access/transaction-handler";
 
-import * as cardsRepository from "@backend/shared/data-access/repositories/cards.repository";
-import * as turnRepository from "@backend/shared/data-access/repositories/turns.repository";
-import * as roundsRepository from "@backend/shared/data-access/repositories/rounds.repository";
-import * as gameRepository from "@backend/shared/data-access/repositories/games.repository";
-import * as gameEventsRepository from "@backend/shared/data-access/repositories/game-events.repository";
-import * as giveClueActions from "./turns/clue/give-clue.action";
-import * as makeGuessActions from "./turns/guess/make-guess.action";
-import * as makeGuessRules from "./turns/guess/make-guess.rules";
-import * as rounds from "./rounds";
-import * as games from "./games";
-import { createEndTurnAction, validateEndTurn } from "./turns/end";
-import { createStartTurnAction, validateStartTurn } from "./turns/start";
-import { validate as validateGiveClue, validateClueWord } from "./turns/clue/give-clue.rules";
-
 import { createGameAggregateLoader } from "@backend/game/state";
 import { UnexpectedGameplayError } from "./errors/gameplay.errors";
 import type { GameAggregate } from "@backend/game/state/types";
 import type { ActingPlayer } from "./turns/types";
 
+import { bindGiveClueAction } from "./turns/clue";
+import { bindMakeGuessAction } from "./turns/guess";
+import { bindStartTurnAction } from "./turns/start";
+import { bindEndTurnAction } from "./turns/end";
+import { bindEndRoundAction } from "./rounds";
+import { bindEndGameAction } from "./games";
+
 /**
- * Creates game-scoped gameplay operations for use within a transaction.
+ * Creates the service-facing ops registry for a single gameplay
+ * transaction.
  *
- * Ops know which game they operate on, which player is acting, and reload
- * state internally after mutations. The player parameter feeds into give-
- * clue and make-guess actions; end-turn / start-turn / end-round / end-
- * game don't read it (they're not actor-attributable in the same way).
+ * Each method binds its sub-feature action to the transaction, calls it
+ * against the handler's tracked currentState (with the acting player
+ * auto-injected for ops that need it), and reloads state on success.
+ * Services read `ops.state` for the always-fresh view.
+ *
+ * Player is owned by the handler — services don't pass it through. The
+ * acting player feeds into give-clue / make-guess; end-turn /
+ * start-turn / end-round / end-game don't read it.
  */
-export const gameplayOperations = (
+const buildOps = (
   trx: TransactionContext,
   initialState: GameAggregate,
   player: ActingPlayer,
 ) => {
-  const gamePublicId = initialState.public_id;
-
   const loadGameAggregate = createGameAggregateLoader(trx);
+  let currentState = initialState;
 
-  /** Reloads game state within the transaction. */
-  const reload = async (): Promise<GameAggregate> => {
-    const state = await loadGameAggregate(gamePublicId);
-    if (!state) throw new UnexpectedGameplayError("Game not found during reload");
-    return state;
+  const reload = async (): Promise<void> => {
+    const fresh = await loadGameAggregate(initialState.public_id);
+    if (!fresh) {
+      throw new UnexpectedGameplayError("Game not found during reload");
+    }
+    currentState = fresh;
   };
 
-  // Build the underlying action functions
-  const giveClueAction = giveClueActions.giveClueToTurn(
-    turnRepository.createClue(trx),
-    turnRepository.updateTurnGuesses(trx),
-    validateGiveClue,
-    validateClueWord,
-  );
-
-  const makeGuessAction = makeGuessActions.createMakeGuessAction({
-    updateCards: cardsRepository.updateCards(trx),
-    createGuess: turnRepository.createGuess(trx),
-    updateTurnGuesses: turnRepository.updateTurnGuesses(trx),
-    createEvent: gameEventsRepository.createEvent(trx),
-    validateMakeGuess: makeGuessRules.validateMakeGuess,
-  });
-
-  const endTurnAction = createEndTurnAction({
-    updateTurnStatus: turnRepository.updateTurnStatus(trx),
-    validateEndTurn: validateEndTurn,
-  });
-
-  const startTurnAction = createStartTurnAction({
-    createTurn: turnRepository.createTurn(trx),
-    validateStartTurn: validateStartTurn,
-  });
-
-  const endRoundAction = rounds.createEndRoundAction({
-    updateRoundStatus: roundsRepository.updateRoundStatus(trx),
-    updateRoundWinner: roundsRepository.updateRoundWinner(trx),
-    validateEndRound: rounds.validateEndRound,
-  });
-
-  const endGameAction = games.createEndGameAction(
-    gameRepository.updateGameStatus(trx),
-  );
+  const giveClue = bindGiveClueAction(trx);
+  const makeGuess = bindMakeGuessAction(trx);
+  const endTurn = bindEndTurnAction(trx);
+  const startTurn = bindStartTurnAction(trx);
+  const endRound = bindEndRoundAction(trx);
+  const endGame = bindEndGameAction(trx);
 
   return {
-    /** Codemaster gives a clue. Reloads state, validates, executes, returns fresh state. */
-    giveClue: async (word: string, count: number) => {
-      const currentState = await reload();
-      const result = await giveClueAction(currentState, player, word, count);
-      if (!result.ok) {
-        return result;
-      }
-      const freshState = await reload();
+    get state(): GameAggregate {
+      return currentState;
+    },
+
+    /** Codemaster gives a clue. */
+    giveClue: async (word: string, targetCardCount: number) => {
+      const result = await giveClue(currentState, player, word, targetCardCount);
+      if (!result.ok) return result;
+      await reload();
       return {
         ok: true as const,
         clue: result.data.clue,
         turn: result.data.turn,
-        state: freshState,
       };
     },
 
-    /**
-     * Codebreaker makes a guess.
-     *
-     * Records the guess only — the post-guess cascade (turn-end /
-     * round-end / game-end) is the service's responsibility. The
-     * service reads the post-guess state, computes an OutcomeStrategy,
-     * and applies it via the appropriate ops in sequence.
-     *
-     * Expected business failures propagate as { ok: false, message }.
-     */
+    /** Codebreaker records a guess. The post-guess cascade is the caller's responsibility. */
     makeGuess: async (cardWord: string) => {
-      const currentState = await reload();
-      const result = await makeGuessAction(currentState, player, cardWord);
-      if (!result.ok) {
-        return result;
-      }
-      const freshState = await reload();
-      return {
-        ok: true as const,
-        guess: result.data,
-        state: freshState,
-      };
+      const result = await makeGuess(currentState, player, cardWord);
+      if (!result.ok) return result;
+      await reload();
+      return { ok: true as const, guess: result.data };
     },
 
-    /**
-     * Ends the current turn. Validation failures propagate as
-     * `{ ok: false, message }` so the caller (end-turn service) can
-     * return 400 with the message instead of 500.
-     */
+    /** Ends the current turn. */
     endTurn: async (turnId: number) => {
-      const state = await reload();
-      const result = await endTurnAction(state, turnId);
+      const result = await endTurn(currentState, turnId);
       if (!result.ok) return result;
-      const freshState = await reload();
-      return { ok: true as const, state: freshState };
+      await reload();
+      return { ok: true as const };
     },
 
-    /**
-     * Starts a new turn for a team. Validation failures propagate as
-     * `{ ok: false, message }` so the caller (start-turn service) can
-     * return 400 with the message instead of 500.
-     */
+    /** Starts a new turn for a team. */
     startTurn: async (roundId: number, teamId: number) => {
-      const state = await reload();
-      const result = await startTurnAction(state, roundId, teamId);
+      const result = await startTurn(currentState, roundId, teamId);
       if (!result.ok) return result;
-      const freshState = await reload();
-      return { ok: true as const, newTurn: result.data, state: freshState };
+      await reload();
+      return { ok: true as const, newTurn: result.data };
     },
 
-    /**
-     * Ends the current round with a winner. Validation failures
-     * propagate as `{ ok: false, message }` — the caller decides
-     * whether they represent an invariant violation (cascade) or an
-     * expected user-visible failure.
-     */
+    /** Ends the current round with a winner. */
     endRound: async (roundId: number, winningTeamId: number) => {
-      const state = await reload();
-      const result = await endRoundAction(state, roundId, winningTeamId);
+      const result = await endRound(currentState, roundId, winningTeamId);
       if (!result.ok) return result;
-      const freshState = await reload();
-      return { ok: true as const, state: freshState };
+      await reload();
+      return { ok: true as const };
     },
 
-    /** Ends the game. Returns fresh state. */
+    /** Ends the game. */
     endGame: async (winningTeamId: number) => {
-      const state = await reload();
-      await endGameAction(state, winningTeamId);
-      const freshState = await reload();
-      return { ok: true as const, state: freshState };
+      await endGame(currentState, winningTeamId);
+      await reload();
+      return { ok: true as const };
     },
   };
 };
@@ -175,7 +111,7 @@ export const gameplayOperations = (
 /**
  * Type representing all operations available within gameplay transactions
  */
-export type GameplayOperations = ReturnType<typeof gameplayOperations>;
+export type GameplayOperations = ReturnType<typeof buildOps>;
 
 /**
  * Handler type: takes initial game state + acting player + operation
@@ -193,7 +129,7 @@ export type GameplayHandler = <R>(
 export const gameplayActions = (dbContext: Kysely<DB>) => {
   const handler: GameplayHandler = async (initialState, player, operation) => {
     return dbContext.transaction().execute(async (trx) => {
-      const ops = gameplayOperations(trx, initialState, player);
+      const ops = buildOps(trx, initialState, player);
       return operation(ops);
     });
   };

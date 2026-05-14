@@ -94,10 +94,9 @@ export const makeGuessService =
           turnId: guessResult.guess.turn._id,
           guessingTeamId: guessResult.guess.turn._teamId,
           guessesRemaining: guessResult.guess.turn.guessesRemaining,
-          postGuessState: guessResult.state,
+          postGuessState: ops.state,
         });
 
-        let finalState = guessResult.state;
         switch (strategy.strategy) {
           case "continue":
             break;
@@ -108,7 +107,6 @@ export const makeGuessService =
                 `Failed to endTurn during cascade: ${r.message}`,
               );
             }
-            finalState = r.state;
             break;
           }
           case "end-round": {
@@ -127,7 +125,6 @@ export const makeGuessService =
                 `Failed to endRound during cascade: ${r.message}`,
               );
             }
-            finalState = r.state;
             break;
           }
           case "end-game": {
@@ -146,8 +143,7 @@ export const makeGuessService =
                 `Failed to endRound during cascade: ${r.message}`,
               );
             }
-            const g = await ops.endGame(strategy.gameWinningTeamId);
-            finalState = g.state;
+            await ops.endGame(strategy.gameWinningTeamId);
             break;
           }
         }
@@ -156,7 +152,7 @@ export const makeGuessService =
           ok: true as const,
           guess: guessResult.guess,
           strategy,
-          state: finalState,
+          state: ops.state,
         };
       },
     );

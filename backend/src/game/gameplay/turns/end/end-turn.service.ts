@@ -55,7 +55,11 @@ export const createEndTurnService =
     const result = await deps.gameplayHandler(
       gameState,
       playerContext,
-      async (ops) => ops.endTurn(currentTurn._id),
+      async (ops) => {
+        const r = await ops.endTurn(currentTurn._id);
+        if (!r.ok) return r;
+        return { ok: true as const };
+      },
     );
 
     if (!result.ok) {

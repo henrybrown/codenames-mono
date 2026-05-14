@@ -113,7 +113,11 @@ export const createStartTurnService =
     const result = await deps.gameplayHandler(
       gameState,
       playerContext,
-      async (ops) => ops.startTurn(currentRound._id, nextTeam._id),
+      async (ops) => {
+        const r = await ops.startTurn(currentRound._id, nextTeam._id);
+        if (!r.ok) return r;
+        return { ok: true as const, newTurn: r.newTurn };
+      },
     );
 
     if (!result.ok) {
