@@ -1,6 +1,7 @@
 import {
   CODEBREAKER_OUTCOME,
   GAME_EVENT_TYPE,
+  type TurnOutcome,
 } from "@codenames/shared/types";
 import { UnexpectedGameplayError } from "../../errors/gameplay.errors";
 import { GameAggregate } from "@backend/game/state/types";
@@ -29,7 +30,7 @@ export type MakeGuessActionResult =
         card: any;
         guess: Awaited<ReturnType<GuessCreator>>;
         turn: Awaited<ReturnType<TurnGuessUpdater>>;
-        outcome: string;
+        outcome: TurnOutcome;
         createdAt: Date;
       };
     }
@@ -67,7 +68,7 @@ function validateGuessCard(
 /**
  * Helper for determining guess outcome based on card and team
  */
-function determineOutcome(card: any, guessingTeamId: number): string {
+function determineOutcome(card: any, guessingTeamId: number): TurnOutcome {
   switch (card.cardType) {
     case "ASSASSIN":
       return CODEBREAKER_OUTCOME.ASSASSIN_CARD;

@@ -3,6 +3,7 @@ import type { GameplayHandler } from "../../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
 import type { GameAggregate } from "@backend/game/state/types";
 import type { GamePlayer } from "@backend/game/access";
+import type { TurnOutcome } from "@codenames/shared/types";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import { getCurrentTurn } from "@backend/game/state/helpers";
 import {
@@ -25,7 +26,7 @@ export type MakeGuessInput = {
 export type MakeGuessSuccess = {
   guess: {
     cardWord: string;
-    outcome: string;
+    outcome: TurnOutcome;
     createdAt: Date;
   };
   turn: CompleteTurnData;
@@ -91,9 +92,6 @@ export const makeGuessService =
 
         const strategy = determineOutcomeStrategy({
           outcome: guessResult.guess.outcome,
-          turnId: guessResult.guess.turn._id,
-          guessingTeamId: guessResult.guess.turn._teamId,
-          guessesRemaining: guessResult.guess.turn.guessesRemaining,
           postGuessState: await ops.state(),
         });
 

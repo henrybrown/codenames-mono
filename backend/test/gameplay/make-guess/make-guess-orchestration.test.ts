@@ -6,7 +6,7 @@
  * returns a tagged union describing the cascade plan. These tests verify
  * the strategy for each outcome scenario.
  */
-import { determineOutcomeStrategy } from "@backend/game/gameplay/turns/guess/determine-outcome-strategy";
+import { determineOutcomeStrategy } from "@backend/game/gameplay/turns/guess/outcome-strategy";
 import {
   buildGameAggregate,
   buildCard,
@@ -103,9 +103,6 @@ describe("determineOutcomeStrategy", () => {
     const gameState = buildGameWithBoard({ selectedRedCards: 6, guessesRemaining: 2 });
     const strategy = determineOutcomeStrategy({
       outcome: "CORRECT_TEAM_CARD",
-      turnId: gameState.currentRound!.turns[0]._id,
-      guessingTeamId: 1,
-      guessesRemaining: 2,
       postGuessState: gameState,
     });
     expect(strategy).toEqual({ strategy: "continue" });
@@ -115,9 +112,6 @@ describe("determineOutcomeStrategy", () => {
     const gameState = buildGameWithBoard({ selectedRedCards: 6, guessesRemaining: 0 });
     const strategy = determineOutcomeStrategy({
       outcome: "CORRECT_TEAM_CARD",
-      turnId: gameState.currentRound!.turns[0]._id,
-      guessingTeamId: 1,
-      guessesRemaining: 0,
       postGuessState: gameState,
     });
     expect(strategy).toEqual({
@@ -131,9 +125,6 @@ describe("determineOutcomeStrategy", () => {
     const gameState = buildGameWithBoard({ selectedRedCards: 9, guessesRemaining: 2, format: "BEST_OF_THREE" });
     const strategy = determineOutcomeStrategy({
       outcome: "CORRECT_TEAM_CARD",
-      turnId: gameState.currentRound!.turns[0]._id,
-      guessingTeamId: 1,
-      guessesRemaining: 2,
       postGuessState: gameState,
     });
     expect(strategy).toEqual({
@@ -148,9 +139,6 @@ describe("determineOutcomeStrategy", () => {
     const gameState = buildGameWithBoard({ selectedRedCards: 9, guessesRemaining: 2, format: "QUICK" });
     const strategy = determineOutcomeStrategy({
       outcome: "CORRECT_TEAM_CARD",
-      turnId: gameState.currentRound!.turns[0]._id,
-      guessingTeamId: 1,
-      guessesRemaining: 2,
       postGuessState: gameState,
     });
     expect(strategy).toEqual({
@@ -166,9 +154,6 @@ describe("determineOutcomeStrategy", () => {
     const gameState = buildGameWithBoard({ selectedBlueCards: 4, guessesRemaining: 2 });
     const strategy = determineOutcomeStrategy({
       outcome: "OTHER_TEAM_CARD",
-      turnId: gameState.currentRound!.turns[0]._id,
-      guessingTeamId: 1,
-      guessesRemaining: 2,
       postGuessState: gameState,
     });
     expect(strategy).toEqual({
@@ -181,9 +166,6 @@ describe("determineOutcomeStrategy", () => {
     const gameState = buildGameWithBoard({ selectedBlueCards: 8, guessesRemaining: 2, format: "BEST_OF_THREE" });
     const strategy = determineOutcomeStrategy({
       outcome: "OTHER_TEAM_CARD",
-      turnId: gameState.currentRound!.turns[0]._id,
-      guessingTeamId: 1,
-      guessesRemaining: 2,
       postGuessState: gameState,
     });
     expect(strategy).toEqual({
@@ -198,9 +180,6 @@ describe("determineOutcomeStrategy", () => {
     const gameState = buildGameWithBoard({ guessesRemaining: 2 });
     const strategy = determineOutcomeStrategy({
       outcome: "BYSTANDER_CARD",
-      turnId: gameState.currentRound!.turns[0]._id,
-      guessingTeamId: 1,
-      guessesRemaining: 2,
       postGuessState: gameState,
     });
     expect(strategy).toEqual({
@@ -213,9 +192,6 @@ describe("determineOutcomeStrategy", () => {
     const gameState = buildGameWithBoard({ assassinSelected: true, guessesRemaining: 2, format: "QUICK" });
     const strategy = determineOutcomeStrategy({
       outcome: "ASSASSIN_CARD",
-      turnId: gameState.currentRound!.turns[0]._id,
-      guessingTeamId: 1,
-      guessesRemaining: 2,
       postGuessState: gameState,
     });
     expect(strategy).toEqual({
@@ -231,9 +207,6 @@ describe("determineOutcomeStrategy", () => {
     const gameState = buildGameWithBoard({ assassinSelected: true, guessesRemaining: 2, format: "BEST_OF_THREE" });
     const strategy = determineOutcomeStrategy({
       outcome: "ASSASSIN_CARD",
-      turnId: gameState.currentRound!.turns[0]._id,
-      guessingTeamId: 1,
-      guessesRemaining: 2,
       postGuessState: gameState,
     });
     expect(strategy).toEqual({
