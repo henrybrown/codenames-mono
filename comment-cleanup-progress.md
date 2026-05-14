@@ -258,7 +258,7 @@
 
 - [x] `backend/src/game/state/index.ts` —
 - [x] `backend/src/game/state/load-game-aggregate.ts` —
-- [ ] `backend/src/game/state/load-turn-aggregate.ts` —
+- [x] `backend/src/game/state/load-turn-aggregate.ts` —
 - [ ] `backend/src/game/state/types.ts` —
 - [ ] `backend/src/game/state/validation.ts` —
 

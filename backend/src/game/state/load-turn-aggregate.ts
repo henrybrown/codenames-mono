@@ -4,9 +4,6 @@ import type {
 } from "@backend/shared/data-access/transaction-handler";
 import * as turnsRepository from "@backend/shared/data-access/repositories/turns.repository";
 
-/**
- * Turn guess data with card word included
- */
 export interface TurnGuess {
   cardWord: string;
   playerName: string;
@@ -14,18 +11,12 @@ export interface TurnGuess {
   createdAt: Date;
 }
 
-/**
- * Turn clue data
- */
 export interface TurnClue {
   word: string;
   number: number;
   createdAt: Date;
 }
 
-/**
- * Complete turn data with computed fields (loader return type)
- */
 export interface TurnData {
   publicId: string;
   teamName: string;
@@ -37,7 +28,6 @@ export interface TurnData {
   hasGuesses: boolean;
   lastGuess?: TurnGuess;
   prevGuesses: TurnGuess[];
-  // Internal fields for service layer
   _gameId: number;
   _roundId: number;
 }
@@ -62,7 +52,6 @@ export const createTurnLoader = (
     const turnData = await getTurnByPublicId(publicId);
     if (!turnData) return null;
 
-    // Transform guesses to frontend format with computed fields
     const transformedGuesses: TurnGuess[] = turnData.guesses.map((guess) => ({
       cardWord: guess.cardWord,
       playerName: guess.playerName,
@@ -70,14 +59,12 @@ export const createTurnLoader = (
       createdAt: guess.createdAt,
     }));
 
-    // Compute derived fields
     const hasGuesses = transformedGuesses.length > 0;
     const lastGuess = hasGuesses
       ? transformedGuesses[transformedGuesses.length - 1]
       : undefined;
     const prevGuesses = hasGuesses ? transformedGuesses.slice(0, -1) : [];
 
-    // Transform clue if present
     const transformedClue: TurnClue | undefined = turnData.clue
       ? {
           word: turnData.clue.word,
