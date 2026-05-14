@@ -30,7 +30,7 @@
 ### backend/src/ai/models/providers/
 
 - [x] `backend/src/ai/models/providers/anthropic.provider.ts` —
-- [ ] `backend/src/ai/models/providers/gemini.provider.ts` —
+- [x] `backend/src/ai/models/providers/gemini.provider.ts` —
 - [ ] `backend/src/ai/models/providers/index.ts` —
 - [ ] `backend/src/ai/models/providers/ollama.provider.ts` —
 - [ ] `backend/src/ai/models/providers/openai.provider.ts` —
