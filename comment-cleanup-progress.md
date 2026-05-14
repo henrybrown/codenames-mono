@@ -90,7 +90,7 @@
 
 ### backend/src/chat/queries/
 
-- [ ] `backend/src/chat/queries/get-messages.controller.ts` —
+- [x] `backend/src/chat/queries/get-messages.controller.ts` —
 - [ ] `backend/src/chat/queries/get-messages.service.ts` —
 - [ ] `backend/src/chat/queries/index.ts` —
 

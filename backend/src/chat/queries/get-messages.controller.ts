@@ -8,9 +8,6 @@ import {
   sendSuccess,
 } from "@backend/shared/http-middleware/controller-helpers";
 
-/**
- * Request validation schemas
- */
 const getMessagesParamsSchema = z.object({
   gameId: z.string().min(1, "Game ID is required"),
 });
@@ -20,16 +17,10 @@ const getMessagesQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(1000).optional(),
 });
 
-/**
- * Dependencies required by the controller
- */
 export interface GetMessagesControllerDeps {
   getMessages: ReturnType<typeof getMessagesService>;
 }
 
-/**
- * Creates the get messages controller
- */
 export const getMessagesController =
   (deps: GetMessagesControllerDeps) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
