@@ -14,9 +14,6 @@ type ServiceDependencies = {
   jwtOptions: SignOptions;
 };
 
-/**
- * Result of login operation specific to the service layer
- */
 export type GuestLoginResult = {
   username: string;
   token: string;
