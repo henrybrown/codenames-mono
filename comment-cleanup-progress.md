@@ -256,7 +256,7 @@
 
 ### backend/src/game/state/
 
-- [ ] `backend/src/game/state/index.ts` —
+- [x] `backend/src/game/state/index.ts` —
 - [ ] `backend/src/game/state/load-game-aggregate.ts` —
 - [ ] `backend/src/game/state/load-turn-aggregate.ts` —
 - [ ] `backend/src/game/state/types.ts` —
