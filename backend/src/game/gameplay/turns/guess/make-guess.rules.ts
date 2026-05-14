@@ -31,9 +31,6 @@ const makeGuessActionSchema = gameplayBaseSchema.extend({
     cards: z.array(cardSchema).min(1, "Must have cards to guess"),
     turns: z.array(turnSchema).min(1, "Must have at least one turn"),
   }),
-  // playerContext intentionally not validated here — requireGameRole(CODEBREAKER)
-  // middleware enforces role at the route layer; team-turn check happens in
-  // validateMakeGuess() below as a post-schema rule using actingTeamId.
 })
   .refine((data) => {
     const currentTurn = getCurrentTurn(data);
