@@ -105,7 +105,7 @@
 - [x] `backend/src/game/access/blocking-game-action.middleware.ts` —
 - [x] `backend/src/game/access/index.ts` —
 - [x] `backend/src/game/access/require-game-player.middleware.ts` —
-- [ ] `backend/src/game/access/require-game-role.middleware.ts` —
+- [x] `backend/src/game/access/require-game-role.middleware.ts` —
 - [ ] `backend/src/game/access/resolve-acting-player.ts` —
 - [ ] `backend/src/game/access/types.ts` —
 
