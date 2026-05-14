@@ -21,9 +21,6 @@ import { httpLoggerMiddleware } from "@backend/shared/http-middleware/http-logge
 import { refreshSystemData } from "./shared/data/system-data-loader";
 import { initializeWebSocketServer } from "./shared/websocket";
 
-/**
- * Runtime validation of env. variables
- */
 let env;
 try {
   env = loadEnvFromPackageDir();
@@ -32,9 +29,6 @@ try {
   process.exit(1);
 }
 
-/**
- * Initialize application logger
- */
 const appLogger = createAppLogger({
   logFilePath: env.LOG_FILE_PATH,
   level: env.LOG_FILE_LEVEL,
@@ -46,17 +40,10 @@ const startupLogger = appLogger.for({ server: "startup" }).toConsole().create();
 
 startupLogger.info("Server starting");
 
-/**
- * Initialize the Express application with all middleware and features
- */
-
 const app = express();
 const dbInstance = await postgresDb.initializeDb(appLogger)(env.DATABASE_URL);
 const httpClient = createHttpClient(appLogger);
 
-/**
- * Refresh system data from json files.
- */
 try {
   await refreshSystemData(startupLogger)(dbInstance);
 } catch (error) {
@@ -65,7 +52,6 @@ try {
   });
 }
 
-// CORS configuration that allows credentials
 const devOrigins = [
   "http://localhost:8000",
   "http://127.0.0.1:8000",
@@ -94,18 +80,15 @@ const corsOptions = {
   exposedHeaders: ["Set-Cookie"],
 };
 
-// Configure general middleware
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Set up Swagger docs
 const swaggerSpec = createOpenApiSpec();
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// this is the auth middleware handlers to be injected into features
 const authHandlers = authMiddleware(env.JWT_SECRET, appLogger);
 const httpLoggerHandler = httpLoggerMiddleware({
   enabled: env.LOG_HTTP_REQUESTS,
@@ -113,7 +96,6 @@ const httpLoggerHandler = httpLoggerMiddleware({
   toConsole: env.LOG_HTTP_TO_CONSOLE,
 });
 
-// Initialize auth feature with JWT options
 const auth = initializeAuth(app, dbInstance, {
   secret: env.JWT_SECRET,
   options: {
@@ -123,7 +105,6 @@ const auth = initializeAuth(app, dbInstance, {
   },
 }, appLogger);
 
-// Initialize features
 const lobby = initializeLobby(app, dbInstance, authHandlers, appLogger);
 const gameplay = initializeGameplay(
   app,
@@ -165,7 +146,6 @@ const ai = initializeAI({
   },
 });
 
-// Initialize chat feature
 const chat = initializeChat({
   app,
   db: dbInstance,
@@ -182,11 +162,9 @@ app.get("/api/health", (req, res) => {
 app.use(notFoundHandler);
 app.use(errorHandler(appLogger));
 
-// Start the server
 const httpServer = createServer(app);
 const PORT = env.PORT || 3000;
 
-// Initialize WebSocket server
 initializeWebSocketServer({
   httpServer,
   jwtSecret: env.JWT_SECRET,

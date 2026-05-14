@@ -15,7 +15,7 @@
 
 ### backend/src/
 
-- [ ] `backend/src/index.ts` —
+- [x] `backend/src/index.ts` —
 
 ### backend/src/ai/
 
