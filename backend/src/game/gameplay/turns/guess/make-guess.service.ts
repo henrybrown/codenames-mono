@@ -9,7 +9,7 @@ import {
   buildCompleteTurnData,
   type CompleteTurnData,
 } from "../shared/present-turn";
-import { determineOutcomeStrategy } from "./determine-outcome-strategy";
+import { determineOutcomeStrategy } from "./outcome-strategy";
 import { UnexpectedGameplayError } from "../../errors/gameplay.errors";
 
 /* -------------------------------------------------------------------------- */
@@ -94,7 +94,7 @@ export const makeGuessService =
           turnId: guessResult.guess.turn._id,
           guessingTeamId: guessResult.guess.turn._teamId,
           guessesRemaining: guessResult.guess.turn.guessesRemaining,
-          postGuessState: ops.state,
+          postGuessState: await ops.state(),
         });
 
         switch (strategy.strategy) {
@@ -152,7 +152,7 @@ export const makeGuessService =
           ok: true as const,
           guess: guessResult.guess,
           strategy,
-          state: ops.state,
+          state: await ops.state(),
         };
       },
     );

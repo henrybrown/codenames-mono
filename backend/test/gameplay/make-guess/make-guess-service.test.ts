@@ -34,7 +34,7 @@ describe("makeGuessService", () => {
       async (_state: any, _player: any, fn: any) => {
         if (handlerThrows) throw handlerThrows;
         return fn({
-          state: gameState,
+          state: vi.fn<any>().mockResolvedValue(gameState),
           makeGuess: vi.fn<any>().mockResolvedValue(
             opsMakeGuessResult ?? {
               ok: true,

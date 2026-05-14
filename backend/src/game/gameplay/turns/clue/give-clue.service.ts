@@ -66,7 +66,7 @@ export const giveClueService =
           ok: true as const,
           clue: r.clue,
           turn: r.turn,
-          state: ops.state,
+          state: await ops.state(),
         };
       },
     );

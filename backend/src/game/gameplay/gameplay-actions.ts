@@ -18,10 +18,10 @@ import { bindEndGameAction } from "./games";
  * Creates the service-facing ops registry for a single gameplay
  * transaction.
  *
- * Each method binds its sub-feature action to the transaction, calls it
- * against the handler's tracked currentState (with the acting player
- * auto-injected for ops that need it), and reloads state on success.
- * Services read `ops.state` for the always-fresh view.
+ * `state()` loads fresh game state within the current transaction. Each
+ * op calls it internally before running its action, so every op sees
+ * the latest committed state. Services that need post-op state call
+ * `ops.state()` themselves — same method, no extra plumbing.
  *
  * Player is owned by the handler — services don't pass it through. The
  * acting player feeds into give-clue / make-guess; end-turn /
@@ -33,14 +33,14 @@ const buildOps = (
   player: ActingPlayer,
 ) => {
   const loadGameAggregate = createGameAggregateLoader(trx);
-  let currentState = initialState;
+  const gamePublicId = initialState.public_id;
 
-  const reload = async (): Promise<void> => {
-    const fresh = await loadGameAggregate(initialState.public_id);
+  const state = async (): Promise<GameAggregate> => {
+    const fresh = await loadGameAggregate(gamePublicId);
     if (!fresh) {
       throw new UnexpectedGameplayError("Game not found during reload");
     }
-    currentState = fresh;
+    return fresh;
   };
 
   const giveClue = bindGiveClueAction(trx);
@@ -51,15 +51,13 @@ const buildOps = (
   const endGame = bindEndGameAction(trx);
 
   return {
-    get state(): GameAggregate {
-      return currentState;
-    },
+    /** Loads fresh game state within the current transaction. */
+    state,
 
     /** Codemaster gives a clue. */
     giveClue: async (word: string, targetCardCount: number) => {
-      const result = await giveClue(currentState, player, word, targetCardCount);
+      const result = await giveClue(await state(), player, word, targetCardCount);
       if (!result.ok) return result;
-      await reload();
       return {
         ok: true as const,
         clue: result.data.clue,
@@ -69,40 +67,35 @@ const buildOps = (
 
     /** Codebreaker records a guess. The post-guess cascade is the caller's responsibility. */
     makeGuess: async (cardWord: string) => {
-      const result = await makeGuess(currentState, player, cardWord);
+      const result = await makeGuess(await state(), player, cardWord);
       if (!result.ok) return result;
-      await reload();
       return { ok: true as const, guess: result.data };
     },
 
     /** Ends the current turn. */
     endTurn: async (turnId: number) => {
-      const result = await endTurn(currentState, turnId);
+      const result = await endTurn(await state(), turnId);
       if (!result.ok) return result;
-      await reload();
       return { ok: true as const };
     },
 
     /** Starts a new turn for a team. */
     startTurn: async (roundId: number, teamId: number) => {
-      const result = await startTurn(currentState, roundId, teamId);
+      const result = await startTurn(await state(), roundId, teamId);
       if (!result.ok) return result;
-      await reload();
       return { ok: true as const, newTurn: result.data };
     },
 
     /** Ends the current round with a winner. */
     endRound: async (roundId: number, winningTeamId: number) => {
-      const result = await endRound(currentState, roundId, winningTeamId);
+      const result = await endRound(await state(), roundId, winningTeamId);
       if (!result.ok) return result;
-      await reload();
       return { ok: true as const };
     },
 
     /** Ends the game. */
     endGame: async (winningTeamId: number) => {
-      await endGame(currentState, winningTeamId);
-      await reload();
+      await endGame(await state(), winningTeamId);
       return { ok: true as const };
     },
   };

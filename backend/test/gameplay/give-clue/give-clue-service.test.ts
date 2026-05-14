@@ -33,7 +33,7 @@ describe("giveClueService", () => {
     const gameplayHandler = vi.fn<(...args: any[]) => any>().mockImplementation(
       async (_state: any, _player: any, fn: any) => {
         return fn({
-          state: opsGameState,
+          state: vi.fn<any>().mockResolvedValue(opsGameState),
           giveClue: vi.fn<any>().mockResolvedValue(
             opsGiveClueResult ?? {
               ok: true,

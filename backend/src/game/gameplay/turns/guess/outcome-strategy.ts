@@ -1,5 +1,41 @@
+import { CODEBREAKER_OUTCOME } from "@codenames/shared/types";
+import type { GameAggregate } from "@backend/game/state/types";
+import { getOtherTeamId } from "@backend/game/state/helpers";
+import { checkRoundWinner, checkGameWinner } from "../../rounds";
+import { UnexpectedGameplayError } from "../../errors/gameplay.errors";
+
 /**
- * Pure derivation of what should happen after a guess.
+ * Type describing what should happen after a guess.
+ *
+ * Pure data — `determineOutcomeStrategy` computes it from the post-guess
+ * state; `make-guess.service` switches on the strategy and runs the
+ * appropriate ops in sequence.
+ *
+ * The structure encodes the rules of the cascade:
+ *   - end-turn implies turn ends only
+ *   - end-round implies turn + round end
+ *   - end-game implies turn + round + game end
+ */
+export type OutcomeStrategy =
+  | { strategy: "continue" }
+  | { strategy: "end-turn"; turnId: number }
+  | {
+      strategy: "end-round";
+      turnId: number;
+      roundId: number;
+      roundWinningTeamId: number;
+    }
+  | {
+      strategy: "end-game";
+      turnId: number;
+      roundId: number;
+      roundWinningTeamId: number;
+      gameWinningTeamId: number;
+    };
+
+
+/**
+ * Pure derivation of what should happen after a guess got a given outcome.
  *
  * Takes the post-guess state (board reflects the just-selected card)
  * and the guess context (outcome category, turn id, etc.), returns a
@@ -7,13 +43,6 @@
  *
  * No IO, no async, no ops. Trivially unit-testable.
  */
-import { CODEBREAKER_OUTCOME } from "@codenames/shared/types";
-import type { GameAggregate } from "@backend/game/state/types";
-import { getOtherTeamId } from "@backend/game/state/helpers";
-import { checkRoundWinner, checkGameWinner } from "../../rounds";
-import { UnexpectedGameplayError } from "../../errors/gameplay.errors";
-import type { OutcomeStrategy } from "./outcome-strategy.types";
-
 export const determineOutcomeStrategy = (input: {
   outcome: string; // CODEBREAKER_OUTCOME value
   turnId: number;
