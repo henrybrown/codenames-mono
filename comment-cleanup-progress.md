@@ -48,7 +48,7 @@
 
 - [x] `backend/src/ai/pipeline/codenames-pipeline.ts` —
 - [x] `backend/src/ai/pipeline/guesser.ts` —
-- [ ] `backend/src/ai/pipeline/index.ts` —
+- [x] `backend/src/ai/pipeline/index.ts` —
 - [ ] `backend/src/ai/pipeline/spymaster.ts` —
 
 ### backend/src/ai/pipeline/prompts/
