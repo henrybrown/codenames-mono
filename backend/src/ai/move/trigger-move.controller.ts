@@ -8,23 +8,14 @@ import {
   sendSuccess,
 } from "@backend/shared/http-middleware/controller-helpers";
 
-/**
- * Request validation schema
- */
 const triggerMoveParamsSchema = z.object({
   gameId: z.string().min(1, "Game ID is required"),
 });
 
-/**
- * Dependencies required by the controller
- */
 export interface TriggerMoveControllerDeps {
   triggerMove: TriggerMoveService;
 }
 
-/**
- * Creates the trigger move controller
- */
 export const triggerMoveController = (deps: TriggerMoveControllerDeps) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
