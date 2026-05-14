@@ -51,9 +51,6 @@ export const isWordFormOf = (clue: string, boardWords: string[]): boolean => {
   });
 };
 
-/**
- * Run the spymaster pipeline
- */
 export const runSpymasterPipeline = async (
   llm: LLMService,
   promptStyle: PromptStyle,
