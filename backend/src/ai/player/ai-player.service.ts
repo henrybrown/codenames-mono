@@ -1,8 +1,3 @@
-/**
- * AI Player Service
- * Listens to game events and makes intelligent decisions for AI players
- */
-
 import type { GiveClueService } from "@backend/game/gameplay/turns/clue/give-clue.service";
 import type { MakeGuessService } from "@backend/game/gameplay/turns/guess/make-guess.service";
 import type { EndTurnService } from "@backend/game/gameplay/turns/end";
@@ -35,7 +30,6 @@ export type AIPlayerDependencies = {
   makeGuess: MakeGuessService;
   endTurn: EndTurnService;
   loadGameAggregate: GameAggregateLoader;
-  // Repository functions
   createPipelineRun: RunCreator;
   findRunningPipeline: RunFinderByGame;
   updatePipelineStatus: RunStatusUpdater;
@@ -129,13 +123,6 @@ export const createAIPlayerService =
       }
     };
 
-    /**
-     * Load game state plus the AI player's record for a given gameId/playerId.
-     *
-     * Returns aggregate and player separately — the aggregate has no
-     * playerContext field anymore; callers pass the player explicitly into
-     * service calls (and through the gameplay handler).
-     */
     const loadGameStateForAI = async (gameId: string, playerId: string) => {
       const aggregate = await loadGameAggregate(gameId);
       if (!aggregate || !aggregate.currentRound) return null;
@@ -479,7 +466,6 @@ export const createAIPlayerService =
           const candidate = rankedList[i];
           const isFirst = i === 0;
 
-          // Threshold check
           if (isFirst) {
             if (candidate.score < GUESS_THRESHOLDS.firstGuessFloor) {
               await emitNarration(
