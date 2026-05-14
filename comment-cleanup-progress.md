@@ -98,7 +98,7 @@
 
 - [x] `backend/src/chat/submit/index.ts` —
 - [x] `backend/src/chat/submit/submit-message.controller.ts` —
-- [ ] `backend/src/chat/submit/submit-message.service.ts` —
+- [x] `backend/src/chat/submit/submit-message.service.ts` —
 
 ### backend/src/game/access/
 
