@@ -73,7 +73,7 @@
 ### backend/src/auth/errors/
 
 - [x] `backend/src/auth/errors/auth-errors.middleware.ts` —
-- [ ] `backend/src/auth/errors/auth.errors.ts` —
+- [x] `backend/src/auth/errors/auth.errors.ts` —
 
 ### backend/src/auth/guest-session/
 
