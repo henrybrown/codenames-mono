@@ -28,9 +28,6 @@ export type RankingOutput = {
   ranked: RankedWord[];
 };
 
-/**
- * Run ranking on all remaining words
- */
 export const runRanking = async (
   llm: LLMService,
   promptStyle: PromptStyle,
