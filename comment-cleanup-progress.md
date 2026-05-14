@@ -81,7 +81,7 @@
 - [x] `backend/src/auth/guest-session/create-guest-session.validation.ts` —
 - [x] `backend/src/auth/guest-session/create-guest-user.service.ts` —
 - [x] `backend/src/auth/guest-session/guest-login.service.ts` —
-- [ ] `backend/src/auth/guest-session/username-generator.ts` —
+- [x] `backend/src/auth/guest-session/username-generator.ts` —
 
 ### backend/src/chat/
 
