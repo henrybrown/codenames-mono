@@ -264,10 +264,10 @@
 
 ### backend/src/game/state/helpers/
 
-- [ ] `backend/src/game/state/helpers/aggregate.ts` —
-- [ ] `backend/src/game/state/helpers/index.ts` —
-- [ ] `backend/src/game/state/helpers/players.ts` —
-- [ ] `backend/src/game/state/helpers/turn-phase.ts` —
+- [x] `backend/src/game/state/helpers/aggregate.ts` —
+- [x] `backend/src/game/state/helpers/index.ts` —
+- [x] `backend/src/game/state/helpers/players.ts` —
+- [x] `backend/src/game/state/helpers/turn-phase.ts` —
 
 ### backend/src/shared/config/
 

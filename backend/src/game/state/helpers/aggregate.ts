@@ -14,9 +14,6 @@ import type {
   Turn,
 } from "../types";
 
-/**
- * @returns The current round or null if it doesn't exist
- */
 export const getLatestRound = (game: GameAggregate): Round | null =>
   game.currentRound || null;
 
@@ -31,35 +28,23 @@ export const getLatestRoundOrThrow = (game: GameAggregate): Round => {
   return currentRound;
 };
 
-/**
- * @returns The number of teams in the game
- */
 export const getTeamCount = (game: GameAggregate): number =>
   game.teams ? game.teams.length : 0;
 
-/**
- * @returns Total number of rounds in the game (current + historical)
- */
 export const getRoundCount = (game: GameAggregate): number => {
   const historicalCount = game.historicalRounds?.length || 0;
   const currentCount = game.currentRound ? 1 : 0;
   return historicalCount + currentCount;
 };
 
-/**
- * @param roundNumber - Round sequence number
- * @returns The requested round (current or historical) or null if not found
- */
 export const findRoundByNumber = (
   game: GameAggregate,
   roundNumber: number,
 ): Round | HistoricalRound | null => {
-  // Check current round first
   if (game.currentRound && game.currentRound.number === roundNumber) {
     return game.currentRound;
   }
 
-  // Then check historical rounds
   if (game.historicalRounds && game.historicalRounds.length > 0) {
     return (
       game.historicalRounds.find((round) => round.number === roundNumber) ||
@@ -70,9 +55,6 @@ export const findRoundByNumber = (
   return null;
 };
 
-/**
- * @returns The winning team info of the specified round, or null if not found or not completed
- */
 export const getRoundWinningTeam = (
   game: GameAggregate,
   roundNumber: number,
@@ -91,9 +73,6 @@ export const getRoundWinningTeam = (
   };
 };
 
-/**
- * @returns The current active turn or null if it doesn't exist
- */
 export const getCurrentTurn = (game: GameAggregate): Turn | null => {
   if (!game.currentRound?.turns) return null;
 
