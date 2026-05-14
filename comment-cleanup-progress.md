@@ -42,7 +42,7 @@
 - [x] `backend/src/ai/move/get-status.service.ts` —
 - [x] `backend/src/ai/move/index.ts` —
 - [x] `backend/src/ai/move/trigger-move.controller.ts` —
-- [ ] `backend/src/ai/move/trigger-move.service.ts` —
+- [x] `backend/src/ai/move/trigger-move.service.ts` —
 
 ### backend/src/ai/pipeline/
 
