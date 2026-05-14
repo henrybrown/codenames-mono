@@ -62,7 +62,7 @@
 ### backend/src/ai/player/
 
 - [x] `backend/src/ai/player/ai-player.service.ts` — 625 lines, kept section dividers per >300 rule
-- [ ] `backend/src/ai/player/game-event-bus.ts` —
+- [x] `backend/src/ai/player/game-event-bus.ts` —
 - [ ] `backend/src/ai/player/index.ts` —
 
 ### backend/src/auth/
