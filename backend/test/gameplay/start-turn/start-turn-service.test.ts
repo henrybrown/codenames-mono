@@ -1,6 +1,6 @@
 import { createStartTurnService } from "@backend/game/gameplay/turns/start/start-turn.service";
 import { buildGameAggregate, buildTurn } from "../../__test-utils__/fixtures";
-import type { GamePlayer } from "@backend/game/access";
+import type { GameAggregate } from "@backend/game/state/types";
 
 vi.mock("@backend/shared/websocket", () => ({
   GameEventsEmitter: {
@@ -14,17 +14,7 @@ describe("startTurnService", () => {
     error: vi.fn(),
   } as any;
 
-  const playerCtx: GamePlayer = {
-    _id: 1,
-    publicId: "player-1",
-    _userId: 101,
-    _teamId: 1,
-    teamName: "Red",
-    publicName: "Bob",
-    role: "CODEBREAKER",
-  };
-
-  const createService = () => {
+  const createService = (gameState: GameAggregate | null) => {
     const gameplayHandler = vi.fn<(...args: any[]) => any>().mockImplementation(
       async (_state: any, _player: any, fn: any) => {
         return fn({
@@ -33,16 +23,33 @@ describe("startTurnService", () => {
       },
     );
 
-    return createStartTurnService(mockLogger)({ gameplayHandler });
+    const loadGameAggregate = vi.fn<(id: string) => Promise<GameAggregate | null>>().mockResolvedValue(gameState);
+
+    return createStartTurnService(mockLogger)({ gameplayHandler, loadGameAggregate });
+  };
+
+  const baseInput = {
+    gameId: "game-public-id",
+    roundNumber: 1,
+    userId: 101,
   };
 
   it("returns success when starting next turn", async () => {
     const gameState = buildGameAggregate();
-    // Set last turn to COMPLETED so next can start
-    gameState.currentRound!.turns = [buildTurn({ status: "COMPLETED", _teamId: 1, teamName: "Red" })];
+    // Set last turn to COMPLETED so next can start. publicId must match the
+    // uuid format required by turnSchema since validateStartTurn re-parses
+    // the full aggregate.
+    gameState.currentRound!.turns = [
+      buildTurn({
+        publicId: "00000000-0000-4000-8000-000000000001",
+        status: "COMPLETED",
+        _teamId: 1,
+        teamName: "Red",
+      }),
+    ];
 
-    const service = createService();
-    const result = await service({ gameState, playerContext: playerCtx });
+    const service = createService(gameState);
+    const result = await service(baseInput);
 
     expect(result.success).toBe(true);
     if (result.success) {
@@ -51,48 +58,46 @@ describe("startTurnService", () => {
     }
   });
 
-  it("rejects when no active round", async () => {
+  it("rejects when no current round", async () => {
     const gameState = buildGameAggregate({ currentRound: null });
 
-    const service = createService();
-    const result = await service({ gameState, playerContext: playerCtx });
+    const service = createService(gameState);
+    const result = await service(baseInput);
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.message).toBe("No active round");
+    if (!result.success) expect(result.message).toBe("No current round");
   });
 
   it("rejects when round not in progress", async () => {
     const gameState = buildGameAggregate();
     gameState.currentRound!.status = "COMPLETED";
 
-    const service = createService();
-    const result = await service({ gameState, playerContext: playerCtx });
+    const service = createService(gameState);
+    const result = await service(baseInput);
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.message).toBe("Round not in progress");
+    // Schema rejects via z.literal(ROUND_STATE.IN_PROGRESS) refinement on currentRound.status.
+    if (!result.success) expect(result.message).toContain("IN_PROGRESS");
   });
 
   it("rejects when active turn already exists", async () => {
     const gameState = buildGameAggregate(); // Default has an ACTIVE turn
 
-    const service = createService();
-    const result = await service({ gameState, playerContext: playerCtx });
+    const service = createService(gameState);
+    const result = await service(baseInput);
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.message).toBe("Active turn already exists");
+    if (!result.success) expect(result.message).toContain("Active turn already exists");
   });
 
   it("rejects when previous turn not completed", async () => {
     const gameState = buildGameAggregate();
-    gameState.currentRound!.turns = [buildTurn({ status: "ACTIVE" })]; // Still active but explicitly setting
-    // Remove the "ACTIVE" check by using a non-active, non-completed status
-    // Actually the test above already covers this case. Let's test "no turns" instead.
     gameState.currentRound!.turns = [];
 
-    const service = createService();
-    const result = await service({ gameState, playerContext: playerCtx });
+    const service = createService(gameState);
+    const result = await service(baseInput);
 
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.message).toBe("No previous turn found");
+    if (!result.success) expect(result.message).toContain("No previous turn found");
   });
 });
