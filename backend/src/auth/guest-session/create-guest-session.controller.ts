@@ -7,21 +7,13 @@ import {
   CreateGuestResponse,
 } from "./create-guest-session.validation";
 
-/** Dependencies required by the guest user controller */
 type ControllerDependencies = {
   createGuestUser: () => Promise<GuestUser>;
   login: GuestLoginService;
 };
 
-/** Creates a controller for handling guest user creation requests */
 export const createGuestUserController =
   ({ createGuestUser, login }: ControllerDependencies) =>
-  /**
-   * Handles HTTP request to create a new guest user
-   * @param req - Express request object
-   * @param res - Express response object
-   * @param next - Express error handling function
-   */
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       createGuestRequestSchema.parse(req.body);
@@ -29,7 +21,6 @@ export const createGuestUserController =
       const user = await createGuestUser();
       const session = await login(user.username);
 
-      // Set JWT token as HTTP-only cookie
       res.cookie("authToken", session.token, {
         httpOnly: true, // Prevents JavaScript access (security)
         secure: process.env.NODE_ENV === "production", // HTTPS only in production
