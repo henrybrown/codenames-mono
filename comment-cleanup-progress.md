@@ -91,7 +91,7 @@
 ### backend/src/chat/queries/
 
 - [x] `backend/src/chat/queries/get-messages.controller.ts` —
-- [ ] `backend/src/chat/queries/get-messages.service.ts` —
+- [x] `backend/src/chat/queries/get-messages.service.ts` —
 - [ ] `backend/src/chat/queries/index.ts` —
 
 ### backend/src/chat/submit/
