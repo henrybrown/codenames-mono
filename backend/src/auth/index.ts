@@ -32,7 +32,6 @@ export const initialize = (
   appLogger: AppLogger,
 ) => {
   const logger = appLogger.for({ feature: "auth" }).create();
-  /** Guest auth */
   const findUser = findByUsername(db);
   const newUser = createUser(db);
   const newSession = storeSession(db);
@@ -54,14 +53,11 @@ export const initialize = (
     login,
   });
 
-  /** User profile */
   const getUserHandler = getUserController({ db });
 
-  /** Auth routes */
   const authRouter = Router();
   authRouter.post("/guests", createGuestHandler);
 
-  /** User routes (JWT protected) */
   const userRouter = Router();
   userRouter.use(
     expressjwt({

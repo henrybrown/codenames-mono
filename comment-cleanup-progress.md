@@ -68,7 +68,7 @@
 ### backend/src/auth/
 
 - [x] `backend/src/auth/get-user.controller.ts` —
-- [ ] `backend/src/auth/index.ts` —
+- [x] `backend/src/auth/index.ts` —
 
 ### backend/src/auth/errors/
 
