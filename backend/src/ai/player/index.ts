@@ -30,12 +30,10 @@ export { gameEventBus, emitServerGameEvent } from "./game-event-bus";
 
 export interface PlayerDependencies {
   pipeline: CodenamesPipeline;
-  // Gameplay services
   giveClue: GiveClueService;
   makeGuess: MakeGuessService;
   endTurn: EndTurnService;
   loadGameAggregate: GameAggregateLoader;
-  // AI feature repositories
   createPipelineRun: RunCreator;
   findRunningPipeline: RunFinderByGame;
   updatePipelineStatus: RunStatusUpdater;
