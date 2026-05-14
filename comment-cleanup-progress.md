@@ -260,7 +260,7 @@
 - [x] `backend/src/game/state/load-game-aggregate.ts` —
 - [x] `backend/src/game/state/load-turn-aggregate.ts` —
 - [x] `backend/src/game/state/types.ts` —
-- [ ] `backend/src/game/state/validation.ts` —
+- [x] `backend/src/game/state/validation.ts` — kept "E.g." trailing comment as-is per don't-rewrite rule
 
 ### backend/src/game/state/helpers/
 

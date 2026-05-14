@@ -1,32 +1,20 @@
 import { z, ZodSchema } from "zod";
 import { GameAggregate } from "./types";
 
-/**
- * Branded type for validated game state
- */
 export type ValidatedGameState<T extends ZodSchema> = z.infer<T> & {
   readonly __brand: unique symbol;
 };
 
-/**
- * Validation result with discriminated union
- */
 export type GameplayValidationResult<T> =
   | { valid: true; data: T }
   | { valid: false; errors: GameplayValidationError[] };
 
-/**
- * Structured validation error
- */
 export type GameplayValidationError = {
   path: string;
   message: string;
   code?: string;
 };
 
-/**
- * Validates data against a Zod schema, returning branded type
- */
 export const validateWithZodSchema = <T extends z.ZodType>(
   schema: T,
   data: unknown,
@@ -40,9 +28,6 @@ export const validateWithZodSchema = <T extends z.ZodType>(
   return { valid: true, data: result.data as ValidatedGameState<T> };
 };
 
-/**
- * Converts Zod errors to our error format
- */
 const convertZodErrors = (error: z.ZodError): GameplayValidationError[] =>
   error.errors.map((err) => ({
     path: err.path.join("."),
@@ -50,19 +35,12 @@ const convertZodErrors = (error: z.ZodError): GameplayValidationError[] =>
     code: err.code,
   }));
 
-/**
- * Extracts the validated type from a validator function
- */
 type ExtractValidatedType<T> = T extends (
   data: GameAggregate,
 ) => GameplayValidationResult<infer U>
   ? U
   : never;
 
-/**
- * Creates intersection of all validator return types...
- *
- */
 type IntersectValidators<T extends readonly any[]> = T extends readonly [
   infer First,
   ...infer Rest,
