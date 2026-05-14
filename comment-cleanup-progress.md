@@ -25,7 +25,7 @@
 
 - [x] `backend/src/ai/models/ai-health.ts` —
 - [x] `backend/src/ai/models/index.ts` —
-- [ ] `backend/src/ai/models/llm.service.ts` —
+- [x] `backend/src/ai/models/llm.service.ts` —
 
 ### backend/src/ai/models/providers/
 

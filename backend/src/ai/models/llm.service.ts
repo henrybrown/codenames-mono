@@ -35,9 +35,6 @@ export type LLMGenerateOptions = {
   maxTokens?: number;
 };
 
-/**
- * Creates a universal LLM service for AI gameplay decisions
- */
 export const createLLMService = (
   config: LLMConfig,
   httpClient: HttpClient,
@@ -70,9 +67,6 @@ export const createLLMService = (
 
   let requestCount = 0;
 
-  /**
-   * Generate text/JSON from the LLM
-   */
   const generate = async (options: LLMGenerateOptions): Promise<string> => {
     const requestId = ++requestCount;
     const startTime = Date.now();
@@ -119,9 +113,6 @@ export const createLLMService = (
     }
   };
 
-  /**
-   * Generate and parse JSON response
-   */
   const generateJSON = async <T = unknown>(
     prompt: string,
     overrides?: Omit<LLMGenerateOptions, "prompt" | "format">,
@@ -179,7 +170,4 @@ export const createLLMService = (
   };
 };
 
-/**
- * Type for the LLM service
- */
 export type LLMService = ReturnType<typeof createLLMService>;
