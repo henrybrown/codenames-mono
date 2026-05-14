@@ -10,9 +10,6 @@ import {
   sendSuccess,
 } from "@backend/shared/http-middleware/controller-helpers";
 
-/**
- * Request validation schemas
- */
 const submitMessageParamsSchema = z.object({
   gameId: z.string().min(1, "Game ID is required"),
 });
@@ -22,16 +19,10 @@ const submitMessageBodySchema = z.object({
   teamOnly: z.boolean().default(false),
 });
 
-/**
- * Dependencies required by the controller
- */
 export interface SubmitMessageControllerDeps {
   submitMessage: ReturnType<typeof submitMessageService>;
 }
 
-/**
- * Creates the submit message controller
- */
 export const submitMessageController = (deps: SubmitMessageControllerDeps) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
