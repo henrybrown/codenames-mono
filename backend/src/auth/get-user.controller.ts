@@ -7,17 +7,10 @@ import {
   sendSuccess,
 } from "@backend/shared/http-middleware/controller-helpers";
 
-/**
- * Dependencies for the get user controller
- */
 export type Dependencies = {
   db: Kysely<DB>;
 };
 
-/**
- * Get user by username controller
- * Returns user information for the specified username
- */
 export const getUserController =
   ({ db }: Dependencies) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
