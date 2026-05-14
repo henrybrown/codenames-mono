@@ -1,4 +1,4 @@
-import { createEndTurnService } from "@backend/game/gameplay/turns/end-turn.service";
+import { createEndTurnService } from "@backend/game/gameplay/turns/end/end-turn.service";
 import { buildGameAggregate, buildTurn } from "../../__test-utils__/fixtures";
 import type { GamePlayer } from "@backend/game/access";
 

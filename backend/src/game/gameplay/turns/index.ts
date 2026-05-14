@@ -5,10 +5,8 @@ import type { AppLogger } from "@backend/shared/logging";
 
 import { giveClue } from "./clue";
 import { makeGuess } from "./guess";
-import { createEndTurnService } from "./end-turn.service";
-import { createEndTurnController } from "./end-turn.controller";
-import { createStartTurnService } from "./start-turn.service";
-import { createStartTurnController } from "./start-turn.controller";
+import { startTurn } from "./start";
+import { endTurn } from "./end";
 
 // todo: review turn action/service logic generally - should be much cleaner/ledgible
 
@@ -33,21 +31,15 @@ export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
     loadGameAggregate: deps.loadGameAggregate,
   });
 
-  /** End turn (inline — no sub-feature folder yet) */
-  const endService = createEndTurnService(logger)({
+  /** Start turn (sub-feature) */
+  const start = startTurn(logger)({
     gameplayHandler: deps.gameplayHandler,
-  });
-  const endController = createEndTurnController(logger)({
-    endTurn: endService,
     loadGameAggregate: deps.loadGameAggregate,
   });
 
-  /** Start turn (inline — no sub-feature folder yet) */
-  const startService = createStartTurnService(logger)({
+  /** End turn (sub-feature) */
+  const end = endTurn(logger)({
     gameplayHandler: deps.gameplayHandler,
-  });
-  const startController = createStartTurnController(logger)({
-    startTurn: startService,
     loadGameAggregate: deps.loadGameAggregate,
   });
 
@@ -55,17 +47,17 @@ export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
     controllers: {
       ...clue.controllers,
       ...guess.controllers,
-      endTurn: endController,
-      startTurn: startController,
+      ...start.controllers,
+      ...end.controllers,
     },
     services: {
       ...clue.services,
       ...guess.services,
-      endTurn: endService,
-      startTurn: startService,
+      ...start.services,
+      ...end.services,
     },
   };
 };
 
-export type { EndTurnService, EndTurnResult } from "./end-turn.service";
-export type { StartTurnService, StartTurnResult } from "./start-turn.service";
+export type { EndTurnService, EndTurnResult } from "./end";
+export type { StartTurnService, StartTurnResult } from "./start";

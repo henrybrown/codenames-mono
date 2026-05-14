@@ -11,7 +11,6 @@ import {
   currentRoundSchema,
   cardSchema,
   turnSchema,
-  teamSchema,
 } from "@backend/game/state/types";
 import {
   validateWithZodSchema,
@@ -61,31 +60,11 @@ const makeGuessActionSchema = gameplayBaseSchema.extend({
     path: ["currentRound", "turns"],
   });
 
-const endTurnSchema = gameplayBaseSchema.extend({
-  status: z.literal(GAME_STATE.IN_PROGRESS),
-  currentRound: currentRoundSchema.extend({
-    status: z.literal(ROUND_STATE.IN_PROGRESS),
-    turns: z.array(turnSchema).min(1, "Must have turns to end"),
-  }),
-});
-
-const startTurnSchema = gameplayBaseSchema.extend({
-  status: z.literal(GAME_STATE.IN_PROGRESS),
-  currentRound: currentRoundSchema.extend({
-    status: z.literal(ROUND_STATE.IN_PROGRESS),
-  }),
-  teams: z.array(teamSchema).min(2, "Must have at least 2 teams"),
-});
-
 /**
  * Branded types for each action
  */
 export type MakeGuessValidGameState = ValidatedGameState<
   typeof makeGuessActionSchema
->;
-export type EndTurnValidGameState = ValidatedGameState<typeof endTurnSchema>;
-export type StartTurnValidGameState = ValidatedGameState<
-  typeof startTurnSchema
 >;
 
 /**
@@ -97,19 +76,19 @@ export function validateTurnForGuessing(
   if (!turn) {
     return { valid: false, error: "No active turn" };
   }
-  
+
   if (turn.status !== "ACTIVE") {
     return { valid: false, error: "Turn is not active" };
   }
-  
+
   if (!turn.clue) {
     return { valid: false, error: "No clue given yet" };
   }
-  
+
   if (turn.guessesRemaining <= 0) {
     return { valid: false, error: "No guesses remaining" };
   }
-  
+
   return { valid: true };
 }
 
@@ -137,16 +116,3 @@ export const validateMakeGuess = (
   }
   return schemaResult;
 };
-
-export const validateEndTurn = (
-  data: GameAggregate,
-): GameplayValidationResult<EndTurnValidGameState> => {
-  return validateWithZodSchema(endTurnSchema, data);
-};
-
-export const validateStartTurn = (
-  data: GameAggregate,
-): GameplayValidationResult<StartTurnValidGameState> => {
-  return validateWithZodSchema(startTurnSchema, data);
-};
-

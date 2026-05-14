@@ -14,7 +14,7 @@ import { GAME_TYPE } from "@codenames/shared/types";
 import {
   withTurnContext,
   type ResolvePlayer,
-} from "./shared/with-turn-context";
+} from "../shared/with-turn-context";
 import {
   endTurnSingleDeviceBody,
   endTurnMultiDeviceBody,

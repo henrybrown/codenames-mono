@@ -3,7 +3,7 @@
  * Allows codebreakers to manually end their turn
  */
 
-import type { GameplayHandler } from "../gameplay-actions";
+import type { GameplayHandler } from "../../gameplay-actions";
 import type { AppLogger } from "@backend/shared/logging";
 import type { GameAggregate } from "@backend/game/state/types";
 import type { GamePlayer } from "@backend/game/access";
