@@ -9,9 +9,6 @@ export interface AiHealth {
   gpuPercent: number;
 }
 
-/**
- * AI status response
- */
 export interface AiStatus {
   available: boolean; // Is it AI's turn and can trigger?
   thinking: boolean; // Is pipeline currently running?
@@ -31,26 +28,17 @@ export interface HealthAwareLLM {
   } | undefined;
 }
 
-/**
- * Dependencies required by the service
- */
 export interface GetStatusServiceDeps {
   findRunningPipeline: RunFinderByGame;
   loadGameAggregate: GameAggregateLoader;
   llm: HealthAwareLLM;
 }
 
-/**
- * Service result types
- */
 export type GetStatusResult =
   | { status: "success"; aiStatus: AiStatus }
   | { status: "game-not-found"; gameId: string }
   | { status: "unauthorized"; gameId: string; userId: number };
 
-/**
- * Creates the get status service
- */
 export const getStatusService = (deps: GetStatusServiceDeps) =>
   async (gameId: string, userId: number): Promise<GetStatusResult> => {
     // Fire-and-forget health probe. Throttled internally; failures are logged at debug.
@@ -71,7 +59,6 @@ export const getStatusService = (deps: GetStatusServiceDeps) =>
         ? { placement: rawHealth.placement, gpuPercent: rawHealth.gpuPercent }
         : undefined;
 
-    // Check for running pipeline
     const runningPipeline = await deps.findRunningPipeline(aggregate._id);
 
     if (runningPipeline) {
@@ -86,7 +73,6 @@ export const getStatusService = (deps: GetStatusServiceDeps) =>
       };
     }
 
-    // Check if it's AI's turn
     if (!aggregate.currentRound) {
       return {
         status: "success",
