@@ -78,7 +78,7 @@
 ### backend/src/auth/guest-session/
 
 - [x] `backend/src/auth/guest-session/create-guest-session.controller.ts` — kept "Keep this for debugging, remove in production" — context-light TODO worth flagging
-- [ ] `backend/src/auth/guest-session/create-guest-session.validation.ts` —
+- [x] `backend/src/auth/guest-session/create-guest-session.validation.ts` —
 - [ ] `backend/src/auth/guest-session/create-guest-user.service.ts` —
 - [ ] `backend/src/auth/guest-session/guest-login.service.ts` —
 - [ ] `backend/src/auth/guest-session/username-generator.ts` —
