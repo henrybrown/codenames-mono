@@ -7,7 +7,7 @@
  * passing in narrow mock ops and inspecting call counts plus the returned
  * aftermath shape.
  */
-import { applyGuessOutcome } from "@backend/game/gameplay/turns/shared/turn-actions";
+import { applyGuessOutcome } from "@backend/game/gameplay/turns/guess/apply-guess-outcome";
 import {
   buildGameAggregate,
   buildCard,

@@ -10,7 +10,7 @@ import * as gameEventsRepository from "@backend/shared/data-access/repositories/
 import * as giveClueActions from "./turns/clue/give-clue.action";
 import * as makeGuessActions from "./turns/guess/make-guess.action";
 import * as makeGuessRules from "./turns/guess/make-guess.rules";
-import * as turnActions from "./turns/shared/turn-actions";
+import { applyGuessOutcome } from "./turns/guess/apply-guess-outcome";
 import * as rounds from "./rounds";
 import * as games from "./games";
 import { createEndTurnAction, validateEndTurn } from "./turns/end";
@@ -120,7 +120,7 @@ export const gameplayOperations = (
       const guessData = result.data;
       const postGuessState = await reload();
 
-      const aftermath = await turnActions.applyGuessOutcome(
+      const aftermath = await applyGuessOutcome(
         {
           // Inner adapters between Result-typed actions and the
           // GuessOutcomeOps interface (which expects Promise<GameAggregate>).

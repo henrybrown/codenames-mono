@@ -1,10 +1,17 @@
 /**
- * Post-guess orchestration.
+ * Post-guess cascade orchestrator.
  *
- * `applyGuessOutcome` is the game-logic orchestrator: given the
- * outcome of a guess and the relevant ops, it decides whether the
- * turn ends, the round ends, the game ends — and runs the matching
- * ops. All within the caller's transaction.
+ * Given the outcome of a just-completed guess, drives any cascading
+ * turn-end / round-end / game-end via the supplied ops. Returns a
+ * description of what fired (used by the service to decide which
+ * websocket events to emit after the transaction commits).
+ *
+ * This is game logic, not transport. WebSocket emits stay in the
+ * service layer based on the returned aftermath.
+ *
+ * Lives in guess/ because it's the post-guess flow. Imports from
+ * rounds/ (winning-conditions, end-round side-effects) reflect the
+ * cascade's reach into round-lifecycle.
  */
 import { CODEBREAKER_OUTCOME } from "@codenames/shared/types";
 import type { GameAggregate } from "@backend/game/state/types";
