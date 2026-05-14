@@ -86,7 +86,7 @@
 ### backend/src/chat/
 
 - [x] `backend/src/chat/game-message.ts` —
-- [ ] `backend/src/chat/index.ts` —
+- [x] `backend/src/chat/index.ts` —
 
 ### backend/src/chat/queries/
 

@@ -49,13 +49,11 @@ export type GameplayFeature = {
 };
 
 export type ChatModuleDependencies = {
-  // Infra
   app: Express;
   db: Kysely<DB>;
   auth: AuthMiddleware;
   httpLogger: HttpLoggerHandler;
   appLogger: AppLogger;
-  // Cross-feature
   gameplay: GameplayFeature;
 };
 
@@ -64,19 +62,16 @@ export const initialize = (deps: ChatModuleDependencies) => {
 
   const logger = appLogger.for({ feature: "chat" }).create();
 
-  /** Repositories — bound once from db, threaded down as typed functions */
   const repositories = {
     findMessagesByGame: gameMessagesRepo.findMessagesByGame(db),
     createGameMessage:  gameMessagesRepo.createMessage(db),
   };
 
-  /** Access — partial-applied with chat's repos */
   const requireMember = requireGameMember({
     getGameByPublicId: gamesRepo.findGameByPublicId(db),
     getPlayerByGameAndUser: playersRepo.findPlayerByGameAndUser(db),
   });
 
-  /** Sub-features */
   const getMessagesFeature = createGetMessages(logger)({
     loadGameAggregate: gameplay.state.loadGameAggregate,
     findMessagesByGame: repositories.findMessagesByGame,
@@ -87,7 +82,6 @@ export const initialize = (deps: ChatModuleDependencies) => {
     createGameMessage: repositories.createGameMessage,
   });
 
-  /** Routes */
   const router = Router();
   router.use(httpLogger(logger));
   router.use(auth);
