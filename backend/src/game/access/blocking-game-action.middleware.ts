@@ -35,7 +35,6 @@ export const blockingGameAction = (actionName: string) => {
       return;
     }
 
-    // Reject if another action is in-flight for this game
     const existing = activeLocks.get(gameId);
     if (existing) {
       res.status(409).json({
@@ -51,7 +50,6 @@ export const blockingGameAction = (actionName: string) => {
       return;
     }
 
-    // Acquire the lock
     const release = () => {
       const current = activeLocks.get(gameId);
       // Only release if this is still our lock (guards against double-release)
@@ -74,7 +72,6 @@ export const blockingGameAction = (actionName: string) => {
 
     activeLocks.set(gameId, lock);
 
-    // Release when response completes or client disconnects
     res.on("finish", release);
     res.on("close", release);
 
