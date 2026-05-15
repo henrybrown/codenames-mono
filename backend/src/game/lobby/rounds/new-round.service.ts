@@ -8,17 +8,11 @@ import { validate as checkRoleAssignmentRules } from "./assign-roles.rules";
 import { validate as checkCardDealingRules } from "./deal-cards.rules";
 import { UnexpectedLobbyError } from "../errors/lobby.errors";
 
-/**
- * Input parameters for round creation
- */
 export type RoundCreationInput = {
   gameId: string;
   userId: number;
 };
 
-/**
- * Successful round creation result
- */
 export type RoundCreationSuccess = {
   _id: number;
   roundNumber: number;
@@ -36,9 +30,6 @@ export type RoundCreationSuccess = {
   }>;
 };
 
-/**
- * Combined result type for round creation
- */
 export type RoundCreationResult =
   | { success: true; data: RoundCreationSuccess }
   | {
@@ -49,20 +40,11 @@ export type RoundCreationResult =
       validationErrors?: LobbyValidationError[];
     };
 
-/**
- * Dependencies required by the round creation service
- */
 export type RoundCreationDependencies = {
   loadLobbyAggregate: LobbyAggregateLoader;
   lobbyHandler: TransactionalHandler<LobbyOperations>;
 };
 
-/**
- * Creates a service for handling round creation with business rule validation
- *
- * @param dependencies - Required external dependencies
- * @returns Service function for creating rounds
- */
 export const roundCreationService = (dependencies: RoundCreationDependencies) => {
   return async (input: RoundCreationInput): Promise<RoundCreationResult> => {
     const lobbyState = await dependencies.loadLobbyAggregate(input.gameId, input.userId);
@@ -75,7 +57,6 @@ export const roundCreationService = (dependencies: RoundCreationDependencies) =>
       };
     }
 
-    // Check if user can modify game (basic permission check)
     if (!lobbyState.userContext.canModifyGame) {
       return {
         success: false,
@@ -99,14 +80,12 @@ export const roundCreationService = (dependencies: RoundCreationDependencies) =>
     const operationResult = await dependencies.lobbyHandler(async (ops) => {
       const newRound = await ops.createRound(validationResult.data);
 
-      // Get fresh lobby state after round creation to validate card dealing
       let currentState = await ops.loadLobbyAggregate(input.gameId, input.userId);
 
       if (!currentState) {
         throw new UnexpectedLobbyError("Failed to get lobby state after round creation");
       }
 
-      // Deal cards
       const dealValidation = checkCardDealingRules(currentState);
       if (!dealValidation.valid) {
         throw new UnexpectedLobbyError(`Cannot deal cards: ${dealValidation.errors[0].message}`);
@@ -114,14 +93,12 @@ export const roundCreationService = (dependencies: RoundCreationDependencies) =>
 
       await ops.dealCards(dealValidation.data);
 
-      // Get fresh state again after dealing cards
       currentState = await ops.loadLobbyAggregate(input.gameId, input.userId);
 
       if (!currentState) {
         throw new UnexpectedLobbyError("Failed to get lobby state after dealing cards");
       }
 
-      // Assign roles
       const validatedForRoles = checkRoleAssignmentRules(currentState);
       if (!validatedForRoles.valid) {
         throw new UnexpectedLobbyError(
@@ -131,7 +108,6 @@ export const roundCreationService = (dependencies: RoundCreationDependencies) =>
 
       await ops.assignPlayerRoles(validatedForRoles.data);
 
-      // Get final state to return full round data
       const finalState = await ops.loadLobbyAggregate(input.gameId, input.userId);
 
       if (!finalState || !finalState.currentRound) {

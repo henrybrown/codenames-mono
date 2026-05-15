@@ -7,9 +7,6 @@ import {
   validateWithZodSchema
 } from "../state/validation";
 
-/**
- * Schema for validating round start
- */
 const startRoundValidationSchema = lobbyBaseSchema
   .refine(
     (data) => data.currentRound !== null && data.currentRound !== undefined,
@@ -41,11 +38,9 @@ const startRoundValidationSchema = lobbyBaseSchema
   )
   .refine(
     (data) => {
-      // In AI mode, skip player count validation (AI bots will be added later)
       if (data.aiMode) {
         return true;
       }
-      // In normal mode, require at least 2 players per team
       return data.teams.every((team) => team.players.length >= 2);
     },
     {
@@ -61,14 +56,8 @@ const startRoundValidationSchema = lobbyBaseSchema
     },
   }));
 
-/**
- * Type for validated start round state
- */
 export type StartRoundValidLobbyState = ValidatedLobbyState<typeof startRoundValidationSchema>;
 
-/**
- * Validates if a round can be started
- */
 export function validate(
   data: LobbyAggregate
 ): LobbyValidationResult<StartRoundValidLobbyState> {

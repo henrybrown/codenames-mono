@@ -5,9 +5,6 @@ import type {
 } from "@backend/shared/data-access/repositories/player-roles.repository";
 import type { AssignRolesValidLobbyState } from "./assign-roles.rules";
 
-/**
- * Type for role assignment input
- */
 type RoleAssignmentInput = {
   playerId: number;
   roundId: number;
@@ -41,7 +38,6 @@ export const assignRolesRandomly = (
     const assignments: RoleAssignmentInput[] = [];
 
     for (const team of gameState.teams) {
-      // Filter to players who haven't been codemaster yet
       const eligiblePlayers = team.players.filter(
         (player) => !previousCodemasters.includes(player._id),
       );
@@ -69,7 +65,6 @@ export const assignRolesRandomly = (
       }
     }
 
-    // Persist role assignments to database
     return await assignPlayerRoles(assignments);
   };
 };

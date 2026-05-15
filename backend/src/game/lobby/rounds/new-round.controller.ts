@@ -4,9 +4,6 @@ import type { RoundCreationService } from "./new-round.service";
 import { pickStatus } from "@backend/shared/http/result-status";
 import { z } from "zod";
 
-/**
- * Request validation schema for new round creation
- */
 export const newRoundRequestSchema = z.object({
   params: z.object({
     gameId: z.string().min(1, "Game ID is required"),
@@ -16,9 +13,6 @@ export const newRoundRequestSchema = z.object({
   }),
 });
 
-/**
- * Response schema for new round creation
- */
 export const newRoundResponseSchema = z.object({
   success: z.literal(true),
   data: z.object({
@@ -39,9 +33,6 @@ export const newRoundResponseSchema = z.object({
   }),
 });
 
-/**
- * Error response schema for new round creation failures
- */
 export const newRoundErrorSchema = z.object({
   success: z.literal(false),
   error: z.string(),
@@ -59,34 +50,15 @@ export const newRoundErrorSchema = z.object({
     .optional(),
 });
 
-/**
- * Type definitions
- */
 export type ValidatedNewRoundRequest = z.infer<typeof newRoundRequestSchema>;
 export type NewRoundResponse = z.infer<typeof newRoundResponseSchema>;
 export type NewRoundErrorResponse = z.infer<typeof newRoundErrorSchema>;
 
-/**
- * Dependencies required by the new round controller
- */
 export type Dependencies = {
   createRound: RoundCreationService;
 };
 
-/**
- * Creates a controller for handling new round creation
- *
- * @param dependencies - Service dependencies
- * @returns Express request handler
- */
 export const newRoundController = ({ createRound }: Dependencies) => {
-  /**
-   * Handles HTTP request to create a new round in a game
-   *
-   * @param req - Express request with game ID
-   * @param res - Express response object
-   * @param next - Express error handling function
-   */
   return async (
     req: Request,
     res: Response,

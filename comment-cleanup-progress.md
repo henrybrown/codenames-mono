@@ -211,21 +211,21 @@
 
 ### backend/src/game/lobby/rounds/
 
-- [ ] `backend/src/game/lobby/rounds/assign-roles.actions.ts` —
-- [ ] `backend/src/game/lobby/rounds/assign-roles.rules.ts` —
-- [ ] `backend/src/game/lobby/rounds/deal-cards.actions.ts` —
-- [ ] `backend/src/game/lobby/rounds/deal-cards.controller.ts` —
-- [ ] `backend/src/game/lobby/rounds/deal-cards.rules.ts` —
-- [ ] `backend/src/game/lobby/rounds/deal-cards.service.ts` —
-- [ ] `backend/src/game/lobby/rounds/index.ts` —
-- [ ] `backend/src/game/lobby/rounds/new-round.actions.ts` —
-- [ ] `backend/src/game/lobby/rounds/new-round.controller.ts` —
-- [ ] `backend/src/game/lobby/rounds/new-round.rules.ts` —
-- [ ] `backend/src/game/lobby/rounds/new-round.service.ts` —
-- [ ] `backend/src/game/lobby/rounds/start-round.actions.ts` —
-- [ ] `backend/src/game/lobby/rounds/start-round.controller.ts` —
-- [ ] `backend/src/game/lobby/rounds/start-round.rules.ts` —
-- [ ] `backend/src/game/lobby/rounds/start-round.service.ts` —
+- [x] `backend/src/game/lobby/rounds/assign-roles.actions.ts` —
+- [x] `backend/src/game/lobby/rounds/assign-roles.rules.ts` —
+- [x] `backend/src/game/lobby/rounds/deal-cards.actions.ts` —
+- [x] `backend/src/game/lobby/rounds/deal-cards.controller.ts` —
+- [x] `backend/src/game/lobby/rounds/deal-cards.rules.ts` —
+- [x] `backend/src/game/lobby/rounds/deal-cards.service.ts` —
+- [x] `backend/src/game/lobby/rounds/index.ts` —
+- [x] `backend/src/game/lobby/rounds/new-round.actions.ts` —
+- [x] `backend/src/game/lobby/rounds/new-round.controller.ts` —
+- [x] `backend/src/game/lobby/rounds/new-round.rules.ts` —
+- [x] `backend/src/game/lobby/rounds/new-round.service.ts` —
+- [x] `backend/src/game/lobby/rounds/start-round.actions.ts` —
+- [x] `backend/src/game/lobby/rounds/start-round.controller.ts` —
+- [x] `backend/src/game/lobby/rounds/start-round.rules.ts` —
+- [x] `backend/src/game/lobby/rounds/start-round.service.ts` —
 
 ### backend/src/game/lobby/setup/
 

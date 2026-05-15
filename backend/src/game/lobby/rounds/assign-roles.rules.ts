@@ -7,9 +7,6 @@ import {
   validateWithZodSchema
 } from "../state/validation";
 
-/**
- * Schema for validating role assignment
- */
 const assignRolesValidationSchema = lobbyBaseSchema
   .refine(
     (data) => data.currentRound !== null && data.currentRound !== undefined,
@@ -55,14 +52,8 @@ const assignRolesValidationSchema = lobbyBaseSchema
     currentRound: data.currentRound!,
   }));
 
-/**
- * Type for validated assign roles state
- */
 export type AssignRolesValidLobbyState = ValidatedLobbyState<typeof assignRolesValidationSchema>;
 
-/**
- * Validates if roles can be assigned
- */
 export function validate(
   data: LobbyAggregate
 ): LobbyValidationResult<AssignRolesValidLobbyState> {

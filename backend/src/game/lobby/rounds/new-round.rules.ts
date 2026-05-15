@@ -7,9 +7,6 @@ import {
   validateWithZodSchema
 } from "../state/validation";
 
-/**
- * Schema for validating new round creation
- */
 const newRoundValidationSchema = lobbyBaseSchema
   .refine(
     (data) => data.status === GAME_STATE.IN_PROGRESS,
@@ -37,14 +34,8 @@ const newRoundValidationSchema = lobbyBaseSchema
     })
   );
 
-/**
- * Type for validated new round state
- */
 export type NewRoundValidLobbyState = ValidatedLobbyState<typeof newRoundValidationSchema>;
 
-/**
- * Validates if a new round can be created
- */
 export function validate(
   data: LobbyAggregate
 ): LobbyValidationResult<NewRoundValidLobbyState> {

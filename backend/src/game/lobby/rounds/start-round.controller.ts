@@ -4,9 +4,6 @@ import { StartRoundService } from "./start-round.service";
 import { pickStatus } from "@backend/shared/http/result-status";
 import { z } from "zod";
 
-/**
- * Request validation schema for round start
- */
 export const startRoundRequestSchema = z.object({
   params: z.object({
     gameId: z.string().min(1, "Game ID is required"),
@@ -20,16 +17,10 @@ export const startRoundRequestSchema = z.object({
   }),
 });
 
-/**
- * Type definition for validated request
- */
 export type ValidatedStartRoundRequest = z.infer<
   typeof startRoundRequestSchema
 >;
 
-/**
- * Response schema for round start
- */
 export const startRoundResponseSchema = z.object({
   success: z.boolean(),
   data: z.object({
@@ -40,9 +31,6 @@ export const startRoundResponseSchema = z.object({
   }),
 });
 
-/**
- * Type definition for error response
- */
 export type StartRoundErrorResponse = {
   success: false;
   error: string;
@@ -51,28 +39,13 @@ export type StartRoundErrorResponse = {
   };
 };
 
-/**
- * Type definition for start round response
- */
 export type StartRoundResponse = z.infer<typeof startRoundResponseSchema>;
 
-/**
- * Dependencies required by the start round controller
- */
 export type Dependencies = {
   startRound: StartRoundService;
 };
 
-/**
- * Creates a controller for handling round start
- */
 export const startRoundController = ({ startRound }: Dependencies) => {
-  /**
-   * Handles HTTP request to start a round in a game
-   * @param req - Express request with game ID and round number
-   * @param res - Express response object
-   * @param next - Express error handling function
-   */
   return async (
     req: Request,
     res: Response,
@@ -113,7 +86,6 @@ export const startRoundController = ({ startRound }: Dependencies) => {
         return;
       }
 
-      // Only expose round number and status, no internal IDs
       const response: StartRoundResponse = {
         success: true,
         data: {

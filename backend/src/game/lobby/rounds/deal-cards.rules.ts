@@ -7,9 +7,6 @@ import {
   validateWithZodSchema
 } from "../state/validation";
 
-/**
- * Schema for validating card dealing
- */
 const createDealCardsValidationSchema = (context?: { redeal?: boolean }) => lobbyBaseSchema
   .refine(
     (data) => data.currentRound !== null && data.currentRound !== undefined,
@@ -27,7 +24,6 @@ const createDealCardsValidationSchema = (context?: { redeal?: boolean }) => lobb
   )
   .refine(
     (data) => {
-      // Allow re-dealing if redeal flag is set in context
       const isRedeal = context?.redeal === true;
       if (isRedeal) return true;
       
@@ -50,14 +46,8 @@ const createDealCardsValidationSchema = (context?: { redeal?: boolean }) => lobb
     currentRound: data.currentRound!,
   }));
 
-/**
- * Type for validated deal cards state
- */
 export type DealCardsValidLobbyState = ValidatedLobbyState<ReturnType<typeof createDealCardsValidationSchema>>;
 
-/**
- * Validates if cards can be dealt
- */
 export function validate(
   data: LobbyAggregate,
   context?: { redeal?: boolean }

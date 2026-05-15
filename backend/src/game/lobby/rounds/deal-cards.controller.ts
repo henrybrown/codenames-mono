@@ -4,9 +4,6 @@ import type { DealCardsService } from "./deal-cards.service";
 import { pickStatus } from "@backend/shared/http/result-status";
 import { z } from "zod";
 
-/**
- * Request validation schema for dealing cards
- */
 export const dealCardsRequestSchema = z.object({
   params: z.object({
     gameId: z.string().min(1, "Game ID is required"),
@@ -25,14 +22,8 @@ export const dealCardsRequestSchema = z.object({
     .default({}),
 });
 
-/**
- * Type definition for validated request
- */
 export type ValidatedDealCardsRequest = z.infer<typeof dealCardsRequestSchema>;
 
-/**
- * Type definition for error response
- */
 export type DealCardsErrorResponse = {
   success: false;
   error: string;
@@ -41,9 +32,6 @@ export type DealCardsErrorResponse = {
   };
 };
 
-/**
- * Type definition for deal cards response
- */
 export type DealCardsResponse = {
   success: boolean;
   data: {
@@ -54,24 +42,11 @@ export type DealCardsResponse = {
   };
 };
 
-/**
- * Dependencies required by the deal cards controller
- */
 export type Dependencies = {
   dealCards: DealCardsService;
 };
 
-/**
- * Creates a controller for handling card dealing
- */
 export const dealCardsController = ({ dealCards }: Dependencies) => {
-  /**
-   * Handles HTTP request to deal random cards for a round
-   *
-   * @param req - Express request with game ID, round ID, and optional deck parameters
-   * @param res - Express response object
-   * @param next - Express error handling function
-   */
   return async (
     req: Request,
     res: Response,

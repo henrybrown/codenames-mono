@@ -5,26 +5,17 @@ import type { LobbyOperations } from "../lobby-actions";
 
 import { validate as checkRoundStartRules } from "./start-round.rules";
 
-/**
- * Input parameters for starting a round
- */
 export type StartRoundInput = {
   gameId: string;
   roundNumber: number;
   userId: number;
 };
 
-/**
- * Successful round start result
- */
 export type StartRoundSuccess = {
   roundNumber: number;
   status: string;
 };
 
-/**
- * Combined result type for round start
- */
 export type StartRoundResult =
   | { success: true; data: StartRoundSuccess }
   | {
@@ -35,20 +26,11 @@ export type StartRoundResult =
       validationErrors?: LobbyValidationError[];
     };
 
-/**
- * Dependencies required by the start round service
- */
 export type StartRoundDependencies = {
   loadLobbyAggregate: LobbyAggregateLoader;
   lobbyHandler: TransactionalHandler<LobbyOperations>;
 };
 
-/**
- * Creates a service for handling round start with business rule validation
- *
- * @param dependencies - Required external dependencies
- * @returns Service function for starting rounds
- */
 export const startRoundService = (dependencies: StartRoundDependencies) => {
   return async (input: StartRoundInput): Promise<StartRoundResult> => {
     const lobbyState = await dependencies.loadLobbyAggregate(input.gameId, input.userId);
@@ -61,7 +43,6 @@ export const startRoundService = (dependencies: StartRoundDependencies) => {
       };
     }
 
-    // Check if user can modify game (basic permission check)
     if (!lobbyState.userContext.canModifyGame) {
       return {
         success: false,

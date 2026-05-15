@@ -15,21 +15,18 @@ export interface RoundsDependencies {
 }
 
 export const createRounds = (deps: RoundsDependencies) => {
-  /** New round */
   const newRoundService = roundCreationService({
     loadLobbyAggregate: deps.loadLobbyAggregate,
     lobbyHandler: deps.lobbyHandler,
   });
   const newRound = newRoundController({ createRound: newRoundService });
 
-  /** Deal cards */
   const dealService = dealCardsService({
     loadLobbyAggregate: deps.loadLobbyAggregate,
     lobbyHandler: deps.lobbyHandler,
   });
   const dealCards = dealCardsController({ dealCards: dealService });
 
-  /** Start round */
   const startService = startRoundService({
     loadLobbyAggregate: deps.loadLobbyAggregate,
     lobbyHandler: deps.lobbyHandler,
