@@ -2,15 +2,6 @@ import { Kysely } from "kysely";
 import { DB } from "../../db/db.types";
 import { UnexpectedRepositoryError } from "./repository.errors";
 
-/**
- * ==================
- * REPOSITORY TYPES
- * ==================
- */
-
-/**
- * Raw event data from database
- */
 export interface GameEventRow {
   id: number;
   public_id: string;
@@ -23,9 +14,6 @@ export interface GameEventRow {
   created_at: Date;
 }
 
-/**
- * Parameters for creating a game event
- */
 export interface CreateEventInput {
   gameId: number;
   eventType: string;
@@ -35,27 +23,8 @@ export interface CreateEventInput {
   metadata?: Record<string, any>;
 }
 
-/**
- * ==================
- * REPOSITORY FUNCTIONS
- * ==================
- */
-
-/**
- * Creates a new game event
- *
- * @param db - Database connection (can be transaction or main connection)
- * @returns Function that creates an event
- */
 export const createEvent =
   (db: Kysely<DB>) =>
-  /**
-   * Inserts a new game event into the database
-   *
-   * @param event - Event data to insert
-   * @returns Newly created event record
-   * @throws {UnexpectedRepositoryError} If insertion fails
-   */
   async (event: CreateEventInput): Promise<GameEventRow> => {
     try {
       const publicId = `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -93,21 +62,8 @@ export const createEvent =
     }
   };
 
-/**
- * Gets all events for a game, ordered chronologically
- *
- * @param db - Database connection
- * @returns Function that retrieves events by game ID
- */
 export const getEventsByGameId =
   (db: Kysely<DB>) =>
-  /**
-   * Fetches all events for a given game
-   *
-   * @param gameId - The game's internal ID
-   * @returns List of events in chronological order
-   * @throws {UnexpectedRepositoryError} If query fails
-   */
   async (gameId: number): Promise<GameEventRow[]> => {
     try {
       const results = await db

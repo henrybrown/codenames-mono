@@ -3,18 +3,10 @@ import { DB } from "../../db/db.types";
 import { z } from "zod";
 import { UnexpectedRepositoryError } from "./repository.errors";
 
-/**
- * ==================
- * REPOSITORY TYPES
- * ==================
- */
-
-/** Domain-specific identifier types */
 export type RunId = string;
 export type GameId = number;
 export type PlayerId = number;
 
-/** Pipeline type enum */
 export const PIPELINE_TYPE = {
   SPYMASTER: "SPYMASTER",
   GUESSER: "GUESSER",
@@ -22,7 +14,6 @@ export const PIPELINE_TYPE = {
 
 export type PipelineType = (typeof PIPELINE_TYPE)[keyof typeof PIPELINE_TYPE];
 
-/** Pipeline status enum */
 export const PIPELINE_STATUS = {
   RUNNING: "RUNNING",
   COMPLETE: "COMPLETE",
@@ -32,7 +23,6 @@ export const PIPELINE_STATUS = {
 export type PipelineStatus =
   (typeof PIPELINE_STATUS)[keyof typeof PIPELINE_STATUS];
 
-/** Structured responses from pipeline stages */
 export interface SpymasterResponse {
   clue: {
     word: string;
@@ -54,7 +44,6 @@ export interface RankerResponse {
   }>;
 }
 
-/** Pipeline run data */
 export type PipelineRunData = {
   id: string;
   game_id: number;
@@ -69,14 +58,12 @@ export type PipelineRunData = {
   completed_at: Date | null;
 };
 
-/** Input types */
 export type CreatePipelineRunInput = {
   gameId: number;
   playerId: number;
   pipelineType: PipelineType;
 };
 
-/** Repository function types */
 export type RunFinder = (runId: RunId) => Promise<PipelineRunData | null>;
 export type RunFinderByGame = (gameId: GameId) => Promise<PipelineRunData | null>;
 export type RunCreator = (input: CreatePipelineRunInput) => Promise<PipelineRunData>;
@@ -92,12 +79,6 @@ export type RunResponseUpdater = <T extends keyof Pick<PipelineRunData, 'spymast
 ) => Promise<void>;
 export type PromptAppender = (runId: RunId, newPrompt: string) => Promise<void>;
 
-/**
- * ==================
- * VALIDATION SCHEMAS
- * ==================
- */
-
 export const pipelineTypeSchema = z.enum([
   PIPELINE_TYPE.SPYMASTER,
   PIPELINE_TYPE.GUESSER,
@@ -109,15 +90,6 @@ export const pipelineStatusSchema = z.enum([
   PIPELINE_STATUS.FAILED,
 ]);
 
-/**
- * ==================
- * REPOSITORY FUNCTIONS
- * ==================
- */
-
-/**
- * Creates a function for finding pipeline runs by ID
- */
 export const findRunById =
   (db: Kysely<DB>): RunFinder =>
   async (runId) => {
@@ -144,9 +116,6 @@ export const findRunById =
       : null;
   };
 
-/**
- * Creates a function for finding running pipeline runs by game ID
- */
 export const findRunningByGameId =
   (db: Kysely<DB>): RunFinderByGame =>
   async (gameId) => {
@@ -175,9 +144,6 @@ export const findRunningByGameId =
       : null;
   };
 
-/**
- * Creates a function for creating new pipeline runs
- */
 export const createRun =
   (db: Kysely<DB>): RunCreator =>
   async (input) => {
@@ -214,9 +180,6 @@ export const createRun =
     }
   };
 
-/**
- * Creates a function for updating pipeline run status
- */
 export const updateRunStatus =
   (db: Kysely<DB>): RunStatusUpdater =>
   async (runId, status, error) => {
@@ -248,9 +211,6 @@ export const updateRunStatus =
     }
   };
 
-/**
- * Creates a function for updating spymaster response
- */
 export const updateSpymasterResponse =
   (db: Kysely<DB>) =>
   async (runId: RunId, response: SpymasterResponse): Promise<void> => {
@@ -268,9 +228,6 @@ export const updateSpymasterResponse =
     }
   };
 
-/**
- * Creates a function for updating prefilter response
- */
 export const updatePrefilterResponse =
   (db: Kysely<DB>) =>
   async (runId: RunId, response: PrefilterResponse): Promise<void> => {
@@ -288,9 +245,6 @@ export const updatePrefilterResponse =
     }
   };
 
-/**
- * Creates a function for updating ranker response
- */
 export const updateRankerResponse =
   (db: Kysely<DB>) =>
   async (runId: RunId, response: RankerResponse): Promise<void> => {
@@ -308,15 +262,10 @@ export const updateRankerResponse =
     }
   };
 
-/**
- * Creates a function for appending prompts to pipeline run
- * Appends new prompts with delimiter for multiple prompts in same run
- */
 export const appendPrompt =
   (db: Kysely<DB>): PromptAppender =>
   async (runId, newPrompt) => {
     try {
-      // Get current prompt
       const current = await db
         .selectFrom("ai_pipeline_runs")
         .select("prompt")

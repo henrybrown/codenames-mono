@@ -4,40 +4,27 @@ import { ROUND_STATE, RoundState } from "@codenames/shared/types";
 import { z } from "zod";
 import { UnexpectedRepositoryError } from "./repository.errors";
 
-/**
- * ==================
- * REPOSITORY TYPES
- * ==================
- */
-
-/** A unique identifier for a round */
 export type RoundId = number;
 
-/** A unique identifier for a game */
 export type GameId = number;
 
-/** A unique identifier for a team */
 export type TeamId = number;
 
-/** Parameters for creating a new round */
 export type RoundInput = {
   gameId: number;
   roundNumber: number;
 };
 
-/** Parameters for updating a round's status */
 export type RoundStatusUpdateInput = {
   roundId: number;
   status: RoundState;
 };
 
-/** Parameters for updating a round's winning team */
 export type RoundWinnerUpdateInput = {
   roundId: number;
   winningTeamId: TeamId | null;
 };
 
-/** Standardized round data returned from repository */
 export type RoundResult = {
   _id: number;
   _gameId: number;
@@ -48,58 +35,35 @@ export type RoundResult = {
   createdAt: Date;
 };
 
-/** Function that finds multiple rounds by a specific identifier type */
 export type RoundFinderAll<T extends GameId> = (
   identifier: T,
 ) => Promise<RoundResult[]>;
 
-/** Function that finds a single round by a specific identifier type */
 export type RoundFinder<T extends RoundId | GameId> = (
   identifier: T,
 ) => Promise<RoundResult | null>;
 
-/** Function that creates a new round */
 export type RoundCreator = ({
   gameId,
   roundNumber,
 }: RoundInput) => Promise<RoundResult>;
 
-/** Function that updates a round's status */
 export type RoundStatusUpdater = ({
   roundId,
   status,
 }: RoundStatusUpdateInput) => Promise<RoundResult>;
 
-/** Function that updates a round's winning team */
 export type RoundWinnerUpdater = ({
   roundId,
   winningTeamId,
 }: RoundWinnerUpdateInput) => Promise<RoundResult>;
 
-/**
- * ==================
- * VALIDATION SCHEMAS
- * ==================
- */
-
-/**
- * Zod schema for round status validation
- */
 export const roundStatusSchema = z.enum([
   ROUND_STATE.SETUP,
   ROUND_STATE.IN_PROGRESS,
   ROUND_STATE.COMPLETED,
 ]);
 
-/**
- * ==================
- * REPOSITORY FUNCTIONS
- * ==================
- */
-
-/**
- * Creates a function for retrieving rounds by game ID
- */
 export const getRoundsByGameId =
   (db: Kysely<DB>): RoundFinderAll<GameId> =>
   async (gameId) => {
@@ -131,9 +95,6 @@ export const getRoundsByGameId =
     }));
   };
 
-/**
- * Creates a function for retrieving a round by its ID
- */
 export const getRoundById =
   (db: Kysely<DB>): RoundFinder<RoundId> =>
   async (roundId) => {
@@ -166,9 +127,6 @@ export const getRoundById =
       : null;
   };
 
-/**
- * Creates a function for retrieving the latest round for a game
- */
 export const getLatestRound =
   (db: Kysely<DB>): RoundFinder<GameId> =>
   async (gameId) => {
@@ -203,9 +161,6 @@ export const getLatestRound =
       : null;
   };
 
-/**
- * Creates a function for creating new rounds
- */
 export const createNewRound =
   (db: Kysely<DB>): RoundCreator =>
   async ({ gameId, roundNumber }) => {
@@ -222,7 +177,6 @@ export const createNewRound =
         );
       }
 
-      // Create the round
       const result = await db
         .insertInto("rounds")
         .values({
@@ -245,7 +199,7 @@ export const createNewRound =
         _id: result.id,
         _gameId: result.game_id,
         _winningTeamId: result.winning_team_id,
-        winningTeamName: null, // No winning team at creation time
+        winningTeamName: null,
         roundNumber: result.round_number,
         status: ROUND_STATE.SETUP,
         createdAt: result.created_at,
@@ -261,14 +215,10 @@ export const createNewRound =
     }
   };
 
-/**
- * Creates a function for updating a round's status
- */
 export const updateRoundStatus =
   (db: Kysely<DB>): RoundStatusUpdater =>
   async ({ roundId, status }) => {
     try {
-      // Get the status ID for the requested status
       const statusResult = await db
         .selectFrom("round_status")
         .where("status_name", "=", status)
@@ -281,7 +231,6 @@ export const updateRoundStatus =
         );
       }
 
-      // Update the round's status
       const updatedRound = await db
         .updateTable("rounds")
         .set({
@@ -298,7 +247,6 @@ export const updateRoundStatus =
         ])
         .executeTakeFirstOrThrow();
 
-      // Get the team name for the winning team if there is one
       let winningTeamName = null;
       if (updatedRound.winningTeamId) {
         const team = await db
@@ -330,14 +278,10 @@ export const updateRoundStatus =
     }
   };
 
-/**
- * Creates a function for updating a round's winning team
- */
 export const updateRoundWinner =
   (db: Kysely<DB>): RoundWinnerUpdater =>
   async ({ roundId, winningTeamId }) => {
     try {
-      // Find the team name if a team ID is provided
       let winningTeamName = null;
       if (winningTeamId) {
         const team = await db
@@ -349,7 +293,6 @@ export const updateRoundWinner =
         winningTeamName = team ? team.team_name : null;
       }
 
-      // Update the round's winning team
       const updatedRound = await db
         .updateTable("rounds")
         .set({
@@ -366,7 +309,6 @@ export const updateRoundWinner =
         ])
         .executeTakeFirstOrThrow();
 
-      // Get the current status to include in the return value
       const roundStatus = await db
         .selectFrom("rounds")
         .innerJoin("round_status", "rounds.status_id", "round_status.id")

@@ -3,19 +3,11 @@ import { DB } from "../../db/db.types";
 import { z } from "zod";
 import { UnexpectedRepositoryError } from "./repository.errors";
 
-/**
- * ==================
- * REPOSITORY TYPES
- * ==================
- */
-
-/** Domain-specific identifier types */
 export type MessageId = string;
 export type GameId = number;
 export type PlayerId = number;
 export type TeamId = number;
 
-/** Message type enum */
 export const MESSAGE_TYPE = {
   CHAT: "CHAT",
   AI_THINKING: "AI_THINKING",
@@ -24,7 +16,6 @@ export const MESSAGE_TYPE = {
 
 export type MessageType = (typeof MESSAGE_TYPE)[keyof typeof MESSAGE_TYPE];
 
-/** Message data */
 export type GameMessageData = {
   id: string;
   game_id: number;
@@ -36,7 +27,6 @@ export type GameMessageData = {
   created_at: Date;
 };
 
-/** Input types */
 export type CreateMessageInput = {
   gameId: number;
   playerId?: number | null;
@@ -46,7 +36,6 @@ export type CreateMessageInput = {
   content: string;
 };
 
-/** Query parameters */
 export type MessageQueryParams = {
   gameId: number;
   since?: Date;
@@ -54,15 +43,8 @@ export type MessageQueryParams = {
   requestingTeamId?: number | null;
 };
 
-/** Repository function types */
 export type MessageCreator = (input: CreateMessageInput) => Promise<GameMessageData>;
 export type MessageFinder = (params: MessageQueryParams) => Promise<GameMessageData[]>;
-
-/**
- * ==================
- * VALIDATION SCHEMAS
- * ==================
- */
 
 export const messageTypeSchema = z.enum([
   MESSAGE_TYPE.CHAT,
@@ -70,15 +52,6 @@ export const messageTypeSchema = z.enum([
   MESSAGE_TYPE.SYSTEM,
 ]);
 
-/**
- * ==================
- * REPOSITORY FUNCTIONS
- * ==================
- */
-
-/**
- * Creates a function for creating new game messages
- */
 export const createMessage =
   (db: Kysely<DB>): MessageCreator =>
   async (input) => {
@@ -115,7 +88,6 @@ export const createMessage =
   };
 
 /**
- * Creates a function for querying game messages
  * Filters out team-only messages when requestingTeamId doesn't match
  */
 export const findMessagesByGame =
@@ -124,12 +96,10 @@ export const findMessagesByGame =
     try {
       let query = db.selectFrom("game_messages").selectAll().where("game_id", "=", params.gameId);
 
-      // Filter by timestamp if provided
       if (params.since) {
         query = query.where("created_at", ">", params.since);
       }
 
-      // Apply limit (default to 100)
       const limit = params.limit ?? 100;
       query = query.orderBy("created_at", "asc").limit(limit);
 

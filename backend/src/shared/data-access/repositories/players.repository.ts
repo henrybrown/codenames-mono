@@ -5,12 +5,6 @@ import { PLAYER_ROLE, PlayerRole } from "@codenames/shared/types";
 import { randomUUID } from "crypto";
 import type { DbContext, TransactionContext } from "../transaction-handler";
 
-/**
- * ==================
- * TYPES
- * ==================
- */
-
 export type PlayerId = number;
 export type PublicPlayerId = string;
 export type UserId = number;
@@ -18,7 +12,6 @@ export type GameId = number;
 export type TeamId = number;
 export type RoundId = number;
 
-/** Unified player type - used for all player data */
 export type PlayerResult = {
   _id: number;
   publicId: string;
@@ -63,36 +56,25 @@ export type ModifyPlayerInput = {
   userId?: number;
 };
 
-/**
- * ==================
- * REPOSITORY FUNCTION TYPES
- * ==================
- */
-
-/** Generic repository function type for finding multiple players */
 export type PlayerFinderAll<T extends GameId | RoundId> = (
   identifier: T,
 ) => Promise<PlayerResult[]>;
 
-/** Repository function type for finding single player by public ID */
 export type PlayerFinderByPublicId = (
   publicId: PublicPlayerId,
 ) => Promise<PlayerResult | null>;
 
-/** Find a single player by game ID and user ID */
 export type PlayerFinderByGameAndUser = (
   gameId: GameId,
   userId: UserId,
 ) => Promise<PlayerResult | null>;
 
-/** Repository function type for player context */
 export type PlayerContextFinder = (
   gameId: GameId,
   userId: UserId,
   roundId: RoundId | null,
 ) => Promise<PlayerResult[] | null>;
 
-/** Repository function types for role operations */
 export type RoleHistoryFinder = (
   gameId: GameId,
   role: PlayerRole,
@@ -102,7 +84,6 @@ export type RoleAssignmentCreator = (
   input: PlayerRoleInput | PlayerRoleInput[],
 ) => Promise<RoleAssignmentResult[]>;
 
-/** Repository function types for player CRUD */
 export type PlayersCreator = (
   playersData: PlayerInput[],
 ) => Promise<PlayerResult[]>;
@@ -112,12 +93,6 @@ export type PlayerRemover = (playerId: PlayerId) => Promise<PlayerResult>;
 export type PlayersUpdater = (
   playersData: ModifyPlayerInput[],
 ) => Promise<PlayerResult[]>;
-
-/**
- * ==================
- * SQL HELPERS
- * ==================
- */
 
 const playerResultColumns = [
   "players.id as id",
@@ -138,7 +113,6 @@ const teamNameLookup =
     "team_name",
   );
 
-/** Parse role name from database */
 function parseRoleName(roleName: string | null): PlayerRole {
   if (!roleName) return PLAYER_ROLE.NONE;
 
@@ -154,15 +128,6 @@ function parseRoleName(roleName: string | null): PlayerRole {
   }
 }
 
-/**
- * ==================
- * CORE PLAYER QUERIES
- * ==================
- */
-
-/**
- * Find players by game ID with latest role information
- */
 export const findPlayersByGameId =
   (db: DbContext | TransactionContext): PlayerFinderAll<GameId> =>
   async (gameId) => {
@@ -206,9 +171,6 @@ export const findPlayersByGameId =
     }));
   };
 
-/**
- * Find players by round ID with their round-specific roles
- */
 export const findPlayersByRoundId =
   (db: DbContext | TransactionContext): PlayerFinderAll<RoundId> =>
   async (roundId) => {
@@ -246,9 +208,6 @@ export const findPlayersByRoundId =
     }));
   };
 
-/**
- * Find player by public ID
- */
 export const findPlayerByPublicId =
   (db: DbContext | TransactionContext): PlayerFinderByPublicId =>
   async (publicId) => {
@@ -346,9 +305,6 @@ export const findPlayerByGameAndUser =
       : null;
   };
 
-/**
- * Get player context with username included
- */
 export const getPlayerContext =
   (db: DbContext | TransactionContext): PlayerContextFinder =>
   async (gameId, userId, roundId) => {
@@ -392,12 +348,6 @@ export const getPlayerContext =
   };
 
 /**
- * ==================
- * ROLE QUERIES
- * ==================
- */
-
-/**
  * Finds player ids for a given role within a game.. returns player Ids for all rounds
  */
 export const getRoleHistory =
@@ -419,15 +369,6 @@ export const getRoleHistory =
     return [...new Set(history.map((r) => r.player_id))];
   };
 
-/**
- * ==================
- * PLAYER MUTATIONS
- * ==================
- */
-
-/**
- * Assign roles to players for a specific round
- */
 export const assignPlayerRoles =
   (db: DbContext | TransactionContext): RoleAssignmentCreator =>
   async (input) => {
@@ -441,14 +382,12 @@ export const assignPlayerRoles =
       assigned_at: new Date(),
     }));
 
-    // Insert the role assignments
     const insertResult = await db
       .insertInto("player_round_roles")
       .values(values)
       .returningAll()
       .execute();
 
-    // Fetch additional data needed for the response
     const playerResults = await Promise.all(
       insertResult.map(async (assignment) => {
         const playerData = await db
@@ -472,9 +411,6 @@ export const assignPlayerRoles =
     return playerResults;
   };
 
-/**
- * Add new players to a game
- */
 export const addPlayers =
   (db: DbContext | TransactionContext): PlayersCreator =>
   async (playersData) => {
@@ -511,9 +447,6 @@ export const addPlayers =
     }));
   };
 
-/**
- * Remove a player from the game
- */
 export const removePlayer =
   (db: DbContext | TransactionContext): PlayerRemover =>
   async (playerId) => {
@@ -537,9 +470,6 @@ export const removePlayer =
     };
   };
 
-/**
- * Modify existing players (update name, team, etc.)
- */
 export const modifyPlayers =
   (db: DbContext | TransactionContext): PlayersUpdater =>
   async (playersData) => {
@@ -554,7 +484,6 @@ export const modifyPlayers =
 
     if (playersWithUpdates.length === 0) return [];
 
-    // Perform all updates
     await Promise.all(
       playersWithUpdates.map(async (player) => {
         const updateValues = Object.fromEntries(
@@ -575,7 +504,6 @@ export const modifyPlayers =
       }),
     );
 
-    // Fetch and return updated players
     const allPublicPlayerIds = playersData.map(
       (player) => player.publicPlayerId,
     );

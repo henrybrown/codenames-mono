@@ -286,18 +286,18 @@
 
 ### backend/src/shared/data-access/repositories/
 
-- [ ] `backend/src/shared/data-access/repositories/ai-pipeline-runs.repository.ts` —
+- [x] `backend/src/shared/data-access/repositories/ai-pipeline-runs.repository.ts` —
 - [x] `backend/src/shared/data-access/repositories/cards.repository.ts` —
-- [ ] `backend/src/shared/data-access/repositories/game-events.repository.ts` —
-- [ ] `backend/src/shared/data-access/repositories/game-messages.repository.ts` —
-- [ ] `backend/src/shared/data-access/repositories/games.repository.ts` —
-- [ ] `backend/src/shared/data-access/repositories/player-roles.repository.ts` —
-- [ ] `backend/src/shared/data-access/repositories/players.repository.ts` —
+- [x] `backend/src/shared/data-access/repositories/game-events.repository.ts` —
+- [x] `backend/src/shared/data-access/repositories/game-messages.repository.ts` —
+- [x] `backend/src/shared/data-access/repositories/games.repository.ts` —
+- [x] `backend/src/shared/data-access/repositories/player-roles.repository.ts` —
+- [x] `backend/src/shared/data-access/repositories/players.repository.ts` —
 - [x] `backend/src/shared/data-access/repositories/repository.errors.ts` —
-- [ ] `backend/src/shared/data-access/repositories/rounds.repository.ts` —
+- [x] `backend/src/shared/data-access/repositories/rounds.repository.ts` —
 - [x] `backend/src/shared/data-access/repositories/sessions.repository.ts` —
-- [ ] `backend/src/shared/data-access/repositories/teams.repository.ts` —
-- [ ] `backend/src/shared/data-access/repositories/turns.repository.ts` —
+- [x] `backend/src/shared/data-access/repositories/teams.repository.ts` —
+- [x] `backend/src/shared/data-access/repositories/turns.repository.ts` —
 - [x] `backend/src/shared/data-access/repositories/users.repository.ts` —
 
 ### backend/src/shared/data/decks/

@@ -4,20 +4,12 @@ import { UnexpectedRepositoryError } from "./repository.errors";
 
 import { PlayerRole, PLAYER_ROLE } from "@codenames/shared/types";
 
-/**
- * ==================
- * REPOSITORY TYPES
- * ==================
- */
-
-/** Domain-specific identifier types */
 export type PlayerId = number;
 export type PublicPlayerId = string;
 export type RoundId = number;
 export type TeamId = number;
 export type RoleId = number;
 
-/** Entity data types */
 export type PlayerRoundRoleData = {
   _player_id: number;
   _round_id: number;
@@ -25,7 +17,6 @@ export type PlayerRoundRoleData = {
   assigned_at: Date;
 };
 
-/** Input and result types */
 export type PlayerRoleInput = {
   playerId: number;
   roundId: number;
@@ -40,7 +31,6 @@ export type RoleAssignmentResult = {
   role: PlayerRole;
 };
 
-/** Repository function types */
 export type RoleAssignmentsFinder = (
   roundId: RoundId,
 ) => Promise<RoleAssignmentResult[]>;
@@ -52,28 +42,10 @@ export type RoleAssignmentCreator = (
 /** Returns a map of role name → internal role id. */
 export type RoleIdsByNameFinder = () => Promise<Record<PlayerRole, number>>;
 
-/**
- * ==================
- * REPOSITORY FUNCTIONS
- * ==================
- */
-
-/**
- * Creates a function for finding role assignments for a round
- *
- * @param db - Database connection
- */
 export const getRoundRoleAssignments =
   (db: Kysely<DB>): RoleAssignmentsFinder =>
-  /**
-   * Retrieves all player role assignments for a specific round
-   *
-   * @param roundId - The round ID to fetch role assignments for
-   * @returns List of role assignments for the specified round
-   */
   async (roundId) => {
     try {
-      // Join player_round_roles with player_roles to get role names and players to get team IDs
       const roleAssignments = await db
         .selectFrom("player_round_roles")
         .innerJoin(
@@ -105,19 +77,8 @@ export const getRoundRoleAssignments =
     }
   };
 
-/**
- * Creates a function for assigning roles to players in a round
- *
- * @param db - Database connection
- */
 export const assignPlayerRoles =
   (db: Kysely<DB>): RoleAssignmentCreator =>
-  /**
-   * Assigns roles to players in a round
-   *
-   * @param input - Role assignment data (single or multiple)
-   * @returns Created role assignment records
-   */
   async (input) => {
     try {
       const inputArray = Array.isArray(input) ? input : [input];
@@ -126,7 +87,6 @@ export const assignPlayerRoles =
         return [];
       }
 
-      // Insert role assignments
       const values = inputArray.map((assignment) => ({
         player_id: assignment.playerId,
         round_id: assignment.roundId,
@@ -134,10 +94,8 @@ export const assignPlayerRoles =
         assigned_at: new Date(),
       }));
 
-      // Perform the inserts
       await db.insertInto("player_round_roles").values(values).execute();
 
-      // Fetch the role names and team IDs for each player
       const assignmentPromises = inputArray.map(async (assignment) => {
         const roleRecord = await db
           .selectFrom("player_roles")
@@ -207,12 +165,6 @@ export const findRoleIdsByName =
     }
   };
 
-/**
- * Maps a role name from the database to the PlayerRole enum
- *
- * @param roleName - Role name from the database
- * @returns Corresponding PlayerRole enum value
- */
 function mapRoleNameToEnum(roleName: string): PlayerRole {
   switch (roleName.toUpperCase()) {
     case "CODEMASTER":

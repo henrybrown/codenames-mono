@@ -4,13 +4,6 @@ import { CODEBREAKER_OUTCOME, TurnOutcome } from "@codenames/shared/types";
 import { z } from "zod";
 import { UnexpectedRepositoryError } from "./repository.errors";
 
-/**
- * ==================
- * REPOSITORY TYPES
- * ==================
- */
-
-/** Domain-specific identifier types */
 export type TurnId = number;
 export type PublicId = string;
 export type RoundId = number;
@@ -18,7 +11,6 @@ export type TeamId = number;
 export type PlayerId = number;
 export type CardId = number;
 
-/** Zod schema for validating outcome values from database */
 export const outcomeSchema = z
   .enum([
     CODEBREAKER_OUTCOME.ASSASSIN_CARD,
@@ -28,7 +20,6 @@ export const outcomeSchema = z
   ])
   .nullable();
 
-/** Standardized results returned from repository */
 export type ClueResult = {
   _id: number;
   _turnId: number;
@@ -63,7 +54,6 @@ export type TurnResult = {
   guesses: GuessResult[];
 };
 
-/** Input types */
 export type ClueInput = {
   word: string;
   targetCardCount: number;
@@ -82,7 +72,6 @@ export type TurnInput = {
   guessesRemaining: number;
 };
 
-/** Repository function types */
 export type TurnsFinder<T extends RoundId> = (
   identifier: T,
 ) => Promise<TurnResult[]>;
@@ -110,15 +99,6 @@ export type TurnStatusUpdater = (
   status: string,
 ) => Promise<TurnResult>;
 
-/**
- * ==================
- * SHARED HELPERS
- * ==================
- */
-
-/**
- * ENHANCED: Fetches clues and guesses with card words for given turn IDs
- */
 const fetchTurnRelatedData = async (
   db: Kysely<DB>,
   turnIds: number[],
@@ -134,11 +114,10 @@ const fetchTurnRelatedData = async (
       .select(["id", "turn_id", "word", "number", "created_at"])
       .execute(),
 
-    // ENHANCED: Added join with cards table to get card words
     db
       .selectFrom("guesses")
       .innerJoin("players", "guesses.player_id", "players.id")
-      .innerJoin("cards", "guesses.card_id", "cards.id") // ENHANCED: Added this join
+      .innerJoin("cards", "guesses.card_id", "cards.id")
       .where("guesses.turn_id", "in", turnIds)
       .select([
         "guesses.id",
@@ -148,13 +127,12 @@ const fetchTurnRelatedData = async (
         "guesses.outcome",
         "guesses.created_at",
         "players.public_name as playerName",
-        "cards.word as cardWord", // ENHANCED: Added card word
+        "cards.word as cardWord",
       ])
       .orderBy("guesses.created_at", "asc")
       .execute(),
   ]);
 
-  // Initialize lookup with empty guesses arrays
   const relatedData: Record<
     number,
     { clue?: ClueResult; guesses: GuessResult[] }
@@ -164,7 +142,6 @@ const fetchTurnRelatedData = async (
     relatedData[turnId] = { guesses: [] };
   });
 
-  // Map clues
   clues.forEach((clue) => {
     relatedData[clue.turn_id].clue = {
       _id: clue.id,
@@ -175,14 +152,13 @@ const fetchTurnRelatedData = async (
     };
   });
 
-  // Map guesses (now with card words)
   guesses.forEach((guess) => {
     relatedData[guess.turn_id].guesses.push({
       _id: guess.id,
       _turnId: guess.turn_id,
       _playerId: guess.player_id,
       _cardId: guess.card_id,
-      cardWord: guess.cardWord, // ENHANCED: Now included
+      cardWord: guess.cardWord,
       playerName: guess.playerName,
       outcome: outcomeSchema.parse(guess.outcome),
       createdAt: guess.created_at,
@@ -192,20 +168,17 @@ const fetchTurnRelatedData = async (
   return relatedData;
 };
 
-/**
- * ENHANCED: Standard query for fetching turn base data with publicId and gameId
- */
 const getTurnBaseData = (db: Kysely<DB>) =>
   db
     .selectFrom("turns")
     .innerJoin("teams", "turns.team_id", "teams.id")
-    .innerJoin("rounds", "turns.round_id", "rounds.id") // ENHANCED: Added join for gameId
+    .innerJoin("rounds", "turns.round_id", "rounds.id")
     .select([
       "turns.id as _id",
-      "turns.public_id as publicId", // ENHANCED: Added public ID
+      "turns.public_id as publicId",
       "turns.round_id as _roundId",
       "turns.team_id as _teamId",
-      "rounds.game_id as _gameId", // ENHANCED: Added game ID for auth
+      "rounds.game_id as _gameId",
       "teams.team_name as teamName",
       "turns.status",
       "turns.guesses_remaining as guessesRemaining",
@@ -213,15 +186,6 @@ const getTurnBaseData = (db: Kysely<DB>) =>
       "turns.completed_at as completedAt",
     ]);
 
-/**
- * ==================
- * REPOSITORY FUNCTIONS
- * ==================
- */
-
-/**
- * Creates a function for adding clues to turns
- */
 export const createClue =
   (db: Kysely<DB>): ClueCreator =>
   async (turnId, { word, targetCardCount }) => {
@@ -252,9 +216,6 @@ export const createClue =
     }
   };
 
-/**
- * Creates a function for creating guesses
- */
 export const createGuess =
   (db: Kysely<DB>): GuessCreator =>
   async ({ turnId, playerId, cardId, outcome }) => {
@@ -278,7 +239,6 @@ export const createGuess =
         ])
         .executeTakeFirstOrThrow();
 
-      // Get player name and card word
       const [player, card] = await Promise.all([
         db
           .selectFrom("players")
@@ -297,7 +257,7 @@ export const createGuess =
         _turnId: guess.turn_id,
         _playerId: guess.player_id,
         _cardId: guess.card_id,
-        cardWord: card.word, // ENHANCED: Now included
+        cardWord: card.word,
         playerName: player.public_name,
         outcome: outcomeSchema.parse(guess.outcome),
         createdAt: guess.created_at,
@@ -310,9 +270,6 @@ export const createGuess =
     }
   };
 
-/**
- * Creates a function for creating new turns
- */
 export const createTurn =
   (db: Kysely<DB>): TurnCreator =>
   async ({ roundId, teamId, guessesRemaining }) => {
@@ -328,7 +285,7 @@ export const createTurn =
         })
         .returning([
           "id",
-          "public_id", // ENHANCED: Include public_id
+          "public_id",
           "round_id",
           "team_id",
           "guesses_remaining",
@@ -338,7 +295,6 @@ export const createTurn =
         ])
         .executeTakeFirstOrThrow();
 
-      // Get team name and game ID
       const [team, round] = await Promise.all([
         db
           .selectFrom("teams")
@@ -373,14 +329,10 @@ export const createTurn =
     }
   };
 
-/**
- * Creates a function for updating turn guess counts
- */
 export const updateTurnGuesses =
   (db: Kysely<DB>): TurnGuessUpdater =>
   async (turnId, guessesRemaining) => {
     try {
-      // Update the turn
       await db
         .updateTable("turns")
         .set({
@@ -390,12 +342,10 @@ export const updateTurnGuesses =
         .where("id", "=", turnId)
         .execute();
 
-      // Get the updated turn data using shared query
       const turn = await getTurnBaseData(db)
         .where("turns.id", "=", turnId)
         .executeTakeFirstOrThrow();
 
-      // Fetch related data
       const relatedData = await fetchTurnRelatedData(db, [turnId]);
 
       return {
@@ -410,16 +360,12 @@ export const updateTurnGuesses =
     }
   };
 
-/**
- * Creates a function for updating turn status
- */
 export const updateTurnStatus =
   (db: Kysely<DB>): TurnStatusUpdater =>
   async (turnId, status) => {
     try {
       const now = new Date();
 
-      // Update the turn with new status and completion time if completing
       await db
         .updateTable("turns")
         .set({
@@ -430,12 +376,10 @@ export const updateTurnStatus =
         .where("id", "=", turnId)
         .execute();
 
-      // Get the updated turn data using shared query
       const turn = await getTurnBaseData(db)
         .where("turns.id", "=", turnId)
         .executeTakeFirstOrThrow();
 
-      // Fetch related data
       const relatedData = await fetchTurnRelatedData(db, [turnId]);
 
       return {
@@ -450,9 +394,6 @@ export const updateTurnStatus =
     }
   };
 
-/**
- * Creates a function for retrieving turns by round ID
- */
 export const getTurnsByRoundId =
   (db: Kysely<DB>): TurnsFinder<RoundId> =>
   async (roundId) => {
@@ -474,9 +415,6 @@ export const getTurnsByRoundId =
     }));
   };
 
-/**
- * Creates a function for retrieving a turn by public ID
- */
 export const getTurnByPublicId =
   (db: Kysely<DB>): TurnFinder<PublicId> =>
   async (publicId: string) => {
@@ -494,9 +432,6 @@ export const getTurnByPublicId =
     };
   };
 
-/**
- * Creates a function for retrieving a turn by internal ID
- */
 export const getTurnById =
   (db: Kysely<DB>): TurnFinder<TurnId> =>
   async (turnId) => {

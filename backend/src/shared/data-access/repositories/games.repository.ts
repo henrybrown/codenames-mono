@@ -10,17 +10,9 @@ import {
 } from "@codenames/shared/types";
 import { z } from "zod";
 
-/**
- * ==================
- * DOMAIN TYPES
- * ==================
- */
-
-/** Domain-specific identifier types */
 export type PublicId = string;
 export type InternalId = number;
 
-/** Entity data types */
 export type GameData = {
   _id: number;
   created_at: Date;
@@ -33,7 +25,6 @@ export type GameData = {
   host_user_id: number;
 };
 
-/** Input and result types */
 export type GameInput = {
   publicId: string;
   gameType: GameType;
@@ -48,7 +39,6 @@ export type GameResult = {
   updated_at?: Date | null;
 };
 
-/** Generic repository function types */
 export type GameFinder<T extends InternalId | PublicId> = (
   identifier: T,
 ) => Promise<GameData | null>;
@@ -63,12 +53,6 @@ export type GameStatusUpdater = (
   gameId: InternalId,
   statusName: GameState,
 ) => Promise<GameData>;
-
-/**
- * ==================
- * VALIDATION SCHEMAS
- * ==================
- */
 
 /**
  * Zod schemas needed due to generated postgrest enum types returning "string" from Kysely query.
@@ -93,15 +77,6 @@ export const gameStateSchema = z.enum([
   GAME_STATE.ABANDONED,
 ]);
 
-/**
- * ==================
- * REPOSITORY FUNCTIONS
- * ==================
- */
-
-/**
- * Creates a function for finding games by public ID
- */
 export const findGameByPublicId =
   (db: Kysely<DB>): GameFinder<PublicId> =>
   async (publicId) => {
@@ -137,9 +112,6 @@ export const findGameByPublicId =
       : null;
   };
 
-/**
- * Creates a function for finding games by internal ID
- */
 export const findGameById =
   (db: Kysely<DB>): GameFinder<InternalId> =>
   async (gameId) => {
@@ -175,9 +147,6 @@ export const findGameById =
       : null;
   };
 
-/**
- * Creates a function for creating new games
- */
 export const createGame =
   (db: Kysely<DB>): GameCreator =>
   async (gameInput) => {
@@ -204,13 +173,9 @@ export const createGame =
     };
   };
 
-/**
- * Creates a function for updating a game's status
- */
 export const updateGameStatus =
   (db: Kysely<DB>): GameStatusUpdater =>
   async (gameId, statusName) => {
-    // Get the status_id corresponding to the status name
     const status = await db
       .selectFrom("game_status")
       .where("status_name", "=", statusName)
