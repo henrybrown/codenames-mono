@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { PlayerResult } from "@backend/shared/data-access/repositories/players.repository";
 
-/**
- * Schema for starting a game
- */
 export const startGameRequestSchema = z.object({
   params: z.object({
     gameId: z.string().min(1, "Game ID is required"),
@@ -13,14 +10,8 @@ export const startGameRequestSchema = z.object({
   }),
 });
 
-/**
- * Type for the parsed start game request
- */
 export type ValidatedStartGameRequest = z.infer<typeof startGameRequestSchema>;
 
-/**
- * Response schema for starting a game
- */
 export const startGameResponseSchema = z
   .object({
     success: z.boolean(),
@@ -33,47 +24,26 @@ export const startGameResponseSchema = z
   })
   .brand<"GameApiResponse">();
 
-/**
- * Type for the response schema
- */
 export type StartGameResponse = z.infer<typeof startGameResponseSchema>;
 
-/**
- * Error object returned when game cannot be started
- */
 export type GameStartValidationError = {
   valid: false;
   reason: string;
 };
 
-/**
- * Success object returned when game can be started
- */
 export type GameStartValidationSuccess = {
   valid: true;
 };
 
-/**
- * Type for the validation result
- */
 export type GameStartValidationResult =
   | GameStartValidationSuccess
   | GameStartValidationError;
 
-/**
- * Pure function to validate if a game can be started
- *
- * @param gameStatus - Current status of the game
- * @param players - List of players in the game
- * @param aiMode - Whether AI mode is enabled (allows starting with fewer players)
- * @returns Validation result indicating if the game can be started and why not if applicable
- */
 export function validateGameCanBeStarted(
   gameStatus: string,
   players: PlayerResult[],
   aiMode: boolean = false,
 ): GameStartValidationResult {
-  // Validate game is in LOBBY state
   if (gameStatus !== "LOBBY") {
     return {
       valid: false,
@@ -81,9 +51,7 @@ export function validateGameCanBeStarted(
     };
   }
 
-  // In AI mode, skip player count validation (AI bots will be added later)
   if (!aiMode) {
-    // Validate minimum players
     if (players.length < 4) {
       return {
         valid: false,
@@ -91,7 +59,6 @@ export function validateGameCanBeStarted(
       };
     }
 
-    // Get unique team IDs and ensure we have at least two teams
     const teamIds = [...new Set(players.map((player) => player._teamId))];
     if (teamIds.length < 2) {
       return {
@@ -100,7 +67,6 @@ export function validateGameCanBeStarted(
       };
     }
 
-    // Ensure each team has at least 2 players
     const playersPerTeam = teamIds.map(
       (teamId) => players.filter((player) => player._teamId === teamId).length,
     );
@@ -113,7 +79,6 @@ export function validateGameCanBeStarted(
     }
   }
 
-  // All validations passed
   return {
     valid: true,
   };

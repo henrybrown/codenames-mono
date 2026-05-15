@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { GAME_STATE, GAME_TYPE, GAME_FORMAT, ROUND_STATE, PLAYER_ROLE } from "@codenames/shared/types";
 
-// Player schema for lobby context
 export const playerSchema = z.object({
   _id: z.number().int().positive(),
   publicId: z.string(),
@@ -14,7 +13,6 @@ export const playerSchema = z.object({
   role: z.string().default(PLAYER_ROLE.NONE),
 });
 
-// Team schema for lobby context
 export const teamSchema = z.object({
   _id: z.number().int().positive(),
   _gameId: z.number().int().positive(),
@@ -22,14 +20,12 @@ export const teamSchema = z.object({
   players: z.array(playerSchema).default([]),
 });
 
-// User context for permissions
 export const userContextSchema = z.object({
   _userId: z.number().int().positive(),
   canModifyGame: z.boolean().default(true),
   isHost: z.boolean().default(false),
 });
 
-// Player context for validation compatibility
 export const playerContextSchema = z.object({
   _userId: z.number().int().positive(),
   _id: z.number().int().positive(),
@@ -45,7 +41,6 @@ export const playerContextSchema = z.object({
   ]),
 });
 
-// Simplified card schema for lobby 
 export const cardSchema = z.object({
   _id: z.number().int().positive(),
   _roundId: z.number().int().positive(),
@@ -56,7 +51,6 @@ export const cardSchema = z.object({
   selected: z.boolean(),
 });
 
-// Simplified round schema for lobby
 export const roundSchema = z.object({
   _id: z.number().int().positive(),
   number: z.number().int().positive(),
@@ -70,7 +64,6 @@ export const roundSchema = z.object({
   createdAt: z.date(),
 });
 
-// Historical round schema - minimal info for round count validation
 export const historicalRoundSchema = z.object({
   _id: z.number().int().positive(),
   number: z.number().int().positive(),
@@ -84,7 +77,6 @@ export const historicalRoundSchema = z.object({
   createdAt: z.date(),
 });
 
-// Main lobby aggregate schema
 export const lobbyBaseSchema = z.object({
   _id: z.number().int().positive(),
   public_id: z.string(),
@@ -112,7 +104,6 @@ export const lobbyBaseSchema = z.object({
   updatedAt: z.date().optional().nullable(),
 });
 
-// Type exports
 export type Player = z.infer<typeof playerSchema>;
 export type Team = z.infer<typeof teamSchema>;
 export type UserContext = z.infer<typeof userContextSchema>;

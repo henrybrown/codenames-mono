@@ -15,9 +15,6 @@ export type CreateAIBotsInput = {
   createUser: UserCreator;
 };
 
-/**
- * Creates AI bot users and adds them as players to fill teams
- */
 export const createAIBotsForTeams = async (input: CreateAIBotsInput): Promise<void> => {
   const { lobby, lobbyHandler, createUser } = input;
 
@@ -28,9 +25,6 @@ export const createAIBotsForTeams = async (input: CreateAIBotsInput): Promise<vo
       continue;
     }
 
-    // Adding AI bots to fill team
-
-    // Create AI bot users using repository
     const botUsers: Array<{ userId: number; botName: string }> = [];
     for (let i = 0; i < playersNeeded; i++) {
       const botUser = await createUser({
@@ -43,7 +37,6 @@ export const createAIBotsForTeams = async (input: CreateAIBotsInput): Promise<vo
       });
     }
 
-    // Add AI bots as players using the standard flow
     await lobbyHandler(async (lobbyOps) => {
       const teamNameToIdMap = getTeamNameToIdMap(lobby);
       const teamId = teamNameToIdMap.get(team.teamName);
@@ -58,7 +51,7 @@ export const createAIBotsForTeams = async (input: CreateAIBotsInput): Promise<vo
         teamId,
         publicName: bot.botName,
         statusId: 1,
-        isAi: true, // ← This is the key difference!
+        isAi: true,
       }));
 
       await lobbyOps.addPlayers(playerInputs);

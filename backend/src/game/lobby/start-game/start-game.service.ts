@@ -49,7 +49,6 @@ export const startGameService = (dependencies: ServiceDependencies) => {
       };
     }
 
-    // In AI mode, skip player count validation (AI bots will be added when starting rounds)
     if (!lobby.aiMode) {
       const totalPlayers = getTotalPlayerCount(lobby);
       const teamCounts = getTeamPlayerCounts(lobby);
@@ -96,7 +95,6 @@ export const startGameService = (dependencies: ServiceDependencies) => {
       };
     });
 
-    // Auto-fill with AI bots if in AI mode
     if (result.success && lobby.aiMode) {
       await createAIBotsForTeams({
         lobby,
@@ -105,7 +103,6 @@ export const startGameService = (dependencies: ServiceDependencies) => {
       });
     }
 
-    // Emit WebSocket event for real-time multiplayer updates
     if (result.success) {
       GameEventsEmitter.gameStarted(publicGameId);
     }

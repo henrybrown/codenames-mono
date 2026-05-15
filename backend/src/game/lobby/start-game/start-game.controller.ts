@@ -9,20 +9,12 @@ import {
 import { pickStatus } from "@backend/shared/http/result-status";
 import { sendError } from "@backend/shared/http-middleware/controller-helpers";
 
-/** Dependencies required by the start game controller */
 export type Dependencies = {
   startGame: ReturnType<typeof startGameService>;
 };
 
-/** Creates a controller for starting a game */
 export const startGameController =
   ({ startGame }: Dependencies) =>
-  /**
-   * Handles HTTP request to start a game
-   * @param req - Express request with game ID
-   * @param res - Express response object
-   * @param next - Express error handling function
-   */
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const validatedRequest = startGameRequestSchema.parse({

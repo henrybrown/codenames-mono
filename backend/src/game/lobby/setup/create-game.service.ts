@@ -4,7 +4,6 @@ import { GameType, GameFormat, GAME_TYPE } from "@codenames/shared/types";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { SetupOperations } from "./setup-actions";
 
-/** Result of game creation */
 export type GameCreationResult = {
   _id: number;
   publicId: string;
@@ -17,12 +16,10 @@ export type GameCreationResult = {
   };
 };
 
-/** Dependencies for the create game service */
 export type ServiceDependencies = {
   setupHandler: TransactionalHandler<SetupOperations>;
 };
 
-/** Creates a game creation service */
 export const createGameService = (dependencies: ServiceDependencies) => {
   /**
    * Generates a public ID for the game.
@@ -36,13 +33,6 @@ export const createGameService = (dependencies: ServiceDependencies) => {
    */
   const generateUniquePublicId = (): string => shortid.generate();
 
-  /**
-   * Creates a new game with specified configuration
-   * @param gameType - Type of game
-   * @param gameFormat - Format of the game
-   * @param userId - ID of the user creating the game
-   * @param aiMode - Whether to enable AI mode (allows starting with fewer players)
-   */
   return async (
     gameType: GameType,
     gameFormat: GameFormat,
@@ -52,7 +42,6 @@ export const createGameService = (dependencies: ServiceDependencies) => {
     const publicId = generateUniquePublicId();
 
     return await dependencies.setupHandler(async (setupOps) => {
-      // Check for collisions within the transaction
       const existingGame = await setupOps.getGame(publicId);
       if (existingGame) {
         throw new UnexpectedSetupError(

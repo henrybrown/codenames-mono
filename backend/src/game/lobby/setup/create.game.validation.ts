@@ -1,10 +1,6 @@
 import { z } from "zod";
 import { GAME_TYPE, GAME_FORMAT } from "@codenames/shared/types";
 
-/**
- * Zod schema for validating create game requests
- * Ensures gameType and gameFormat are valid enum values
- */
 export const createGameRequestSchema = z
   .object({
     gameType: z.enum([GAME_TYPE.SINGLE_DEVICE, GAME_TYPE.MULTI_DEVICE]),
@@ -17,15 +13,8 @@ export const createGameRequestSchema = z
   })
   .strict();
 
-/**
- * Type definition for create game request payload
- */
 export type CreateGameRequest = z.infer<typeof createGameRequestSchema>;
 
-/**
- * Zod schema for validating create game responses
- * Defines the structure of successful game creation responses
- */
 export const createGameResponseSchema = z
   .object({
     success: z.boolean(),
@@ -44,7 +33,4 @@ export const createGameResponseSchema = z
   })
   .strict();
 
-/**
- * Type definition for create game response payload
- */
 export type CreateGameResponse = z.infer<typeof createGameResponseSchema>;

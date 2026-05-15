@@ -229,30 +229,30 @@
 
 ### backend/src/game/lobby/setup/
 
-- [ ] `backend/src/game/lobby/setup/create-game.controller.ts` —
-- [ ] `backend/src/game/lobby/setup/create-game.service.ts` —
-- [ ] `backend/src/game/lobby/setup/create.game.validation.ts` —
-- [ ] `backend/src/game/lobby/setup/setup-actions.ts` —
+- [x] `backend/src/game/lobby/setup/create-game.controller.ts` —
+- [x] `backend/src/game/lobby/setup/create-game.service.ts` —
+- [x] `backend/src/game/lobby/setup/create.game.validation.ts` —
+- [x] `backend/src/game/lobby/setup/setup-actions.ts` —
 
 ### backend/src/game/lobby/setup/errors/
 
-- [ ] `backend/src/game/lobby/setup/errors/setup-errors.middleware.ts` —
-- [ ] `backend/src/game/lobby/setup/errors/setup.errors.ts` —
+- [x] `backend/src/game/lobby/setup/errors/setup-errors.middleware.ts` —
+- [x] `backend/src/game/lobby/setup/errors/setup.errors.ts` —
 
 ### backend/src/game/lobby/start-game/
 
-- [ ] `backend/src/game/lobby/start-game/start-game-ai-helper.ts` —
-- [ ] `backend/src/game/lobby/start-game/start-game.controller.ts` —
-- [ ] `backend/src/game/lobby/start-game/start-game.service.ts` —
-- [ ] `backend/src/game/lobby/start-game/start-game.validation.ts` —
+- [x] `backend/src/game/lobby/start-game/start-game-ai-helper.ts` —
+- [x] `backend/src/game/lobby/start-game/start-game.controller.ts` —
+- [x] `backend/src/game/lobby/start-game/start-game.service.ts` —
+- [x] `backend/src/game/lobby/start-game/start-game.validation.ts` —
 
 ### backend/src/game/lobby/state/
 
-- [ ] `backend/src/game/lobby/state/helpers.ts` —
-- [ ] `backend/src/game/lobby/state/index.ts` —
-- [ ] `backend/src/game/lobby/state/load-lobby-aggregate.ts` —
-- [ ] `backend/src/game/lobby/state/types.ts` —
-- [ ] `backend/src/game/lobby/state/validation.ts` —
+- [x] `backend/src/game/lobby/state/helpers.ts` —
+- [x] `backend/src/game/lobby/state/index.ts` —
+- [x] `backend/src/game/lobby/state/load-lobby-aggregate.ts` —
+- [x] `backend/src/game/lobby/state/types.ts` —
+- [x] `backend/src/game/lobby/state/validation.ts` —
 
 ### backend/src/game/state/
 
