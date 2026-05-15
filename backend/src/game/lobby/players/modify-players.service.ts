@@ -83,7 +83,6 @@ export const modifyPlayersService = (dependencies: ServiceDependencies) => {
       }
     }
 
-    // Validate team names if any are provided
     const teamNamesInRequest = playersToModify
       .map((p) => p.teamName)
       .filter((name): name is string => name !== undefined);
@@ -105,7 +104,6 @@ export const modifyPlayersService = (dependencies: ServiceDependencies) => {
     }
 
     const result = await dependencies.lobbyHandler(async (lobbyOps) => {
-      // Build the repository request with proper team ID mapping
       const repositoryRequest = playersToModify.map((player) => {
         const updateData: {
           gameId: number;
@@ -117,7 +115,6 @@ export const modifyPlayersService = (dependencies: ServiceDependencies) => {
           publicPlayerId: player.playerId,
         };
 
-        // Add optional fields only if they're provided
         if (player.playerName !== undefined) {
           updateData.publicName = player.playerName;
         }

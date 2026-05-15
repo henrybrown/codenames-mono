@@ -187,27 +187,27 @@
 
 ### backend/src/game/lobby/
 
-- [ ] `backend/src/game/lobby/index.ts` —
-- [ ] `backend/src/game/lobby/lobby-actions.ts` —
+- [x] `backend/src/game/lobby/index.ts` —
+- [x] `backend/src/game/lobby/lobby-actions.ts` —
 
 ### backend/src/game/lobby/errors/
 
-- [ ] `backend/src/game/lobby/errors/lobby-errors.middleware.ts` —
-- [ ] `backend/src/game/lobby/errors/lobby.errors.ts` —
+- [x] `backend/src/game/lobby/errors/lobby-errors.middleware.ts` —
+- [x] `backend/src/game/lobby/errors/lobby.errors.ts` —
 
 ### backend/src/game/lobby/players/
 
-- [ ] `backend/src/game/lobby/players/add-players.controller.ts` —
-- [ ] `backend/src/game/lobby/players/add-players.service.ts` —
-- [ ] `backend/src/game/lobby/players/add-players.validation.ts` —
-- [ ] `backend/src/game/lobby/players/index.ts` —
-- [ ] `backend/src/game/lobby/players/modify-batch-players.controller.ts` —
-- [ ] `backend/src/game/lobby/players/modify-players.service.ts` —
-- [ ] `backend/src/game/lobby/players/modify-players.validation.ts` —
-- [ ] `backend/src/game/lobby/players/modify-single-player.controller.ts` —
-- [ ] `backend/src/game/lobby/players/remove-players.controller.ts` —
-- [ ] `backend/src/game/lobby/players/remove-players.service.ts` —
-- [ ] `backend/src/game/lobby/players/remove-players.validation.ts` —
+- [x] `backend/src/game/lobby/players/add-players.controller.ts` —
+- [x] `backend/src/game/lobby/players/add-players.service.ts` —
+- [x] `backend/src/game/lobby/players/add-players.validation.ts` —
+- [x] `backend/src/game/lobby/players/index.ts` —
+- [x] `backend/src/game/lobby/players/modify-batch-players.controller.ts` —
+- [x] `backend/src/game/lobby/players/modify-players.service.ts` —
+- [x] `backend/src/game/lobby/players/modify-players.validation.ts` —
+- [x] `backend/src/game/lobby/players/modify-single-player.controller.ts` —
+- [x] `backend/src/game/lobby/players/remove-players.controller.ts` —
+- [x] `backend/src/game/lobby/players/remove-players.service.ts` —
+- [x] `backend/src/game/lobby/players/remove-players.validation.ts` —
 
 ### backend/src/game/lobby/rounds/
 

@@ -15,9 +15,6 @@ import * as assignRolesActions from "./rounds/assign-roles.actions";
 import { createLobbyAggregateLoader } from "./state";
 import { UnexpectedLobbyError } from "./errors/lobby.errors";
 
-/**
- * Wrapper around gameplay state provider to throw if not found
- */
 const getGameStateOrThrow =
   (trx: TransactionContext) => async (gameId: string, userId: number) => {
     const lobby = await createLobbyAggregateLoader(trx)(gameId, userId);
@@ -29,12 +26,6 @@ const getGameStateOrThrow =
   };
 
 
-/**
- * Creates lobby operations for use within a transaction context
- *
- * @param trx - Database transaction context
- * @returns Object containing all lobby operations
- */
 export const lobbyOperations = (trx: TransactionContext) => ({
   loadLobbyAggregate: getGameStateOrThrow(trx),
   addPlayers: playersRepository.addPlayers(trx),
@@ -62,7 +53,4 @@ export const lobbyOperations = (trx: TransactionContext) => ({
   ),
 });
 
-/**
- * Type representing all operations available within lobby transactions
- */
 export type LobbyOperations = ReturnType<typeof lobbyOperations>;

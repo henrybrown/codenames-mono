@@ -17,7 +17,6 @@ import { lobbyErrorHandler } from "./errors/lobby-errors.middleware";
 import { startGameService } from "./start-game/start-game.service";
 import { startGameController } from "./start-game/start-game.controller";
 
-/** Setup imports (folded from top-level setup/) */
 import { createGameService } from "./setup/create-game.service";
 import { createGameController } from "./setup/create-game.controller";
 import { setupOperations } from "./setup/setup-actions";
@@ -34,20 +33,15 @@ export const initialize = (
   appLogger: AppLogger,
 ) => {
   const logger = appLogger.for({ feature: "lobby" }).create();
-  /** State providers */
   const loadLobbyAggregate = createLobbyAggregateLoader(db);
 
-  /** Transaction handlers */
   const lobbyHandler = createTransactionalHandler(db, lobbyOperations);
   const setupHandler = createTransactionalHandler(db, setupOperations);
 
-  /** Players (add, modify, remove) */
   const players = createPlayers({ loadLobbyAggregate, lobbyHandler });
 
-  /** Rounds (new-round, deal-cards, start-round) */
   const rounds = createRounds({ loadLobbyAggregate, lobbyHandler });
 
-  /** Start game */
   const createUserRepo = createUser(db);
   const lobbyStartGameService = startGameService({
     lobbyHandler,
@@ -58,26 +52,20 @@ export const initialize = (
     startGame: lobbyStartGameService,
   });
 
-  /** Game creation (setup) */
   const setupGameService = createGameService({ setupHandler });
   const setupGameController = createGameController({ createGame: setupGameService });
 
-  /** Routes */
   const router = Router();
 
-  /** Setup route */
   router.post("/games", auth, setupGameController);
 
-  /** Player routes */
   router.post("/games/:gameId/players", auth, blockingGameAction("add-players"), players.controllers.add);
   router.patch("/games/:gameId/players", auth, blockingGameAction("modify-players"), players.controllers.modifyBatch);
   router.patch("/games/:gameId/players/:playerId", auth, blockingGameAction("modify-player"), players.controllers.modifySingle);
   router.delete("/games/:gameId/players/:playerId", auth, blockingGameAction("remove-player"), players.controllers.remove);
 
-  /** Game start */
   router.post("/games/:gameId/start", auth, blockingGameAction("start-game"), lobbyStartGameController);
 
-  /** Round routes */
   router.post("/games/:gameId/rounds", auth, blockingGameAction("new-round"), rounds.controllers.newRound);
   router.post("/games/:gameId/rounds/:id/deal", auth, blockingGameAction("deal-cards"), rounds.controllers.dealCards);
   router.post("/games/:gameId/rounds/:roundNumber/start", auth, blockingGameAction("start-round"), rounds.controllers.startRound);

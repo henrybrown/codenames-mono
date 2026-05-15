@@ -3,7 +3,6 @@ import type { LobbyOperations } from "../lobby-actions";
 import type { LobbyAggregateLoader } from "../state";
 import { getPlayerByPublicId, isPlayerOwner } from "../state/helpers";
 
-/** Represents the result of a player removal operation */
 export type PlayerResult = {
   _id: number;
   publicId: string;
@@ -21,21 +20,12 @@ export type RemovePlayersResult =
   | { success: true; data: RemovePlayersSuccess }
   | { success: false; message: string; notFound?: boolean };
 
-/** Required dependencies for creating the RemovePlayersService */
 export type ServiceDependencies = {
   lobbyHandler: TransactionalHandler<LobbyOperations>;
   loadLobbyAggregate: LobbyAggregateLoader;
 };
 
-/** Creates an implementation of the remove players service */
 export const removePlayersService = (dependencies: ServiceDependencies) => {
-  /**
-   * Removes a specific player from a game
-   * @param publicGameId - Public identifier of the game
-   * @param userId - ID of the user attempting to remove the player
-   * @param playerIdToRemove - Public UUID of the player to remove
-   * @returns Removed player details and game context
-   */
   const removePlayers = async (
     publicGameId: string,
     userId: number,

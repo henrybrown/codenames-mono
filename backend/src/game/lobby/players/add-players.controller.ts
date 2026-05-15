@@ -7,20 +7,12 @@ import {
   AddPlayersResponse,
 } from "./add-players.validation";
 
-/** Dependencies required for the add players controller */
 export type Dependencies = {
   addPlayers: ReturnType<typeof addPlayersService>;
 };
 
-/** Creates a controller for adding players to a game lobby */
 export const addPlayersController =
   ({ addPlayers }: Dependencies) =>
-  /**
-   * Handles HTTP request to add players to a game
-   * @param req - Express request with game and player details
-   * @param res - Express response object
-   * @param next - Express error handling function
-   */
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const validatedRequest = addPlayersRequestSchema.parse({

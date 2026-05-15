@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-/**
- * Schema for removing players from a game
- */
 export const removePlayersRequestSchema = z.object({
   params: z.object({
     gameId: z.string().min(1, "Game ID is required"),
@@ -13,16 +10,10 @@ export const removePlayersRequestSchema = z.object({
   }),
 });
 
-/**
- * Type for the parsed remove players request
- */
 export type ValidatedRemovePlayersRequest = z.infer<
   typeof removePlayersRequestSchema
 >;
 
-/**
- * Schema for a player in the response
- */
 const playerResponseSchema = z.object({
   id: z.string(),
   playerName: z.string(),
@@ -31,9 +22,6 @@ const playerResponseSchema = z.object({
   isActive: z.boolean(),
 });
 
-/**
- * Response schema for removing players
- */
 export const removePlayersResponseSchema = z
   .object({
     success: z.boolean(),
@@ -44,7 +32,4 @@ export const removePlayersResponseSchema = z
   })
   .strict();
 
-/**
- * Type for the response schema
- */
 export type RemovePlayersResponse = z.infer<typeof removePlayersResponseSchema>;

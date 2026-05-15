@@ -6,20 +6,12 @@ import {
   removePlayersResponseSchema,
 } from "./remove-players.validation";
 
-/** Dependencies required by the remove players controller */
 export type Dependencies = {
   removePlayersService: ReturnType<typeof removePlayersService>;
 };
 
-/** Creates a controller for removing players from a game lobby */
 export const removePlayersController =
   ({ removePlayersService }: Dependencies) =>
-  /**
-   * Handles HTTP request to remove a player from a game
-   * @param req - Express request with game and player details
-   * @param res - Express response object
-   * @param next - Express error handling function
-   */
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const validatedRequest = removePlayersRequestSchema.parse({

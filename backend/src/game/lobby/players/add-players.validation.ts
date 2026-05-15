@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-/**
- * Schema for a single player's data
- */
 export const playerSchema = z
   .object({
     playerName: z.string().min(1).max(30),
@@ -10,9 +7,6 @@ export const playerSchema = z
   })
   .strict();
 
-/**
- * Complete request validation schema
- */
 export const addPlayersRequestSchema = z.object({
   params: z.object({
     gameId: z.string().min(1, "Game ID is required"),
@@ -26,16 +20,10 @@ export const addPlayersRequestSchema = z.object({
   ]),
 });
 
-/**
- * Type for the parsed request
- */
 export type ValidatedAddPlayersRequest = z.infer<
   typeof addPlayersRequestSchema
 >;
 
-/**
- * Schema for a player in the response
- */
 const playerResponseSchema = z.object({
   id: z.string(),
   playerName: z.string(),
@@ -44,9 +32,6 @@ const playerResponseSchema = z.object({
   isActive: z.boolean(),
 });
 
-/**
- * Response schema for adding players
- */
 export const addPlayersResponseSchema = z
   .object({
     success: z.boolean(),
@@ -57,7 +42,4 @@ export const addPlayersResponseSchema = z
   })
   .strict();
 
-/**
- * Type for the response schema
- */
 export type AddPlayersResponse = z.infer<typeof addPlayersResponseSchema>;
