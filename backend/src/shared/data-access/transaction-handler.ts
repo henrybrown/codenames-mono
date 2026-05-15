@@ -1,14 +1,8 @@
 import type { Kysely, Transaction } from "kysely";
 import type { DB } from "../db/db.types";
 
-/**
- * Regular database connection context for non-transactional operations
- */
 export type DbContext = Kysely<DB>;
 
-/**
- * Transaction context for operations that need atomicity
- */
 export type TransactionContext = Transaction<DB>;
 
 /**
@@ -49,11 +43,6 @@ export const createTransactionalHandler = <TOperations>(
   };
 };
 
-/**
- * Handler that executes operations within a database transaction
- *
- * @template TOperations - The operations object type provided to the callback
- */
 export type TransactionalHandler<TOperations> = <TResult>(
   operation: (ops: TOperations) => Promise<TResult>,
 ) => Promise<TResult>;

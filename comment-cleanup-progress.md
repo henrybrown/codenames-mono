@@ -271,34 +271,34 @@
 
 ### backend/src/shared/config/
 
-- [ ] `backend/src/shared/config/env.config.ts` —
-- [ ] `backend/src/shared/config/index.ts` —
-- [ ] `backend/src/shared/config/jwt.config.ts` —
+- [x] `backend/src/shared/config/env.config.ts` —
+- [x] `backend/src/shared/config/index.ts` —
+- [x] `backend/src/shared/config/jwt.config.ts` —
 
 ### backend/src/shared/data/
 
-- [ ] `backend/src/shared/data/schema-migrations.ts` —
-- [ ] `backend/src/shared/data/system-data-loader.ts` —
+- [x] `backend/src/shared/data/schema-migrations.ts` —
+- [x] `backend/src/shared/data/system-data-loader.ts` —
 
 ### backend/src/shared/data-access/
 
-- [ ] `backend/src/shared/data-access/transaction-handler.ts` —
+- [x] `backend/src/shared/data-access/transaction-handler.ts` —
 
 ### backend/src/shared/data-access/repositories/
 
 - [ ] `backend/src/shared/data-access/repositories/ai-pipeline-runs.repository.ts` —
-- [ ] `backend/src/shared/data-access/repositories/cards.repository.ts` —
+- [x] `backend/src/shared/data-access/repositories/cards.repository.ts` —
 - [ ] `backend/src/shared/data-access/repositories/game-events.repository.ts` —
 - [ ] `backend/src/shared/data-access/repositories/game-messages.repository.ts` —
 - [ ] `backend/src/shared/data-access/repositories/games.repository.ts` —
 - [ ] `backend/src/shared/data-access/repositories/player-roles.repository.ts` —
 - [ ] `backend/src/shared/data-access/repositories/players.repository.ts` —
-- [ ] `backend/src/shared/data-access/repositories/repository.errors.ts` —
+- [x] `backend/src/shared/data-access/repositories/repository.errors.ts` —
 - [ ] `backend/src/shared/data-access/repositories/rounds.repository.ts` —
-- [ ] `backend/src/shared/data-access/repositories/sessions.repository.ts` —
+- [x] `backend/src/shared/data-access/repositories/sessions.repository.ts` —
 - [ ] `backend/src/shared/data-access/repositories/teams.repository.ts` —
 - [ ] `backend/src/shared/data-access/repositories/turns.repository.ts` —
-- [ ] `backend/src/shared/data-access/repositories/users.repository.ts` —
+- [x] `backend/src/shared/data-access/repositories/users.repository.ts` —
 
 ### backend/src/shared/data/decks/
 

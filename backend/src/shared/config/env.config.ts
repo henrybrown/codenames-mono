@@ -17,9 +17,6 @@ export const consoleFormat = winston.format.printf(
   },
 );
 
-/**
- * Bespoke logger used as logger config contained in .env
- */
 const envLoadLogger = winston.createLogger({
   level: "info",
   format: winston.format.combine(
@@ -49,7 +46,6 @@ export const loadEnvFromPackageDir = () => {
   envLoadLogger.info(`Loading environment from: ${envPath}`);
   dotenv.config({ path: envPath });
 
-  // validate env variables against zod schema
   const result = EnvSchema.safeParse(process.env);
 
   if (!result.success) {
@@ -79,7 +75,6 @@ export const loadEnvFromPackageDir = () => {
   return parsedEnv;
 };
 
-// Zod schema for environment variables
 const EnvSchema = z.object({
   PORT: z.string().transform(Number).default("3000"),
   DATABASE_URL: z.string().url("Invalid DATABASE_URL"),

@@ -5,20 +5,11 @@ import { refreshEnums } from "./enums";
 import { runSchemaMigrations } from "./schema-migrations";
 import type { AppLogger } from "../logging";
 
-/**
- * Data refresh function to load application system data
- * 1. Delete all existing data from the tables
- * 2. Insert fresh data from the JSON files
- *
- * @param logger Application logger
- * @returns Function that accepts db connection
- */
 export const refreshSystemData = (logger: AppLogger) => async (db: Kysely<DB>): Promise<void> => {
   const log = logger.for({ module: "system-data-loader" }).create();
   log.info("Starting data refresh");
 
   try {
-    // Run idempotent schema migrations before data refresh
     await runSchemaMigrations(logger)(db);
 
     await db.transaction().execute(async (trx) => {

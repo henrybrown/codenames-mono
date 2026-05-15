@@ -2,18 +2,10 @@ import { Kysely } from "kysely";
 import { DB } from "../../db/db.types";
 import { UnexpectedRepositoryError } from "./repository.errors";
 
-/**
- * ==================
- * REPOSITORY TYPES
- * ==================
- */
-
-/** Domain-specific identifier types */
 export type UserId = number;
 export type SessionId = number;
 export type Token = string;
 
-/** Input and result types */
 export type SessionInput = {
   userId: number;
   token: string;
@@ -29,7 +21,6 @@ export type SessionResult = {
   createdAt: Date;
 };
 
-/** Generic repository function types */
 export type SessionFinder<T extends Token> = (
   identifier: T,
 ) => Promise<SessionResult | null>;
@@ -40,26 +31,8 @@ export type SessionCreator = (input: SessionInput) => Promise<SessionResult>;
 
 export type SessionInvalidator = (token: Token) => Promise<boolean>;
 
-/**
- * ==================
- * REPOSITORY FUNCTIONS
- * ==================
- */
-
-/**
- * Creates a function for storing new sessions
- *
- * @param db - Database connection
- */
 export const storeSession =
   (db: Kysely<DB>): SessionCreator =>
-  /**
-   * Creates a new session for a user
-   *
-   * @param input - Session creation parameters
-   * @returns Created session data
-   * @throws {UnexpectedRepositoryError} If session creation fails
-   */
   async ({ userId, token, expiresAt }) => {
     try {
       // Calculate expiration date if not provided (default: 7 days)
@@ -109,19 +82,8 @@ export const storeSession =
     }
   };
 
-/**
- * Creates a function for finding sessions by token
- *
- * @param db - Database connection
- */
 export const findSessionByToken =
   (db: Kysely<DB>): SessionFinder<Token> =>
-  /**
-   * Retrieves session data using a token
-   *
-   * @param token - The session token
-   * @returns Session data if found and valid, null otherwise
-   */
   async (token) => {
     // For a stateless JWT implementation, this would verify the JWT
     // and return the decoded data or null if invalid
@@ -146,19 +108,8 @@ export const findSessionByToken =
     return null;
   };
 
-/**
- * Creates a function for invalidating sessions
- *
- * @param db - Database connection
- */
 export const invalidateSession =
   (db: Kysely<DB>): SessionInvalidator =>
-  /**
-   * Invalidates a specific session
-   *
-   * @param token - The session token to invalidate
-   * @returns true if invalidated successfully, false otherwise
-   */
   async (token) => {
     try {
       // For a stateless JWT implementation, this might be a no-op
@@ -176,19 +127,8 @@ export const invalidateSession =
     }
   };
 
-/**
- * Creates a function for invalidating all sessions for a user
- *
- * @param db - Database connection
- */
 export const invalidateUserSessions =
   (db: Kysely<DB>) =>
-  /**
-   * Invalidates all sessions for a specific user
-   *
-   * @param userId - The ID of the user whose sessions should be invalidated
-   * @returns true if invalidated successfully, false otherwise
-   */
   async (userId: number): Promise<boolean> => {
     try {
       // For a stateless JWT implementation, this might add all tokens
