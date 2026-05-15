@@ -138,10 +138,10 @@
 
 ### backend/src/game/gameplay/rounds/
 
-- [ ] `backend/src/game/gameplay/rounds/end-round.action.ts` —
-- [ ] `backend/src/game/gameplay/rounds/end-round.rules.ts` —
-- [ ] `backend/src/game/gameplay/rounds/index.ts` —
-- [ ] `backend/src/game/gameplay/rounds/winning-conditions.ts` —
+- [x] `backend/src/game/gameplay/rounds/end-round.action.ts` —
+- [x] `backend/src/game/gameplay/rounds/end-round.rules.ts` —
+- [x] `backend/src/game/gameplay/rounds/index.ts` —
+- [x] `backend/src/game/gameplay/rounds/winning-conditions.ts` —
 
 ### backend/src/game/gameplay/turns/
 
