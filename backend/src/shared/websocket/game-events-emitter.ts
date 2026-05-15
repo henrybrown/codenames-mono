@@ -15,9 +15,6 @@ import type {
  * to trigger real-time updates without knowing WebSocket implementation details
  */
 export class GameEventsEmitter {
-  /**
-   * Emit a player joined event
-   */
   static playerJoined(gameId: string, playerId: string, playerName: string, teamId?: number): void {
     const payload: PlayerEventPayload = {
       gameId,
@@ -29,9 +26,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.PLAYER_JOINED, payload);
   }
 
-  /**
-   * Emit a player left event
-   */
   static playerLeft(gameId: string, playerId: string, playerName: string): void {
     const payload: PlayerEventPayload = {
       gameId,
@@ -42,9 +36,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.PLAYER_LEFT, payload);
   }
 
-  /**
-   * Emit a player updated event
-   */
   static playerUpdated(
     gameId: string,
     playerId: string,
@@ -61,9 +52,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.PLAYER_UPDATED, payload);
   }
 
-  /**
-   * Emit a game started event
-   */
   static gameStarted(gameId: string): void {
     const payload: BaseEventPayload = {
       gameId,
@@ -72,9 +60,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.GAME_STARTED, payload);
   }
 
-  /**
-   * Emit a round created event
-   */
   static roundCreated(gameId: string, roundNumber: number): void {
     const payload: GameplayEventPayload = {
       gameId,
@@ -84,9 +69,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.ROUND_CREATED, payload);
   }
 
-  /**
-   * Emit a round started event
-   */
   static roundStarted(gameId: string, roundNumber: number): void {
     const payload: GameplayEventPayload = {
       gameId,
@@ -96,9 +78,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.ROUND_STARTED, payload);
   }
 
-  /**
-   * Emit a cards dealt event
-   */
   static cardsDealt(gameId: string, roundNumber: number): void {
     const payload: GameplayEventPayload = {
       gameId,
@@ -108,9 +87,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.CARDS_DEALT, payload);
   }
 
-  /**
-   * Emit a clue given event
-   */
   static clueGiven(gameId: string, roundNumber: number, turnId: string, playerId: string): void {
     const payload: GameplayEventPayload = {
       gameId,
@@ -122,9 +98,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.CLUE_GIVEN, payload);
   }
 
-  /**
-   * Emit a guess made event
-   */
   static guessMade(gameId: string, roundNumber: number, turnId: string, playerId: string): void {
     const payload: GameplayEventPayload = {
       gameId,
@@ -137,9 +110,6 @@ export class GameEventsEmitter {
     // Also emit to server-side event bus for AI to listen
   }
 
-  /**
-   * Emit a turn started event
-   */
   static turnStarted(gameId: string, roundNumber: number, turnId: string, playerId?: string): void {
     const payload: GameplayEventPayload = {
       gameId,
@@ -151,9 +121,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.TURN_STARTED, payload);
   }
 
-  /**
-   * Emit a turn ended event
-   */
   static turnEnded(gameId: string, roundNumber: number, turnId: string): void {
     const payload: GameplayEventPayload = {
       gameId,
@@ -164,9 +131,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.TURN_ENDED, payload);
   }
 
-  /**
-   * Emit a round ended event
-   */
   static roundEnded(gameId: string, roundNumber: number): void {
     const payload: GameplayEventPayload = {
       gameId,
@@ -176,9 +140,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.ROUND_ENDED, payload);
   }
 
-  /**
-   * Emit a game ended event
-   */
   static gameEnded(gameId: string, winningTeamId: number | null = null): void {
     const payload: GameStateEventPayload = {
       gameId,
@@ -200,9 +161,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.GAME_UPDATED, payload);
   }
 
-  /**
-   * Emit an AI pipeline started event
-   */
   static aiPipelineStarted(gameId: string, runId: string, pipelineType: string): void {
     const payload: AiPipelineEventPayload = {
       gameId,
@@ -213,9 +171,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.AI_PIPELINE_STARTED, payload);
   }
 
-  /**
-   * Emit an AI pipeline stage event
-   */
   static aiPipelineStage(gameId: string, runId: string, stage: string): void {
     const payload: AiPipelineEventPayload = {
       gameId,
@@ -226,9 +181,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.AI_PIPELINE_STAGE, payload);
   }
 
-  /**
-   * Emit an AI pipeline complete event
-   */
   static aiPipelineComplete(gameId: string, runId: string): void {
     const payload: AiPipelineEventPayload = {
       gameId,
@@ -238,9 +190,6 @@ export class GameEventsEmitter {
     emitToGame(gameId, WebSocketEvent.AI_PIPELINE_COMPLETE, payload);
   }
 
-  /**
-   * Emit an AI pipeline failed event
-   */
   static aiPipelineFailed(gameId: string, runId: string, error: string): void {
     const payload: AiPipelineEventPayload = {
       gameId,

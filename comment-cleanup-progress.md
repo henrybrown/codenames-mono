@@ -2,7 +2,7 @@
 
 **Started:** 2026-05-15
 **Total files:** 187
-**Status:** in progress
+**Status:** complete
 
 ## How to use this file
 
@@ -302,52 +302,61 @@
 
 ### backend/src/shared/data/decks/
 
-- [ ] `backend/src/shared/data/decks/index.ts` —
+- [x] `backend/src/shared/data/decks/index.ts` —
 
 ### backend/src/shared/data/enums/
 
-- [ ] `backend/src/shared/data/enums/index.ts` —
+- [x] `backend/src/shared/data/enums/index.ts` —
 
 ### backend/src/shared/db/
 
-- [ ] `backend/src/shared/db/db.postgres.ts` —
-- [ ] `backend/src/shared/db/index.ts` —
+- [x] `backend/src/shared/db/db.postgres.ts` —
+- [x] `backend/src/shared/db/index.ts` —
 
 ### backend/src/shared/http/
 
-- [ ] `backend/src/shared/http/result-status.ts` —
+- [x] `backend/src/shared/http/result-status.ts` —
 
 ### backend/src/shared/http-client/
 
-- [ ] `backend/src/shared/http-client/http-client.ts` —
-- [ ] `backend/src/shared/http-client/index.ts` —
+- [x] `backend/src/shared/http-client/http-client.ts` —
+- [x] `backend/src/shared/http-client/index.ts` —
 
 ### backend/src/shared/http-middleware/
 
-- [ ] `backend/src/shared/http-middleware/add-error-details.helper.ts` —
-- [ ] `backend/src/shared/http-middleware/auth.middleware.ts` —
-- [ ] `backend/src/shared/http-middleware/controller-helpers.ts` —
-- [ ] `backend/src/shared/http-middleware/error-handler.middleware.ts` —
-- [ ] `backend/src/shared/http-middleware/feature-error-handler.middleware.ts` —
-- [ ] `backend/src/shared/http-middleware/http-logger.middleware.ts` —
+- [x] `backend/src/shared/http-middleware/add-error-details.helper.ts` —
+- [x] `backend/src/shared/http-middleware/auth.middleware.ts` —
+- [x] `backend/src/shared/http-middleware/controller-helpers.ts` —
+- [x] `backend/src/shared/http-middleware/error-handler.middleware.ts` —
+- [x] `backend/src/shared/http-middleware/feature-error-handler.middleware.ts` —
+- [x] `backend/src/shared/http-middleware/http-logger.middleware.ts` —
 
 ### backend/src/shared/logging/
 
-- [ ] `backend/src/shared/logging/create-app-logger.ts` —
-- [ ] `backend/src/shared/logging/index.ts` —
+- [x] `backend/src/shared/logging/create-app-logger.ts` —
+- [x] `backend/src/shared/logging/index.ts` —
 
 ### backend/src/shared/websocket/
 
-- [ ] `backend/src/shared/websocket/game-events-emitter.ts` —
-- [ ] `backend/src/shared/websocket/index.ts` —
-- [ ] `backend/src/shared/websocket/websocket-auth.middleware.ts` —
-- [ ] `backend/src/shared/websocket/websocket-events.types.ts` —
-- [ ] `backend/src/shared/websocket/websocket-server.ts` —
+- [x] `backend/src/shared/websocket/game-events-emitter.ts` —
+- [x] `backend/src/shared/websocket/index.ts` —
+- [x] `backend/src/shared/websocket/websocket-auth.middleware.ts` —
+- [x] `backend/src/shared/websocket/websocket-events.types.ts` —
+- [x] `backend/src/shared/websocket/websocket-server.ts` —
 
 
-## Summary (filled in after sweep completes)
+## Summary
 
-- Files processed: 0 / 187
-- Comments removed (approximate): -
-- Files flagged for follow-up: -
-- TODO comments retained without context: -
+- Files processed: 187 / 187
+- Comments removed: ~350+ blocks (mostly paraphrasing JSDoc on factories/types, section-divider banners, and inline narration of the next line)
+- Typecheck passes after every batch commit
+- Files flagged for follow-up:
+  - `ai/player/ai-player.service.ts` — 625 lines, kept section dividers per the >300-line rule
+  - `game/state/validation.ts` — kept trailing "E.g." comment as-is per don't-rewrite rule (incomplete in original)
+- TODO comments retained:
+  - `auth/guest-session/create-guest-session.controller.ts` — `// Keep this for debugging, remove in production` on session.token in response body
+  - `game/gameplay/turns/index.ts` — `// todo: review turn action/service logic generally - should be much cleaner/ledgible`
+- Borderline retentions worth a reviewer sanity-check:
+  - Repository file headers like `/** Zod schemas needed due to generated postgrest enum types... */` (games.repository.ts) — kept because they explain a real workaround, not just paraphrase.
+  - `gameplay-actions.ts` retained the `makeGuess` op JSDoc ("post-guess cascade is the caller's responsibility") and the `state` op one-liner, removed the four other op JSDocs that just paraphrased function names.
+  - `loadGameStateForAI` JSDoc in `ai-player.service.ts` was removed (function name carries it), but the `GUESS_THRESHOLDS` confidence block was kept entirely (substantive rationale).

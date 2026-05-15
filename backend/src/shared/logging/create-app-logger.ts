@@ -2,10 +2,6 @@ import winston from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
 import util from "util";
 
-// ============================================================================
-// Types
-// ============================================================================
-
 export type LogLevel = "debug" | "info" | "warn" | "error" | "http";
 
 export type AppLoggerConfig = {
@@ -36,10 +32,6 @@ export type LogOptions = {
   meta?: LogMeta;
   fileOnly?: boolean; // When true, log only to file, not console
 };
-
-// ============================================================================
-// Formats
-// ============================================================================
 
 const orderedFormat = winston.format.printf(({ level, message, timestamp, meta, ...rest }) => {
   const ordered: Record<string, unknown> = { timestamp, level };
@@ -77,10 +69,6 @@ export const consoleFormat = winston.format.printf(
     return `${timestamp} ${level} ${prefix}${message}${metaStr}`;
   },
 );
-
-// ============================================================================
-// Classes
-// ============================================================================
 
 /**
  * Builder for creating scoped AppLogger instances.
@@ -150,21 +138,11 @@ export class AppLogger {
     this.logWithOptions("http", message, options);
   }
 
-  /**
-   * Creates a LoggerBuilder to configure a scoped child logger
-   */
   for(scope: LogScope): LoggerBuilder {
     return new LoggerBuilder(this.logger).for(scope);
   }
 }
 
-// ============================================================================
-// Factory
-// ============================================================================
-
-/**
- * Creates the root application logger with file rotation and optional console output
- */
 export const createAppLogger = (config: AppLoggerConfig): AppLogger => {
   const transports: winston.transport[] = [
     new DailyRotateFile({

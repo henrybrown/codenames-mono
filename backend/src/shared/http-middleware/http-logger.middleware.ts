@@ -13,17 +13,11 @@ type HttpLoggerConfig = {
   toConsole: boolean;
 };
 
-/**
- * Extracts minimal request metadata
- */
 const extractRequestMetaMinimal = (req: Request) => ({
   method: req.method,
   path: req.path,
 });
 
-/**
- * Extracts full request metadata for verbose logging
- */
 const extractRequestMetaVerbose = (req: Request) => ({
   method: req.method,
   path: req.path,
@@ -37,16 +31,10 @@ const extractRequestMetaVerbose = (req: Request) => ({
   contentLength: req.get("content-length"),
 });
 
-/**
- * Extracts minimal response metadata
- */
 const extractResponseMetaMinimal = (res: Response) => ({
   statusCode: res.statusCode,
 });
 
-/**
- * Extracts full response metadata for verbose logging
- */
 const extractResponseMetaVerbose = (res: Response, body?: unknown) => ({
   statusCode: res.statusCode,
   statusMessage: res.statusMessage,
@@ -55,9 +43,6 @@ const extractResponseMetaVerbose = (res: Response, body?: unknown) => ({
   body,
 });
 
-/**
- * Creates HTTP request/response logging middleware
- */
 export const httpLoggerMiddleware = (config: HttpLoggerConfig) => (logger: AppLogger) => {
   const httpLogger = logger.for({ middleware: "http-logger" }).create();
 

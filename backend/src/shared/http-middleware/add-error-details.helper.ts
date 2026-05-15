@@ -9,14 +9,6 @@ export type AdditionalErrorDetails = {
   stack: Record<string, string>;
 };
 
-/**
- * Generates standardized error details for API responses
- *
- * @param err - The error object
- * @param req - Express request object
- * @param exclude - Optional array of field names to exclude from the result
- * @returns Object containing error details
- */
 export const generateAdditionalErrorInfo = (
   err: Error,
   req: Request,

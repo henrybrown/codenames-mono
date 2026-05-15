@@ -8,10 +8,6 @@ const { Pool } = pg;
 let dbInstance: Kysely<DB> | null = null;
 
 /**
- * Initialize the database connection and test it
- * @param connectionString The PostgreSQL connection string
- * @param logger The application logger
- * @returns A Promise resolving to the database instance
  * @throws Error if connection test fails
  */
 export const initializeDb = (logger: AppLogger) => async (connectionString: string): Promise<Kysely<DB>> => {

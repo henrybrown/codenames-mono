@@ -20,14 +20,11 @@ export type AuthMiddleware = (
 
 export const authMiddleware = (jwtSecret: string, logger?: AppLogger): AuthMiddleware => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
-    // Idempotent request ID generation
     req.id = req.id ?? crypto.randomUUID();
 
     try {
-      // Try to get token from cookie first
       let token = req.cookies?.authToken;
 
-      // Fallback to Authorization header if no cookie
       if (!token) {
         const authHeader = req.headers.authorization;
         if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -42,13 +39,11 @@ export const authMiddleware = (jwtSecret: string, logger?: AppLogger): AuthMiddl
         });
       }
 
-      // Verify the JWT token
       const decoded = jwt.verify(token, jwtSecret) as {
         userId: number;
         username: string;
       };
 
-      // Attach user info to request
       req.auth = {
         userId: decoded.userId,
         username: decoded.username,

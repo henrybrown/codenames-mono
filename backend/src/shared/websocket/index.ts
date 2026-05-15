@@ -1,8 +1,3 @@
-/**
- * WebSocket module exports
- * Provides real-time communication infrastructure for multiplayer game features
- */
-
 export { initializeWebSocketServer, getWebSocketServer, emitToGame, emitToAll } from "./websocket-server";
 export { createWebSocketAuthMiddleware } from "./websocket-auth.middleware";
 export type { AuthenticatedSocket } from "./websocket-auth.middleware";

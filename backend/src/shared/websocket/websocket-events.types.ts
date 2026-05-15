@@ -1,6 +1,3 @@
-/**
- * WebSocket event types for real-time game updates
- */
 export enum WebSocketEvent {
   // Connection events
   CONNECTION = "connection",
@@ -42,43 +39,28 @@ export enum WebSocketEvent {
   GAME_MESSAGE_CREATED = "game_message_created",
 }
 
-/**
- * Base payload structure for all events
- */
 export interface BaseEventPayload {
   gameId: string;
   timestamp: string;
 }
 
-/**
- * Event payload for player-related events
- */
 export interface PlayerEventPayload extends BaseEventPayload {
   playerId?: string;
   playerName?: string;
   teamId?: number;
 }
 
-/**
- * Event payload for gameplay events
- */
 export interface GameplayEventPayload extends BaseEventPayload {
   roundNumber?: number;
   turnId?: string;
   playerId?: string;
 }
 
-/**
- * Event payload for game state changes
- */
 export interface GameStateEventPayload extends BaseEventPayload {
   gameStatus?: string;
   winningTeamId?: number;
 }
 
-/**
- * Event payload for AI pipeline events
- */
 export interface AiPipelineEventPayload extends BaseEventPayload {
   runId: string;
   pipelineType?: string;
@@ -86,18 +68,12 @@ export interface AiPipelineEventPayload extends BaseEventPayload {
   error?: string;
 }
 
-/**
- * Event payload for game message events
- */
 export interface GameMessageEventPayload extends BaseEventPayload {
   messageId: string;
   messageType: string;
   teamId?: number;
 }
 
-/**
- * Union type for all event payloads
- */
 export type EventPayload =
   | BaseEventPayload
   | PlayerEventPayload

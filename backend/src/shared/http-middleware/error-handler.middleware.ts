@@ -19,7 +19,6 @@ export const errorHandler = (logger: AppLogger) => (
   res: Response,
   next: NextFunction,
 ): void => {
-  // Error details included in response for dev mode
   const errorResponse: ErrorResponse = {
     success: false,
     error: "An unexpected error occurred",
