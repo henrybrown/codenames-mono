@@ -145,45 +145,45 @@
 
 ### backend/src/game/gameplay/turns/
 
-- [ ] `backend/src/game/gameplay/turns/index.ts` —
-- [ ] `backend/src/game/gameplay/turns/types.ts` —
+- [x] `backend/src/game/gameplay/turns/index.ts` — kept context-light TODO at L11
+- [x] `backend/src/game/gameplay/turns/types.ts` —
 
 ### backend/src/game/gameplay/turns/clue/
 
-- [ ] `backend/src/game/gameplay/turns/clue/give-clue.action.ts` —
-- [ ] `backend/src/game/gameplay/turns/clue/give-clue.controller.ts` —
-- [ ] `backend/src/game/gameplay/turns/clue/give-clue.rules.ts` —
-- [ ] `backend/src/game/gameplay/turns/clue/give-clue.service.ts` —
-- [ ] `backend/src/game/gameplay/turns/clue/index.ts` —
+- [x] `backend/src/game/gameplay/turns/clue/give-clue.action.ts` —
+- [x] `backend/src/game/gameplay/turns/clue/give-clue.controller.ts` —
+- [x] `backend/src/game/gameplay/turns/clue/give-clue.rules.ts` —
+- [x] `backend/src/game/gameplay/turns/clue/give-clue.service.ts` —
+- [x] `backend/src/game/gameplay/turns/clue/index.ts` —
 
 ### backend/src/game/gameplay/turns/end/
 
-- [ ] `backend/src/game/gameplay/turns/end/end-turn.action.ts` —
-- [ ] `backend/src/game/gameplay/turns/end/end-turn.controller.ts` —
-- [ ] `backend/src/game/gameplay/turns/end/end-turn.rules.ts` —
-- [ ] `backend/src/game/gameplay/turns/end/end-turn.service.ts` —
-- [ ] `backend/src/game/gameplay/turns/end/index.ts` —
+- [x] `backend/src/game/gameplay/turns/end/end-turn.action.ts` —
+- [x] `backend/src/game/gameplay/turns/end/end-turn.controller.ts` —
+- [x] `backend/src/game/gameplay/turns/end/end-turn.rules.ts` —
+- [x] `backend/src/game/gameplay/turns/end/end-turn.service.ts` —
+- [x] `backend/src/game/gameplay/turns/end/index.ts` —
 
 ### backend/src/game/gameplay/turns/guess/
 
-- [ ] `backend/src/game/gameplay/turns/guess/index.ts` —
-- [ ] `backend/src/game/gameplay/turns/guess/make-guess.action.ts` —
-- [ ] `backend/src/game/gameplay/turns/guess/make-guess.controller.ts` —
-- [ ] `backend/src/game/gameplay/turns/guess/make-guess.rules.ts` —
-- [ ] `backend/src/game/gameplay/turns/guess/make-guess.service.ts` —
-- [ ] `backend/src/game/gameplay/turns/guess/outcome-strategy.ts` —
+- [x] `backend/src/game/gameplay/turns/guess/index.ts` —
+- [x] `backend/src/game/gameplay/turns/guess/make-guess.action.ts` —
+- [x] `backend/src/game/gameplay/turns/guess/make-guess.controller.ts` —
+- [x] `backend/src/game/gameplay/turns/guess/make-guess.rules.ts` —
+- [x] `backend/src/game/gameplay/turns/guess/make-guess.service.ts` —
+- [x] `backend/src/game/gameplay/turns/guess/outcome-strategy.ts` —
 
 ### backend/src/game/gameplay/turns/shared/
 
-- [ ] `backend/src/game/gameplay/turns/shared/present-turn.ts` —
+- [x] `backend/src/game/gameplay/turns/shared/present-turn.ts` —
 
 ### backend/src/game/gameplay/turns/start/
 
-- [ ] `backend/src/game/gameplay/turns/start/index.ts` —
-- [ ] `backend/src/game/gameplay/turns/start/start-turn.action.ts` —
-- [ ] `backend/src/game/gameplay/turns/start/start-turn.controller.ts` —
-- [ ] `backend/src/game/gameplay/turns/start/start-turn.rules.ts` —
-- [ ] `backend/src/game/gameplay/turns/start/start-turn.service.ts` —
+- [x] `backend/src/game/gameplay/turns/start/index.ts` —
+- [x] `backend/src/game/gameplay/turns/start/start-turn.action.ts` —
+- [x] `backend/src/game/gameplay/turns/start/start-turn.controller.ts` —
+- [x] `backend/src/game/gameplay/turns/start/start-turn.rules.ts` —
+- [x] `backend/src/game/gameplay/turns/start/start-turn.service.ts` —
 
 ### backend/src/game/lobby/
 

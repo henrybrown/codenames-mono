@@ -17,27 +17,23 @@ export interface TurnsDependencies {
 }
 
 export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
-  /** Give clue (sub-feature) */
   const clue = giveClue(logger)({
     gameplayHandler: deps.gameplayHandler,
     loadTurn: deps.loadTurn,
     loadGameAggregate: deps.loadGameAggregate,
   });
 
-  /** Make guess (sub-feature) */
   const guess = makeGuess(logger)({
     gameplayHandler: deps.gameplayHandler,
     loadTurn: deps.loadTurn,
     loadGameAggregate: deps.loadGameAggregate,
   });
 
-  /** Start turn (sub-feature) */
   const start = startTurn(logger)({
     gameplayHandler: deps.gameplayHandler,
     loadGameAggregate: deps.loadGameAggregate,
   });
 
-  /** End turn (sub-feature) */
   const end = endTurn(logger)({
     gameplayHandler: deps.gameplayHandler,
     loadGameAggregate: deps.loadGameAggregate,

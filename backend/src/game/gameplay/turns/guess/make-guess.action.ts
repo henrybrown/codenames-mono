@@ -36,9 +36,6 @@ export type MakeGuessActionResult =
     }
   | { ok: false; message: string };
 
-/**
- * Validates a specific card can be guessed
- */
 function validateGuessCard(
   game: GameAggregate,
   cardWord: string,
@@ -65,9 +62,6 @@ function validateGuessCard(
   return { valid: true, cardId: targetCard._id };
 }
 
-/**
- * Helper for determining guess outcome based on card and team
- */
 function determineOutcome(card: any, guessingTeamId: number): TurnOutcome {
   switch (card.cardType) {
     case "ASSASSIN":
@@ -83,9 +77,6 @@ function determineOutcome(card: any, guessingTeamId: number): TurnOutcome {
   }
 }
 
-/**
- * Creates the make guess action
- */
 export const createMakeGuessAction = (deps: {
   updateCards: CardUpdater;
   createGuess: GuessCreator;

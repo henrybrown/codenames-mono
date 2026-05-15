@@ -1,14 +1,3 @@
-/**
- * Give Clue Service
- *
- * Owns the full give-clue workflow: load the aggregate, resolve the
- * acting player according to game type, validate the round number,
- * run the gameplay handler, emit the event, return the shaped result.
- *
- * Failure variant carries notFound/conflict flags so the controller can
- * pick the right HTTP status via `pickStatus`.
- */
-
 import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import type { TurnLoader } from "@backend/game/state/load-turn-aggregate";
 import type { GameplayHandler } from "../../gameplay-actions";
@@ -27,10 +16,6 @@ import {
   buildCompleteTurnData,
   type CompleteTurnData,
 } from "../shared/present-turn";
-
-/* -------------------------------------------------------------------------- */
-/* Types                                                                      */
-/* -------------------------------------------------------------------------- */
 
 export type GiveClueInput = {
   gameId: string;
@@ -64,10 +49,6 @@ export type GiveClueDependencies = {
   loadTurn: TurnLoader;
 };
 
-/* -------------------------------------------------------------------------- */
-/* Player resolution                                                          */
-/* -------------------------------------------------------------------------- */
-
 const resolvePlayer = (
   aggregate: GameAggregate,
   input: GiveClueInput,
@@ -78,10 +59,6 @@ const resolvePlayer = (
   }
   return resolveActingPlayerForUser(aggregate, input.userId);
 };
-
-/* -------------------------------------------------------------------------- */
-/* Service                                                                    */
-/* -------------------------------------------------------------------------- */
 
 export const giveClueService =
   (logger: AppLogger) =>

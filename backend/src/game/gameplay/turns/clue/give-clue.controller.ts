@@ -1,11 +1,3 @@
-/**
- * Give Clue Controller — HTTP only.
- *
- * Decodes the request into a domain input, calls the service, encodes
- * the result. No aggregate loading, no player resolution, no business
- * checks. The service owns all of that.
- */
-
 import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import { z } from "zod";

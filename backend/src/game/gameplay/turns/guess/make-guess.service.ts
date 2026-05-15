@@ -19,10 +19,6 @@ import {
 import { determineOutcomeStrategy } from "./outcome-strategy";
 import { UnexpectedGameplayError } from "../../errors/gameplay.errors";
 
-/* -------------------------------------------------------------------------- */
-/* Types                                                                      */
-/* -------------------------------------------------------------------------- */
-
 export type MakeGuessInput = {
   gameId: string;
   roundNumber: number;
@@ -56,10 +52,6 @@ export type MakeGuessDependencies = {
   loadTurn: TurnLoader;
 };
 
-/* -------------------------------------------------------------------------- */
-/* Player resolution                                                          */
-/* -------------------------------------------------------------------------- */
-
 const resolvePlayer = (
   aggregate: GameAggregate,
   input: MakeGuessInput,
@@ -70,10 +62,6 @@ const resolvePlayer = (
   }
   return resolveActingPlayerForUser(aggregate, input.userId);
 };
-
-/* -------------------------------------------------------------------------- */
-/* Service                                                                    */
-/* -------------------------------------------------------------------------- */
 
 /**
  * Defensive fallback: when round/game ended and the turn data can't be

@@ -20,9 +20,6 @@ import {
 import { getCurrentTurn } from "@backend/game/state/helpers";
 import { z } from "zod";
 
-/**
- * Validation schemas for make-guess related actions
- */
 const makeGuessActionSchema = gameplayBaseSchema.extend({
   status: z.literal(GAME_STATE.IN_PROGRESS),
   currentRound: currentRoundSchema.extend({
@@ -60,16 +57,10 @@ const makeGuessActionSchema = gameplayBaseSchema.extend({
     path: ["currentRound", "turns"],
   });
 
-/**
- * Branded types for each action
- */
 export type MakeGuessValidGameState = ValidatedGameState<
   typeof makeGuessActionSchema
 >;
 
-/**
- * Helper function to validate turn state for guessing
- */
 export function validateTurnForGuessing(
   turn: Turn | null
 ): { valid: boolean; error?: string } {
@@ -92,9 +83,6 @@ export function validateTurnForGuessing(
   return { valid: true };
 }
 
-/**
- * Validation functions
- */
 export const validateMakeGuess = (
   data: GameAggregate,
   actingTeamId: number,

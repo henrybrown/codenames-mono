@@ -1,7 +1,3 @@
-/**
- * Start Turn Controller — HTTP only.
- */
-
 import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import { z } from "zod";

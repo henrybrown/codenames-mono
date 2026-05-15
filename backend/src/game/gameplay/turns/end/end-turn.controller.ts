@@ -1,11 +1,3 @@
-/**
- * End Turn Controller — HTTP only.
- *
- * Decodes the request, calls the service, encodes the response.
- * The service owns aggregate loading, round-number checks, and
- * player resolution.
- */
-
 import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import { z } from "zod";

@@ -1,11 +1,3 @@
-/**
- * End Turn Service
- *
- * Owns the full end-turn workflow: load the aggregate, validate the
- * round number, resolve the acting player, end the current turn,
- * emit the event.
- */
-
 import type { GameplayHandler } from "../../gameplay-actions";
 import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregate";
 import type { AppLogger } from "@backend/shared/logging";
