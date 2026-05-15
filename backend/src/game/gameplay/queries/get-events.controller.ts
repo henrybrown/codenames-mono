@@ -3,23 +3,14 @@ import type { Request } from "express-jwt";
 import type { GetEventsService } from "./get-events.service";
 import { z } from "zod";
 
-/**
- * Request validation schema
- */
 const getEventsParamsSchema = z.object({
   gameId: z.string().min(1, "Game ID is required"),
 });
 
-/**
- * Dependencies required by the controller
- */
 export interface GetEventsControllerDeps {
   getEvents: GetEventsService;
 }
 
-/**
- * Creates the get events controller
- */
 export const getEventsController = (deps: GetEventsControllerDeps) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

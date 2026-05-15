@@ -4,28 +4,16 @@ import type { AppLogger } from "@backend/shared/logging";
 import { GetPlayersService } from "./get-players.service";
 import { z } from "zod";
 
-/**
- * Schema for validating request parameters
- */
 const getPlayersParamsSchema = z.object({
   gameId: z.string().min(1, "Game ID is required"),
 });
 
-/**
- * Dependencies required by the controller
- */
 export type GetPlayersDependencies = {
   getPlayersService: GetPlayersService;
 };
 
-/**
- * Controller type definition
- */
 export type GetPlayersController = (req: Request, res: Response) => Promise<void>;
 
-/**
- * Creates the get players controller
- */
 export const createGetPlayersController = (logger: AppLogger) => (
   deps: GetPlayersDependencies,
 ): GetPlayersController => {

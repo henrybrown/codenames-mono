@@ -3,9 +3,6 @@ import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregat
 import { findPlayerByUserId } from "@backend/game/access";
 import type { AppLogger } from "@backend/shared/logging";
 
-/**
- * Transformed event for API response
- */
 export interface GameEvent {
   id: string;
   gameId: string;
@@ -17,25 +14,16 @@ export interface GameEvent {
   [key: string]: any; // For metadata fields
 }
 
-/**
- * Dependencies required by the service
- */
 export interface GetEventsServiceDeps {
   getEventsByGameId: (gameId: number) => Promise<GameEventRow[]>;
   loadGameAggregate: GameAggregateLoader;
 }
 
-/**
- * Service result types
- */
 export type GetEventsResult =
   | { status: "success"; events: GameEvent[] }
   | { status: "game-not-found"; gameId: string }
   | { status: "unauthorized"; gameId: string; userId: number };
 
-/**
- * Creates the get events service
- */
 export const getEventsService = (logger: AppLogger) => (deps: GetEventsServiceDeps) =>
   async (gameId: string, userId: number): Promise<GetEventsResult> => {
     const aggregate = await deps.loadGameAggregate(gameId);
@@ -47,12 +35,9 @@ export const getEventsService = (logger: AppLogger) => (deps: GetEventsServiceDe
       return { status: "unauthorized", gameId, userId };
     }
 
-    // Get all events for this game
     const eventRows = await deps.getEventsByGameId(aggregate._id);
 
-    // Transform to API format
     const events: GameEvent[] = eventRows.map((row) => {
-      // Parse metadata if it exists
       let metadata: Record<string, any> = {};
       if (row.metadata) {
         try {

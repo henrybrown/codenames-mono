@@ -111,30 +111,30 @@
 
 ### backend/src/game/gameplay/
 
-- [ ] `backend/src/game/gameplay/gameplay-actions.ts` —
-- [ ] `backend/src/game/gameplay/index.ts` —
+- [x] `backend/src/game/gameplay/gameplay-actions.ts` —
+- [x] `backend/src/game/gameplay/index.ts` —
 
 ### backend/src/game/gameplay/errors/
 
-- [ ] `backend/src/game/gameplay/errors/gameplay-errors.middleware.ts` —
-- [ ] `backend/src/game/gameplay/errors/gameplay.errors.ts` —
+- [x] `backend/src/game/gameplay/errors/gameplay-errors.middleware.ts` —
+- [x] `backend/src/game/gameplay/errors/gameplay.errors.ts` —
 
 ### backend/src/game/gameplay/games/
 
-- [ ] `backend/src/game/gameplay/games/end-game.action.ts` —
-- [ ] `backend/src/game/gameplay/games/index.ts` —
+- [x] `backend/src/game/gameplay/games/end-game.action.ts` —
+- [x] `backend/src/game/gameplay/games/index.ts` —
 
 ### backend/src/game/gameplay/queries/
 
-- [ ] `backend/src/game/gameplay/queries/get-events.controller.ts` —
-- [ ] `backend/src/game/gameplay/queries/get-events.service.ts` —
-- [ ] `backend/src/game/gameplay/queries/get-game.controller.ts` —
-- [ ] `backend/src/game/gameplay/queries/get-game.service.ts` —
-- [ ] `backend/src/game/gameplay/queries/get-players.controller.ts` —
-- [ ] `backend/src/game/gameplay/queries/get-players.service.ts` —
-- [ ] `backend/src/game/gameplay/queries/get-turn.controller.ts` —
-- [ ] `backend/src/game/gameplay/queries/get-turn.service.ts` —
-- [ ] `backend/src/game/gameplay/queries/index.ts` —
+- [x] `backend/src/game/gameplay/queries/get-events.controller.ts` —
+- [x] `backend/src/game/gameplay/queries/get-events.service.ts` —
+- [x] `backend/src/game/gameplay/queries/get-game.controller.ts` —
+- [x] `backend/src/game/gameplay/queries/get-game.service.ts` —
+- [x] `backend/src/game/gameplay/queries/get-players.controller.ts` —
+- [x] `backend/src/game/gameplay/queries/get-players.service.ts` —
+- [x] `backend/src/game/gameplay/queries/get-turn.controller.ts` —
+- [x] `backend/src/game/gameplay/queries/get-turn.service.ts` —
+- [x] `backend/src/game/gameplay/queries/index.ts` —
 
 ### backend/src/game/gameplay/rounds/
 

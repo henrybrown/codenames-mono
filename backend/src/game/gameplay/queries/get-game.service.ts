@@ -10,9 +10,6 @@ import {
 } from "@backend/game/access";
 import type { AppLogger } from "@backend/shared/logging";
 
-/**
- * Service input parameters
- */
 export type GetGameStateInput = {
   gameId: string;
   userId: number;
@@ -24,9 +21,6 @@ export type GetGameStateResult =
   | { success: true; data: PublicGameStateResponse }
   | { success: false; message: string; notFound?: boolean };
 
-/**
- * Public API response structure
- */
 export type PublicGameStateResponse = {
   publicId: string;
   status: string;
@@ -76,16 +70,10 @@ export type PublicGameStateResponse = {
   } | null;
 };
 
-/**
- * Dependencies required by the service
- */
 export type GetGameStateDependencies = {
   loadGameAggregate: GameAggregateLoader;
 };
 
-/**
- * Creates a service for retrieving role-specific game state
- */
 export const getGameStateService = (logger: AppLogger) => (deps: GetGameStateDependencies) => {
   return async (input: GetGameStateInput): Promise<GetGameStateResult> => {
     const aggregate = await deps.loadGameAggregate(input.gameId);
@@ -133,9 +121,6 @@ export const getGameStateService = (logger: AppLogger) => (deps: GetGameStateDep
   };
 };
 
-/**
- * Transforms the internal game state to the public API format
- */
 function transformGameState(
   aggregate: GameAggregate,
   playerContext: GamePlayer | null,
@@ -198,9 +183,6 @@ function transformGameState(
   };
 }
 
-/**
- * Applies visibility rules to a card based on player role and round status
- */
 function applyCardVisibility(card: any, playerRole: PlayerRole, roundStatus: string) {
   const baseCard = {
     word: card.word,

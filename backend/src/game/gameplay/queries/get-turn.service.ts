@@ -4,9 +4,6 @@ import { PlayerFinderAll, RoundId as PlayerRoundId } from "@backend/shared/data-
 import { TurnPhase, Player } from "@backend/game/state/types";
 import { computeTurnPhase } from "@backend/game/state/helpers";
 
-/**
- * API response turn data (sanitized - no internal IDs)
- */
 export interface ApiTurnData {
   id: string;
   teamName: string;
@@ -44,9 +41,6 @@ export type GetTurnService = (
   publicTurnId: string,
 ) => Promise<GetTurnResponse | null>;
 
-/**
- * Transform a turn result from repository to API format
- */
 const transformTurnToApi = (turn: TurnResult, players: Player[]): ApiTurnData => {
   const guesses = turn.guesses.map((g) => ({
     cardWord: g.cardWord,
@@ -80,9 +74,6 @@ const transformTurnToApi = (turn: TurnResult, players: Player[]): ApiTurnData =>
   };
 };
 
-/**
- * Transform provider turn data to API format
- */
 const transformProviderTurnToApi = (turnData: TurnData, active: TurnPhase | null): ApiTurnData => ({
   id: turnData.publicId,
   teamName: turnData.teamName,
@@ -103,9 +94,6 @@ export interface GetTurnServiceDeps {
   findPlayersByRoundId: PlayerFinderAll<PlayerRoundId>;
 }
 
-/**
- * Service for fetching turn data with historic turns for API response
- */
 export const getTurnService =
   ({ loadTurn, getTurnsByRoundId, findPlayersByRoundId }: GetTurnServiceDeps): GetTurnService =>
   async (publicTurnId) => {

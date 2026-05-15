@@ -4,9 +4,6 @@ import type { AppLogger } from "@backend/shared/logging";
 import { z } from "zod";
 import { GetTurnService, ApiTurnData } from "./get-turn.service";
 
-/**
- * Request validation schema
- */
 const getTurnRequestSchema = z.object({
   params: z.object({
     turnId: z.string().uuid("Turn ID must be a valid UUID"),
@@ -18,9 +15,6 @@ const getTurnRequestSchema = z.object({
 
 type ValidatedGetTurnRequest = z.infer<typeof getTurnRequestSchema>;
 
-/**
- * API response type
- */
 interface GetTurnApiResponse {
   success: true;
   data: {
@@ -29,9 +23,6 @@ interface GetTurnApiResponse {
   };
 }
 
-/**
- * Controller for GET /api/turns/:publicId
- */
 export const controller =
   (logger: AppLogger) =>
   (getTurnService: GetTurnService) =>

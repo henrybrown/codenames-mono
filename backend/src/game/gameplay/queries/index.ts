@@ -25,7 +25,6 @@ export interface QueriesDependencies {
 }
 
 export const createQueries = (logger: AppLogger) => (deps: QueriesDependencies) => {
-  /** Get game */
   const getGameService = getGameStateService(
     logger.for({ service: "get-game" }).create(),
   )({
@@ -33,20 +32,17 @@ export const createQueries = (logger: AppLogger) => (deps: QueriesDependencies) 
   });
   const getGameController = getGameStateController({ getGameState: getGameService });
 
-  /** Get players */
   const playersService = createGetPlayersService({ loadGameAggregate: deps.loadGameAggregate });
   const getPlayersController = createGetPlayersController(
     logger.for({ service: "get-players" }).create(),
   )({ getPlayersService: playersService });
 
-  /** Get events */
   const eventsService = getEventsService(logger)({
     getEventsByGameId: gameEventsRepository.getEventsByGameId(deps.db),
     loadGameAggregate: deps.loadGameAggregate,
   });
   const eventsController = getEventsController({ getEvents: eventsService });
 
-  /** Get turn */
   const turnService = getTurnService({
     loadTurn: deps.loadTurn,
     getTurnsByRoundId: deps.getTurnsByRoundId,

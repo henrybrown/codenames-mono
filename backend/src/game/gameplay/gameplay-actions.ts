@@ -56,7 +56,6 @@ const buildOps = (
     /** Loads fresh game state within the current transaction. */
     state,
 
-    /** Codemaster gives a clue. */
     giveClue: async (word: string, targetCardCount: number) => {
       const result = await giveClue(await state(), player, word, targetCardCount);
       if (!result.ok) return result;
@@ -74,28 +73,24 @@ const buildOps = (
       return { ok: true as const, guess: result.data };
     },
 
-    /** Ends the current turn. */
     endTurn: async (turnId: number) => {
       const result = await endTurn(await state(), turnId);
       if (!result.ok) return result;
       return { ok: true as const };
     },
 
-    /** Starts a new turn for a team. */
     startTurn: async (roundId: number, teamId: number) => {
       const result = await startTurn(await state(), roundId, teamId);
       if (!result.ok) return result;
       return { ok: true as const, newTurn: result.data };
     },
 
-    /** Ends the current round with a winner. */
     endRound: async (roundId: number, winningTeamId: number) => {
       const result = await endRound(await state(), roundId, winningTeamId);
       if (!result.ok) return result;
       return { ok: true as const };
     },
 
-    /** Ends the game. */
     endGame: async (winningTeamId: number) => {
       await endGame(await state(), winningTeamId);
       return { ok: true as const };
@@ -103,9 +98,6 @@ const buildOps = (
   };
 };
 
-/**
- * Type representing all operations available within gameplay transactions
- */
 export type GameplayOperations = ReturnType<typeof buildOps>;
 
 /**
@@ -118,9 +110,6 @@ export type GameplayHandler = <R>(
   operation: (ops: GameplayOperations) => Promise<R>,
 ) => Promise<R>;
 
-/**
- * Creates gameplay action components with game-scoped transactional handler
- */
 export const gameplayActions = (dbContext: Kysely<DB>) => {
   const handler: GameplayHandler = async (initialState, player, operation) => {
     return dbContext.transaction().execute(async (trx) => {

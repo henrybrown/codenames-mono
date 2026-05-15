@@ -17,9 +17,6 @@ import { createQueries } from "./queries";
 import { createTurns } from "./turns";
 import { gameplayErrorHandler } from "./errors/gameplay-errors.middleware";
 
-/**
- * Initializes the gameplay feature module with all routes and dependencies
- */
 export const initialize = (
   app: Express,
   db: Kysely<DB>,
@@ -29,22 +26,18 @@ export const initialize = (
 ) => {
   const logger = appLogger.for({ feature: "gameplay" }).create();
 
-  /** State providers */
   const loadGameAggregate = createGameAggregateLoader(db);
   const loadTurn = createTurnLoader(db);
   const getTurnsByRoundId = turnsRepo.getTurnsByRoundId(db);
   const findPlayersByRoundId = playersRepo.findPlayersByRoundId(db);
 
-  /** Gameplay actions (transactional handler) */
   const { handler: gameplayHandler } = gameplayActions(db);
 
-  /** Access (RBAC) — partial-applied with deps */
   const gameRole = requireGameRole({
     getGameByPublicId: gamesRepo.findGameByPublicId(db),
     getPlayerByGameAndUser: playersRepo.findPlayerByGameAndUser(db),
   });
 
-  /** Queries */
   const queries = createQueries(logger)({
     loadGameAggregate,
     loadTurn,
@@ -53,14 +46,12 @@ export const initialize = (
     db,
   });
 
-  /** Turns (clue, guess, end-turn, start-turn) */
   const turns = createTurns(logger)({
     gameplayHandler,
     loadTurn,
     loadGameAggregate,
   });
 
-  /** Routes */
   const router = Router();
   router.use(httpLogger(logger));
   router.use(auth);

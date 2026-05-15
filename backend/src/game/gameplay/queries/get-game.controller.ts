@@ -5,9 +5,6 @@ import { pickStatus } from "@backend/shared/http/result-status";
 import { PLAYER_ROLE } from "@codenames/shared/types";
 import { z } from "zod";
 
-/**
- * Request validation schema for game state retrieval
- */
 export const gameStateRequestSchema = z.object({
   params: z.object({
     gameId: z.string().min(1, "Game ID is required"),
