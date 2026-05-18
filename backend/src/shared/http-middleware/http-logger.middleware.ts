@@ -3,6 +3,7 @@ import type { Request } from "express-jwt";
 import type { AppLogger } from "@backend/shared/logging";
 import crypto from "crypto";
 
+/** `Request` augmented with a per-request correlation id. */
 export interface TrackedRequest extends Request {
   id?: string;
 }
@@ -43,6 +44,22 @@ const extractResponseMetaVerbose = (res: Response, body?: unknown) => ({
   body,
 });
 
+/**
+ * Builds the HTTP request/response logging middleware.
+ *
+ * When enabled, stamps each request with a correlation id (`req.id`),
+ * emits a `request_received` event on entry, and emits
+ * `request_completed` on response `finish` with the elapsed duration.
+ *
+ * Verbose mode captures full request/response payloads (params, query,
+ * body, headers, response body) at `http` level; non-verbose mode
+ * records method, path and status at `info` level. Response level is
+ * upgraded to `warn` for 4xx and `error` for 5xx regardless of mode.
+ *
+ * When `toConsole` is false the events are written to the file
+ * transport only — useful for keeping noisy verbose traffic out of
+ * the console while still preserving it on disk.
+ */
 export const httpLoggerMiddleware = (config: HttpLoggerConfig) => (logger: AppLogger) => {
   const httpLogger = logger.for({ middleware: "http-logger" }).create();
 
@@ -98,4 +115,5 @@ export const httpLoggerMiddleware = (config: HttpLoggerConfig) => (logger: AppLo
   };
 };
 
+/** Configured HTTP logger middleware factory — call with a logger to attach. */
 export type HttpLoggerHandler = ReturnType<typeof httpLoggerMiddleware>;

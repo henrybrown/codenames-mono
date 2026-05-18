@@ -10,9 +10,12 @@ import type {
 } from "./websocket-events.types";
 
 /**
- * Service for emitting game-related WebSocket events
- * This provides a clean interface for the rest of the application
- * to trigger real-time updates without knowing WebSocket implementation details
+ * Static façade over the websocket server for emitting game events.
+ *
+ * Each method composes the payload for a specific `WebSocketEvent`,
+ * stamps it with the current timestamp, and broadcasts it to the
+ * `game:<gameId>` room. Centralising emission here keeps payload
+ * shapes consistent and hides the underlying transport.
  */
 export class GameEventsEmitter {
   static playerJoined(gameId: string, playerId: string, playerName: string, teamId?: number): void {

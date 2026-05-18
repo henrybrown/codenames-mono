@@ -1,16 +1,19 @@
 /**
- * Picks an HTTP status code from a service failure variant's flags.
+ * Status hint flags carried on service failure results.
  *
- * Services return { success: false; message; notFound?; conflict? } for
- * expected business failures; this maps those flags to the right HTTP
- * status. Genuine internal failures throw and are caught by error
- * middleware → 500, separately.
+ * `notFound` and `conflict` are mutually advisory — `notFound` maps to
+ * 404, `conflict` to 409, and absence of both to 400.
  */
 export type ResultStatusFlags = {
   readonly notFound?: boolean;
   readonly conflict?: boolean;
 };
 
+/**
+ * Maps a failure variant's flags to an HTTP status code.
+ *
+ * Precedence: `notFound` (404) → `conflict` (409) → generic 400.
+ */
 export const pickStatus = (flags: ResultStatusFlags): number => {
   if (flags.notFound) return 404;
   if (flags.conflict) return 409;

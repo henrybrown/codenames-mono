@@ -1,3 +1,4 @@
+/** Canonical names for every event emitted over the game socket. */
 export enum WebSocketEvent {
   // Connection events
   CONNECTION = "connection",
@@ -39,28 +40,33 @@ export enum WebSocketEvent {
   GAME_MESSAGE_CREATED = "game_message_created",
 }
 
+/** Common fields stamped on every event — identifies the game and emission time. */
 export interface BaseEventPayload {
   gameId: string;
   timestamp: string;
 }
 
+/** Event payload for lobby player-membership changes. */
 export interface PlayerEventPayload extends BaseEventPayload {
   playerId?: string;
   playerName?: string;
   teamId?: number;
 }
 
+/** Event payload for in-game turn/round progression. */
 export interface GameplayEventPayload extends BaseEventPayload {
   roundNumber?: number;
   turnId?: string;
   playerId?: string;
 }
 
+/** Event payload for whole-game lifecycle transitions. */
 export interface GameStateEventPayload extends BaseEventPayload {
   gameStatus?: string;
   winningTeamId?: number;
 }
 
+/** Event payload for AI pipeline lifecycle notifications. */
 export interface AiPipelineEventPayload extends BaseEventPayload {
   runId: string;
   pipelineType?: string;
@@ -68,12 +74,14 @@ export interface AiPipelineEventPayload extends BaseEventPayload {
   error?: string;
 }
 
+/** Event payload for chat / game-message creation. */
 export interface GameMessageEventPayload extends BaseEventPayload {
   messageId: string;
   messageType: string;
   teamId?: number;
 }
 
+/** Union of every payload shape that may be emitted over the socket. */
 export type EventPayload =
   | BaseEventPayload
   | PlayerEventPayload

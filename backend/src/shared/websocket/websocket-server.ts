@@ -16,6 +16,19 @@ let io: SocketIOServer | null = null;
 
 let wsLogger: AppLogger | undefined;
 
+/**
+ * Initialise the singleton Socket.io server on top of the given HTTP
+ * server.
+ *
+ * Configures CORS, ping timeouts and the JWT auth middleware, then
+ * wires the connection handler that maintains `game:<id>` rooms in
+ * response to `JOIN_GAME` / `LEAVE_GAME` events. On `JOIN_GAME` also
+ * re-emits a server-internal `PLAYER_JOINED` event so the AI player
+ * pump can decide whether to act.
+ *
+ * Must be called exactly once at boot — subsequent calls overwrite the
+ * singleton.
+ */
 export const initializeWebSocketServer = (config: WebSocketServerConfig): SocketIOServer => {
   const { httpServer, jwtSecret, corsOrigins, logger } = config;
   wsLogger = logger;
@@ -67,6 +80,10 @@ export const initializeWebSocketServer = (config: WebSocketServerConfig): Socket
   return io;
 };
 
+/**
+ * Access the initialised Socket.io server. Throws if
+ * `initializeWebSocketServer` has not been called yet.
+ */
 export const getWebSocketServer = (): SocketIOServer => {
   if (!io) {
     throw new Error("WebSocket server not initialized. Call initializeWebSocketServer first.");
@@ -74,6 +91,10 @@ export const getWebSocketServer = (): SocketIOServer => {
   return io;
 };
 
+/**
+ * Broadcast an event to every socket subscribed to the given game's
+ * room. No-ops with a warn log if the server has not been initialised.
+ */
 export const emitToGame = (gameId: string, event: WebSocketEvent, payload: any): void => {
   if (!io) {
     wsLogger?.warn("websocket_emit_skipped: server not initialized");
@@ -85,6 +106,10 @@ export const emitToGame = (gameId: string, event: WebSocketEvent, payload: any):
   wsLogger?.debug(`websocket_emit: event=${event} room=${roomName}`);
 };
 
+/**
+ * Broadcast an event to every connected socket. No-ops with a warn log
+ * if the server has not been initialised.
+ */
 export const emitToAll = (event: WebSocketEvent, payload: any): void => {
   if (!io) {
     wsLogger?.warn("websocket_emit_skipped: server not initialized");

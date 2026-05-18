@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { parse as parseCookie } from "cookie";
 import type { AppLogger } from "@backend/shared/logging";
 
+/** Socket.io `Socket` augmented with the authenticated user payload. */
 export interface AuthenticatedSocket extends Socket {
   auth?: {
     userId: number;
@@ -10,6 +11,15 @@ export interface AuthenticatedSocket extends Socket {
   };
 }
 
+/**
+ * Build the websocket-handshake authentication middleware.
+ *
+ * Pulls a JWT from (in order) the `authToken` cookie, the
+ * `Authorization: Bearer` header, or `handshake.auth.token`, then
+ * verifies it against `jwtSecret`. On success, stamps `socket.auth`
+ * with the decoded `{ userId, username }`. On failure, rejects the
+ * handshake with a generic error message and emits a `warn` log.
+ */
 export const createWebSocketAuthMiddleware = (jwtSecret: string, logger?: AppLogger) => {
   return (socket: AuthenticatedSocket, next: (err?: Error) => void) => {
     try {

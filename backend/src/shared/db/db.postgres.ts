@@ -8,7 +8,11 @@ const { Pool } = pg;
 let dbInstance: Kysely<DB> | null = null;
 
 /**
- * @throws Error if connection test fails
+ * Initializes the Kysely-over-Postgres DB connection.
+ *
+ * Tests the pool with a real `connect()` round-trip before returning,
+ * so connection failures abort the bootstrap. Throws if the DB has
+ * already been initialized (single-instance constraint).
  */
 export const initializeDb = (logger: AppLogger) => async (connectionString: string): Promise<Kysely<DB>> => {
   if (dbInstance) throw new Error("Database already initialized");
@@ -40,6 +44,12 @@ export const initializeDb = (logger: AppLogger) => async (connectionString: stri
   return dbInstance;
 }
 
+/**
+ * Returns the initialized DB instance.
+ *
+ * Throws if called before `initializeDb` — there's no implicit lazy init,
+ * since that would mask config errors during startup.
+ */
 export function getDb(): Kysely<DB> {
   if (!dbInstance) {
     throw new Error("Database not initialized. Call initializeDb first.");

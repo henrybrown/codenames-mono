@@ -2,6 +2,7 @@ import type { Response } from "express";
 import type { Request } from "express-jwt";
 import type { AppLogger } from "@backend/shared/logging";
 
+/** Optional payload attached to the error envelope; currently only `validationErrors`. */
 export type ErrorDetails = {
   validationErrors?: { path: string; message: string }[];
 };

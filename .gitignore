@@ -70,3 +70,7 @@ backend/test/manual/play-moves.ts
 .gitignore
 TODO.md
 
+# Local progress trackers for one-off sweeps
+*-progress.md
+tsdoc-progress.md
+

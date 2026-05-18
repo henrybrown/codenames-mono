@@ -21,6 +21,12 @@ const migrations: Migration[] = [
   },
 ];
 
+/**
+ * Runs the idempotent schema migrations in order.
+ *
+ * Each migration must be safe to re-run (uses `IF NOT EXISTS` etc.);
+ * failures throw immediately so the bootstrap can abort cleanly.
+ */
 export const runSchemaMigrations = (logger: AppLogger) => async (db: Kysely<DB>): Promise<void> => {
   const log = logger.for({ module: "schema-migrations" }).create();
   log.info("Running schema migrations");

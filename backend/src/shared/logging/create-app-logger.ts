@@ -2,8 +2,10 @@ import winston from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
 import util from "util";
 
+/** Supported log severities — `http` is reserved for request/response traces. */
 export type LogLevel = "debug" | "info" | "warn" | "error" | "http";
 
+/** Configuration for the root application logger. */
 export type AppLoggerConfig = {
   logFilePath: string;
   level: LogLevel;
@@ -22,12 +24,19 @@ const LOG_SCOPE_KEYS = [
   "server",
 ] as const;
 
+/**
+ * Structured scope tags attached to every log entry — surfaces in both
+ * the JSON file output and the console prefix so events can be filtered
+ * by `app`/`module`/`feature`/etc. without parsing the message.
+ */
 export type LogScope = {
   [K in (typeof LOG_SCOPE_KEYS)[number]]?: string;
 };
 
+/** Free-form structured metadata serialised alongside a log entry. */
 export type LogMeta = Record<string, unknown>;
 
+/** Options accepted by every log method on `AppLogger`. */
 export type LogOptions = {
   meta?: LogMeta;
   fileOnly?: boolean; // When true, log only to file, not console
@@ -54,6 +63,7 @@ const orderedFormat = winston.format.printf(({ level, message, timestamp, meta, 
   return JSON.stringify(ordered);
 });
 
+/** Console output formatter — emits a single-line `timestamp level [scope] message` line. */
 export const consoleFormat = winston.format.printf(
   ({ level, message, timestamp, meta, ...rest }) => {
     const scope = LOG_SCOPE_KEYS.filter((key) => rest[key] !== undefined)
@@ -71,8 +81,12 @@ export const consoleFormat = winston.format.printf(
 );
 
 /**
- * Builder for creating scoped AppLogger instances.
- * Accumulates scope other props until create() is called.
+ * Fluent builder that accumulates scope tags and metadata before
+ * materialising a child `AppLogger`.
+ *
+ * Each chained call mutates the in-progress descriptor; `create()`
+ * forks a winston child logger so subsequent log calls automatically
+ * carry the accumulated scope.
  */
 export class LoggerBuilder {
   private logData: LogScope & { meta?: LogMeta } = {};
@@ -80,22 +94,26 @@ export class LoggerBuilder {
 
   constructor(private readonly logger: winston.Logger) {}
 
+  /** Merge additional scope tags into the in-progress descriptor. */
   for(scope: LogScope): this {
     Object.assign(this.logData, scope);
     return this;
   }
 
+  /** Merge additional structured metadata onto every log entry. */
   withMeta(meta: LogMeta): this {
     this.logData.meta ??= {};
     Object.assign(this.logData.meta, meta);
     return this;
   }
 
+  /** Force this scope to be visible on the console at the given level. */
   toConsole(level: LogLevel = "info"): this {
     this.consoleOverride = level;
     return this;
   }
 
+  /** Materialise the configured child logger. */
   create(): AppLogger {
     const childLogger = this.logger.child(this.logData);
     return new AppLogger(childLogger);
@@ -103,7 +121,15 @@ export class LoggerBuilder {
 }
 
 /**
- * Application logger wrapping winston with structured scope support
+ * Structured application logger.
+ *
+ * Wraps a winston logger to provide level-specific methods that accept
+ * either a plain meta object (legacy form) or an options object with
+ * `meta` and a `fileOnly` flag that suppresses console output for that
+ * specific entry.
+ *
+ * Use `.for({ scope })` to begin building a child logger with
+ * accumulated scope tags.
  */
 export class AppLogger {
   constructor(private readonly logger: winston.Logger) {}
@@ -118,31 +144,45 @@ export class AppLogger {
     }
   }
 
+  /** Log an `info` event. */
   info(message: string, options?: LogMeta | LogOptions) {
     this.logWithOptions("info", message, options);
   }
 
+  /** Log a `warn` event. */
   warn(message: string, options?: LogMeta | LogOptions) {
     this.logWithOptions("warn", message, options);
   }
 
+  /** Log an `error` event. */
   error(message: string, options?: LogMeta | LogOptions) {
     this.logWithOptions("error", message, options);
   }
 
+  /** Log a `debug` event. */
   debug(message: string, options?: LogMeta | LogOptions) {
     this.logWithOptions("debug", message, options);
   }
 
+  /** Log an `http` event — filtered from console output by default. */
   http(message: string, options?: LogMeta | LogOptions) {
     this.logWithOptions("http", message, options);
   }
 
+  /** Begin a fluent builder seeded with the given scope tags. */
   for(scope: LogScope): LoggerBuilder {
     return new LoggerBuilder(this.logger).for(scope);
   }
 }
 
+/**
+ * Build the root `AppLogger`.
+ *
+ * Always attaches a rotating JSON-lines file transport (daily rotation,
+ * 20MB max, 2-day retention). When `consoleLevel` is not `"silent"`,
+ * also attaches a colourised console transport that filters out `http`
+ * level events and any entry tagged `fileOnly: true`.
+ */
 export const createAppLogger = (config: AppLoggerConfig): AppLogger => {
   const transports: winston.transport[] = [
     new DailyRotateFile({

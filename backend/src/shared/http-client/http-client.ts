@@ -19,6 +19,7 @@
 
 import type { AppLogger } from "@backend/shared/logging";
 
+/** Plain header bag — string values only, case-insensitive by HTTP convention. */
 export type HttpHeaders = Record<string, string>;
 
 export interface HttpRequestOptions {
@@ -80,6 +81,14 @@ export class HttpError extends Error {
 const DEFAULT_TIMEOUT_MS = 60_000;
 const JSON_HEADERS: HttpHeaders = { "Content-Type": "application/json" };
 
+/**
+ * Builds the shared HTTP client.
+ *
+ * Wraps native `fetch` with JSON serialization, status-based error
+ * raising (`HttpError`), timeout via `AbortSignal.timeout`, and uniform
+ * debug logging. Transport failures are normalized into `HttpError` with
+ * `status: 0` so callers only need one error branch.
+ */
 export const createHttpClient = (
   logger: AppLogger,
   config: HttpClientConfig = {},

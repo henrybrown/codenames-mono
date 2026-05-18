@@ -5,6 +5,11 @@ import { refreshEnums } from "./enums";
 import { runSchemaMigrations } from "./schema-migrations";
 import type { AppLogger } from "../logging";
 
+/**
+ * Brings the system data tables into sync with the bundled sources on
+ * startup: schema migrations first (out of transaction so DDL takes
+ * effect), then base decks + enums together in one transaction.
+ */
 export const refreshSystemData = (logger: AppLogger) => async (db: Kysely<DB>): Promise<void> => {
   const log = logger.for({ module: "system-data-loader" }).create();
   log.info("Starting data refresh");

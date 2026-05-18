@@ -6,6 +6,13 @@ import type { AppLogger } from "../../logging";
 
 const BASE_DECK_IDS = ["BASE"];
 
+/**
+ * Replaces the contents of the `decks` table with the bundled base decks.
+ *
+ * Deletes any rows tagged `BASE` then re-inserts from `en_base_deck.json`
+ * and `es_base_deck.json`. Runs inside the caller's transaction so a
+ * partial failure doesn't leave the table half-populated.
+ */
 export const refreshBaseDecks = (logger: AppLogger) => async (trx: Transaction<DB>): Promise<void> => {
   const decks = [enBaseDeck, esBaseDeck];
 

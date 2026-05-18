@@ -7,6 +7,13 @@ import type { AppLogger } from "../../logging";
 
 const enums = [gameStatuses, playerStatuses, playerRoles];
 
+/**
+ * Replaces enum lookup tables (game/player statuses, player roles) from
+ * the bundled JSON sources.
+ *
+ * Defers FK constraints for the duration so dependent rows aren't rejected
+ * during the truncate-and-reinsert. Runs inside the caller's transaction.
+ */
 export const refreshEnums = (logger: AppLogger) => async (trx: Transaction<DB>) => {
   try {
     await sql`SET CONSTRAINTS ALL DEFERRED`.execute(trx);

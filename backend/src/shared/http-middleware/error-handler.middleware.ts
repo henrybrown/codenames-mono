@@ -9,9 +9,11 @@ type ErrorResponse = {
 };
 
 /**
- * Global error handler middleware for Express
- * This is error middleware (4 parameters) that handles unexpected errors
- * Expected errors (400-level) should be handled by controllers
+ * Builds the top-level Express error handler (4-arg middleware).
+ *
+ * Catches anything that wasn't handled by a feature-scoped handler and
+ * returns 500. In development, attaches stack/cause/body details to aid
+ * debugging; in production, returns a generic message only.
  */
 export const errorHandler = (logger: AppLogger) => (
   err: Error,
@@ -35,8 +37,10 @@ export const errorHandler = (logger: AppLogger) => (
 };
 
 /**
- * Middleware to handle 404 (Not Found) errors for routes that don't exist
- * This is regular middleware (3 parameters) that runs when no routes matched
+ * Catch-all middleware that returns 404 for unmatched routes.
+ *
+ * Mounted after all route handlers so it only fires when nothing else
+ * accepted the request.
  */
 export const notFoundHandler = (
   req: Request,
