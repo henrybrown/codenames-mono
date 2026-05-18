@@ -2,8 +2,8 @@
  * Pure game-rule derivation for the codenames win conditions.
  *
  * Operates on slices of the loaded GameAggregate (cards, historical
- * rounds). No DB access, no async. Used by the make-guess action
- * orchestrator to decide if a guess ends the round / game.
+ * rounds). No DB access, no async. All functions are total — same inputs
+ * always produce the same output.
  */
 import { ROUND_STATE, type GameFormat } from "@codenames/shared/types";
 import type { Card, HistoricalRound } from "@backend/game/state/types";

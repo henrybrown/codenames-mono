@@ -29,10 +29,20 @@ const requestSchema = z.object({
   }),
 });
 
+/** Wiring dependencies for the give-clue controller. */
 export type GiveClueControllerDeps = {
   giveClue: GiveClueService;
 };
 
+/**
+ * `POST /api/games/:gameId/rounds/:roundNumber/clues` — codemaster gives
+ * a clue.
+ *
+ * Body accepts `role` (single-device) or `playerId` (multi-device) for
+ * actor identification — the service picks the right one based on the
+ * loaded aggregate's game type. Maps service failure flags to HTTP
+ * status codes.
+ */
 export const giveClueController =
   (logger: AppLogger) =>
   (deps: GiveClueControllerDeps) =>

@@ -10,12 +10,19 @@ import { giveClueController } from "./give-clue.controller";
 import { giveClueToTurn } from "./give-clue.action";
 import { validate as validateGiveClue, validateClueWord } from "./give-clue.rules";
 
+/** Wiring dependencies for the give-clue sub-feature. */
 export interface GiveClueDependencies {
   gameplayHandler: GameplayHandler;
   loadTurn: TurnLoader;
   loadGameAggregate: GameAggregateLoader;
 }
 
+/**
+ * Builds the give-clue sub-feature (controller + service).
+ *
+ * Returns `{ controllers, services }` for the parent module to mount and
+ * expose.
+ */
 export const giveClue = (logger: AppLogger) => (dependencies: GiveClueDependencies) => {
   const service = giveClueService(logger)({
     gameplayHandler: dependencies.gameplayHandler,
@@ -36,10 +43,11 @@ export const giveClue = (logger: AppLogger) => (dependencies: GiveClueDependenci
 export default giveClue;
 
 /**
- * Binds the give-clue action to a transaction. Returns a function that
- * the gameplay ops registry can invoke.
+ * Binds the give-clue action against a transaction-scoped set of
+ * repositories and validators.
  *
- * All repos + validators are baked in. The caller only needs trx.
+ * The caller passes in only the transaction; everything else is closed
+ * over and ready to be invoked by the ops registry.
  */
 export const bindGiveClueAction = (trx: TransactionContext) =>
   giveClueToTurn(
@@ -49,4 +57,5 @@ export const bindGiveClueAction = (trx: TransactionContext) =>
     validateClueWord,
   );
 
+/** Transaction-bound give-clue action. */
 export type BoundGiveClueAction = ReturnType<typeof bindGiveClueAction>;

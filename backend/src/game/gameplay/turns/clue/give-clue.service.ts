@@ -17,21 +17,37 @@ import {
   type CompleteTurnData,
 } from "../shared/present-turn";
 
+/**
+ * Input to the give-clue service.
+ *
+ * Flattened request shape — params, body, and auth at the top level.
+ * Exactly one of `role` (single-device) or `playerId` (multi-device) is
+ * expected; absence of both yields a not-found result.
+ */
 export type GiveClueInput = {
   gameId: string;
   roundNumber: number;
   userId: number;
   word: string;
   targetCardCount: number;
+  /** Used in single-device mode to identify the actor by their role. */
   role?: PlayerRole;
+  /** Used in multi-device mode as a redundancy check against JWT identity. */
   playerId?: string;
 };
 
+/** Successful give-clue payload — the clue plus the full turn shape. */
 export type GiveClueSuccess = {
   clue: { word: string; targetCardCount: number; createdAt: Date };
   turn: CompleteTurnData;
 };
 
+/**
+ * Tagged result for the give-clue service.
+ *
+ * `notFound` and `conflict` are status hints; absence of both indicates a
+ * generic bad-request condition.
+ */
 export type GiveClueResult =
   | { success: true; data: GiveClueSuccess }
   | {
@@ -41,8 +57,10 @@ export type GiveClueResult =
       conflict?: boolean;
     };
 
+/** Service-call signature for giving a clue. */
 export type GiveClueService = (input: GiveClueInput) => Promise<GiveClueResult>;
 
+/** Wiring dependencies for the give-clue service. */
 export type GiveClueDependencies = {
   gameplayHandler: GameplayHandler;
   loadGameAggregate: GameAggregateLoader;
@@ -60,6 +78,14 @@ const resolvePlayer = (
   return resolveActingPlayerForUser(aggregate, input.userId);
 };
 
+/**
+ * Builds the give-clue service.
+ *
+ * Loads the aggregate, validates the round number, resolves the acting
+ * player by game type, runs the gameplay handler, and emits the
+ * clue-given event. Failures surface as `{ success: false, ... }` with
+ * `notFound` / `conflict` flags; invariant violations throw.
+ */
 export const giveClueService =
   (logger: AppLogger) =>
   (deps: GiveClueDependencies): GiveClueService =>
@@ -146,4 +172,6 @@ export const giveClueService =
     };
   };
 
+/** Backwards-compatible alias preserved for consumers that imported the
+ *  old `ReturnType<typeof giveClueService>` shape directly. */
 export type GiveClueServiceReturn = ReturnType<ReturnType<typeof giveClueService>>;

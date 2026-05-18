@@ -10,12 +10,17 @@ import { endTurn } from "./end";
 
 // todo: review turn action/service logic generally - should be much cleaner/ledgible
 
+/** Wiring dependencies for the four turn sub-features. */
 export interface TurnsDependencies {
   gameplayHandler: GameplayHandler;
   loadTurn: TurnLoader;
   loadGameAggregate: GameAggregateLoader;
 }
 
+/**
+ * Composes the four turn sub-features (give-clue, make-guess, start-turn,
+ * end-turn) and merges their controllers and services into a single object.
+ */
 export const createTurns = (logger: AppLogger) => (deps: TurnsDependencies) => {
   const clue = giveClue(logger)({
     gameplayHandler: deps.gameplayHandler,

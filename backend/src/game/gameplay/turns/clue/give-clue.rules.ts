@@ -15,10 +15,9 @@ import { z } from "zod";
 /**
  * Schema for the game state required to give a clue.
  *
- * Validates game-shape only: in-progress game, in-progress round, with
- * a current active turn that has no clue yet. Does NOT validate who's
- * giving the clue — request-time identity is enforced by the
- * requireGameRole(CODEMASTER) middleware at the route layer, not here.
+ * Validates game-shape only: in-progress game, in-progress round, with a
+ * current active turn that has no clue yet. Doesn't validate request-time
+ * identity (role and auth checks are separate concerns at the route layer).
  */
 const clueGivingSchema = gameplayBaseSchema.extend({
   status: z.literal(GAME_STATE.IN_PROGRESS),
@@ -49,6 +48,12 @@ const clueGivingAllowedSchema = clueGivingSchema
     },
   );
 
+/**
+ * Branded aggregate shape returned by `validate`.
+ *
+ * Guarantees the game and round are in progress, the active turn exists
+ * and is ACTIVE, and no clue has been given on it yet.
+ */
 export type GiveClueValidGameState = ValidatedGameState<
   typeof clueGivingAllowedSchema
 >;

@@ -12,8 +12,7 @@ import type { ActingPlayer } from "../types";
  * Result of attempting to give a clue.
  *
  * `ok: false` is for expected business failures (invalid clue word,
- * wrong game state). Genuine internal failures throw
- * UnexpectedGameplayError → 500 via middleware.
+ * wrong game state); invariant violations throw `UnexpectedGameplayError`.
  */
 export type GiveClueActionResult =
   | {
@@ -26,8 +25,12 @@ export type GiveClueActionResult =
   | { ok: false; message: string };
 
 /**
- * Factory function that creates a self-validating clue giving action.
- * Returns a Result; expected failures are values, not exceptions.
+ * Builds the give-clue action.
+ *
+ * Validates the clue word against board state, validates the aggregate
+ * via the rules schema, then persists the clue and updates the turn's
+ * remaining guesses (clue count + 1). Returns a Result on expected
+ * failures; throws on invariants.
  */
 export const giveClueToTurn = (
   createClue: ClueCreator,
@@ -88,4 +91,5 @@ export const giveClueToTurn = (
   };
 };
 
+/** Bound give-clue action. */
 export type ClueGiver = ReturnType<typeof giveClueToTurn>;

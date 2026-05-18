@@ -18,8 +18,18 @@ const endRoundSchema = gameplayBaseSchema.extend({
   }),
 });
 
+/**
+ * Branded aggregate shape returned by `validateEndRound`.
+ *
+ * Guarantees the game is `IN_PROGRESS` and has a current round also
+ * `IN_PROGRESS` (i.e. eligible to be ended).
+ */
 export type EndRoundValidGameState = ValidatedGameState<typeof endRoundSchema>;
 
+/**
+ * Validates that the aggregate is in a state where the current round can
+ * be ended. Returns flattened errors when not.
+ */
 export const validateEndRound = (
   data: GameAggregate,
 ): GameplayValidationResult<EndRoundValidGameState> => {

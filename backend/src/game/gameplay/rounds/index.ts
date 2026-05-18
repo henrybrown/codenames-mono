@@ -19,8 +19,10 @@ export {
 } from "./winning-conditions";
 
 /**
- * Binds the end-round action to a transaction. Returns a function that
- * the gameplay ops registry can invoke.
+ * Binds the end-round action against a transaction-scoped repository.
+ *
+ * Returns the action closed over the transaction; ready to be wired into
+ * the ops registry.
  */
 export const bindEndRoundAction = (trx: TransactionContext) =>
   createEndRoundAction({
@@ -29,4 +31,5 @@ export const bindEndRoundAction = (trx: TransactionContext) =>
     validateEndRound,
   });
 
+/** Transaction-bound end-round action. */
 export type BoundEndRoundAction = ReturnType<typeof bindEndRoundAction>;
