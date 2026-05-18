@@ -56,8 +56,15 @@ const startRoundValidationSchema = lobbyBaseSchema
     },
   }));
 
+/**
+ * Branded lobby shape returned by `validate`.
+ *
+ * Guarantees game is IN_PROGRESS, current round exists in SETUP with
+ * cards dealt, and (outside AI mode) at least 2 players per team.
+ */
 export type StartRoundValidLobbyState = ValidatedLobbyState<typeof startRoundValidationSchema>;
 
+/** Validates that the current round can be started. Returns flattened errors when not. */
 export function validate(
   data: LobbyAggregate
 ): LobbyValidationResult<StartRoundValidLobbyState> {

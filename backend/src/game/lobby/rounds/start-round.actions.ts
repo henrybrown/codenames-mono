@@ -3,6 +3,12 @@ import { TurnCreator } from "@backend/shared/data-access/repositories/turns.repo
 import { StartRoundValidLobbyState } from "./start-round.rules";
 import { ROUND_STATE } from "@codenames/shared/types";
 
+/**
+ * Builds the start-round action.
+ *
+ * Flips the round status to IN_PROGRESS and seeds the first turn for the
+ * starting team with zero guesses remaining (the clue stage hasn't begun).
+ */
 export const startCurrentRound = (
   updateRoundStatus: RoundStatusUpdater,
   createTurn: TurnCreator,

@@ -9,11 +9,13 @@ import { dealCardsController } from "./deal-cards.controller";
 import { startRoundService } from "./start-round.service";
 import { startRoundController } from "./start-round.controller";
 
+/** Wiring dependencies for the lobby rounds sub-feature. */
 export interface RoundsDependencies {
   loadLobbyAggregate: LobbyAggregateLoader;
   lobbyHandler: TransactionalHandler<LobbyOperations>;
 }
 
+/** Builds the rounds sub-feature — new-round, deal-cards, start-round. */
 export const createRounds = (deps: RoundsDependencies) => {
   const newRoundService = roundCreationService({
     loadLobbyAggregate: deps.loadLobbyAggregate,

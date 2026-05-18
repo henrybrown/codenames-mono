@@ -52,8 +52,19 @@ const assignRolesValidationSchema = lobbyBaseSchema
     currentRound: data.currentRound!,
   }));
 
+/**
+ * Branded lobby shape returned by `validate`.
+ *
+ * Guarantees a current round in SETUP state, no roles assigned yet, and
+ * (outside AI mode) at least 2 players per team. The transform pins
+ * `currentRound` as non-null so downstream code doesn't need to recheck.
+ */
 export type AssignRolesValidLobbyState = ValidatedLobbyState<typeof assignRolesValidationSchema>;
 
+/**
+ * Validates that the lobby is in a state where roles can be assigned.
+ * Returns flattened errors when not.
+ */
 export function validate(
   data: LobbyAggregate
 ): LobbyValidationResult<AssignRolesValidLobbyState> {

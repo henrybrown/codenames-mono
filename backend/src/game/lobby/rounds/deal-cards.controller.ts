@@ -4,6 +4,12 @@ import type { DealCardsService } from "./deal-cards.service";
 import { pickStatus } from "@backend/shared/http/result-status";
 import { z } from "zod";
 
+/**
+ * Request schema for the deal-cards endpoint.
+ *
+ * Body is optional and defaults to `{ deck: "BASE", languageCode: "en",
+ * redeal: false }` so a bare POST works.
+ */
 export const dealCardsRequestSchema = z.object({
   params: z.object({
     gameId: z.string().min(1, "Game ID is required"),
@@ -22,8 +28,10 @@ export const dealCardsRequestSchema = z.object({
     .default({}),
 });
 
+/** Parsed shape of a validated deal-cards request. */
 export type ValidatedDealCardsRequest = z.infer<typeof dealCardsRequestSchema>;
 
+/** Error response shape — optionally includes per-field validation errors. */
 export type DealCardsErrorResponse = {
   success: false;
   error: string;
@@ -32,6 +40,7 @@ export type DealCardsErrorResponse = {
   };
 };
 
+/** Wire-format success response shape for deal-cards. */
 export type DealCardsResponse = {
   success: boolean;
   data: {
@@ -42,10 +51,18 @@ export type DealCardsResponse = {
   };
 };
 
+/** Wiring dependencies for the deal-cards controller. */
 export type Dependencies = {
   dealCards: DealCardsService;
 };
 
+/**
+ * `POST /api/games/:gameId/rounds/:id/deal` — deals (or redeals) the
+ * 25-card board for a round in SETUP state.
+ *
+ * Maps service failure flags to HTTP statuses via `pickStatus`. Responds
+ * 201 with the dealt cards on success.
+ */
 export const dealCardsController = ({ dealCards }: Dependencies) => {
   return async (
     req: Request,

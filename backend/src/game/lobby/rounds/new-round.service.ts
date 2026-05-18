@@ -8,11 +8,13 @@ import { validate as checkRoleAssignmentRules } from "./assign-roles.rules";
 import { validate as checkCardDealingRules } from "./deal-cards.rules";
 import { UnexpectedLobbyError } from "../errors/lobby.errors";
 
+/** Input to the new-round service. */
 export type RoundCreationInput = {
   gameId: string;
   userId: number;
 };
 
+/** Successful new-round payload — the round metadata plus the 25-card board. */
 export type RoundCreationSuccess = {
   _id: number;
   roundNumber: number;
@@ -30,6 +32,7 @@ export type RoundCreationSuccess = {
   }>;
 };
 
+/** Tagged result for the new-round service. */
 export type RoundCreationResult =
   | { success: true; data: RoundCreationSuccess }
   | {
@@ -40,11 +43,20 @@ export type RoundCreationResult =
       validationErrors?: LobbyValidationError[];
     };
 
+/** Wiring dependencies for the new-round service. */
 export type RoundCreationDependencies = {
   loadLobbyAggregate: LobbyAggregateLoader;
   lobbyHandler: TransactionalHandler<LobbyOperations>;
 };
 
+/**
+ * Builds the new-round service.
+ *
+ * Inside one transaction: creates the round row, reloads to deal cards
+ * against the fresh state, reloads again to assign roles, then returns
+ * the assembled response. Each intermediate state reload uses a fresh
+ * lobby aggregate so the validators see post-write data.
+ */
 export const roundCreationService = (dependencies: RoundCreationDependencies) => {
   return async (input: RoundCreationInput): Promise<RoundCreationResult> => {
     const lobbyState = await dependencies.loadLobbyAggregate(input.gameId, input.userId);
@@ -131,4 +143,5 @@ export const roundCreationService = (dependencies: RoundCreationDependencies) =>
   };
 };
 
+/** Service-call signature for creating a new round. */
 export type RoundCreationService = ReturnType<typeof roundCreationService>;

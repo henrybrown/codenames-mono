@@ -5,17 +5,20 @@ import type { LobbyOperations } from "../lobby-actions";
 
 import { validate as checkRoundStartRules } from "./start-round.rules";
 
+/** Input to the start-round service. */
 export type StartRoundInput = {
   gameId: string;
   roundNumber: number;
   userId: number;
 };
 
+/** Successful start-round payload — the updated round number and status. */
 export type StartRoundSuccess = {
   roundNumber: number;
   status: string;
 };
 
+/** Tagged result for the start-round service. */
 export type StartRoundResult =
   | { success: true; data: StartRoundSuccess }
   | {
@@ -26,11 +29,19 @@ export type StartRoundResult =
       validationErrors?: LobbyValidationError[];
     };
 
+/** Wiring dependencies for the start-round service. */
 export type StartRoundDependencies = {
   loadLobbyAggregate: LobbyAggregateLoader;
   lobbyHandler: TransactionalHandler<LobbyOperations>;
 };
 
+/**
+ * Builds the start-round service.
+ *
+ * Loads the lobby, verifies permission and that `roundNumber` matches
+ * the current round, validates the start-round rules, then transitions
+ * the round and seeds the first turn transactionally.
+ */
 export const startRoundService = (dependencies: StartRoundDependencies) => {
   return async (input: StartRoundInput): Promise<StartRoundResult> => {
     const lobbyState = await dependencies.loadLobbyAggregate(input.gameId, input.userId);
@@ -93,4 +104,5 @@ export const startRoundService = (dependencies: StartRoundDependencies) => {
   };
 };
 
+/** Service-call signature for starting a round. */
 export type StartRoundService = ReturnType<typeof startRoundService>;

@@ -34,8 +34,16 @@ const newRoundValidationSchema = lobbyBaseSchema
     })
   );
 
+/**
+ * Branded lobby shape returned by `validate`.
+ *
+ * Guarantees game is IN_PROGRESS, the current round is COMPLETED (or
+ * absent on first round), and the format's max-rounds cap hasn't been
+ * reached.
+ */
 export type NewRoundValidLobbyState = ValidatedLobbyState<typeof newRoundValidationSchema>;
 
+/** Validates that a new round can be created. Returns flattened errors when not. */
 export function validate(
   data: LobbyAggregate
 ): LobbyValidationResult<NewRoundValidLobbyState> {

@@ -69,4 +69,5 @@ export const assignRolesRandomly = (
   };
 };
 
+/** Bound role-assignment action. */
 export type RoleAssigner = ReturnType<typeof assignRolesRandomly>;

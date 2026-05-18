@@ -4,6 +4,7 @@ import { StartRoundService } from "./start-round.service";
 import { pickStatus } from "@backend/shared/http/result-status";
 import { z } from "zod";
 
+/** Request schema for the start-round endpoint. */
 export const startRoundRequestSchema = z.object({
   params: z.object({
     gameId: z.string().min(1, "Game ID is required"),
@@ -17,10 +18,12 @@ export const startRoundRequestSchema = z.object({
   }),
 });
 
+/** Parsed shape of a validated start-round request. */
 export type ValidatedStartRoundRequest = z.infer<
   typeof startRoundRequestSchema
 >;
 
+/** Success response schema for start-round. */
 export const startRoundResponseSchema = z.object({
   success: z.boolean(),
   data: z.object({
@@ -31,6 +34,7 @@ export const startRoundResponseSchema = z.object({
   }),
 });
 
+/** Error response shape with optional per-field validation issues. */
 export type StartRoundErrorResponse = {
   success: false;
   error: string;
@@ -39,12 +43,18 @@ export type StartRoundErrorResponse = {
   };
 };
 
+/** Wire-format success response shape for start-round. */
 export type StartRoundResponse = z.infer<typeof startRoundResponseSchema>;
 
+/** Wiring dependencies for the start-round controller. */
 export type Dependencies = {
   startRound: StartRoundService;
 };
 
+/**
+ * `POST /api/games/:gameId/rounds/:roundNumber/start` — transitions a
+ * SETUP round into IN_PROGRESS and seeds the first turn.
+ */
 export const startRoundController = ({ startRound }: Dependencies) => {
   return async (
     req: Request,

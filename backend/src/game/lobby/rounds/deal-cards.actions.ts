@@ -11,6 +11,14 @@ import { GAME_EVENT_TYPE } from "@codenames/shared/types";
 
 import type { DealCardsValidLobbyState } from "./deal-cards.rules";
 
+/**
+ * Builds the deal-cards action.
+ *
+ * Randomly picks which team starts, allocates the 25-card distribution
+ * (9 + 8 + 1 assassin + 7 bystanders), shuffles, draws unique words
+ * (excluding any current words to support redeals), and writes the cards
+ * plus a DEAL event in a single repository call each.
+ */
 export const dealCardsToRound = (
   getRandomWords: RandomWordsSelector,
   replaceCards: CardsCreator,
@@ -79,12 +87,11 @@ const shuffleCards = <T>(items: T[]): T[] => {
 };
 
 /**
- * Allocates the initial card type distribution before shuffling
- * - Starting team: 9 cards
- * - Other team: 8 cards
- * - Assassin: 1 card
- * - Bystander: 7 cards
- * Total: 25 cards
+ * Allocates the initial card type distribution before shuffling.
+ *
+ * Distribution: starting team 9, other team 8, assassin 1, bystander 7 —
+ * always 25 cards total. The asymmetry (9/8) gives the starting team a
+ * one-card head start to balance the going-second advantage.
  */
 export const allocateInitialCardTypes = (startingTeam: TeamId, otherTeam: TeamId): CardInfo[] => [
   ...Array(9).fill({ cardType: CARD_TYPE.TEAM, teamId: startingTeam }),
@@ -93,4 +100,5 @@ export const allocateInitialCardTypes = (startingTeam: TeamId, otherTeam: TeamId
   ...Array(7).fill({ cardType: CARD_TYPE.BYSTANDER }),
 ];
 
+/** Bound deal-cards action. */
 export type CardDealer = ReturnType<typeof dealCardsToRound>;

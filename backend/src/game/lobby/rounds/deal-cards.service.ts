@@ -7,12 +7,14 @@ import { GameEventsEmitter } from "@backend/shared/websocket";
 
 import { validate as checkCardDealingRules } from "./deal-cards.rules";
 
+/** Input to the deal-cards service — `redeal` opts into replacing cards. */
 export type DealCardsInput = {
   gameId: string;
   userId: number;
   redeal?: boolean;
 };
 
+/** Successful deal-cards payload — the round id plus the new card list. */
 export type DealCardsSuccess = {
   _roundId: number;
   roundNumber: number;
@@ -20,6 +22,12 @@ export type DealCardsSuccess = {
   cards: CardResult[];
 };
 
+/**
+ * Tagged result for the deal-cards service.
+ *
+ * `validationErrors` carries the per-field flattened issues when the
+ * schema rejected the lobby state, for richer client diagnostics.
+ */
 export type DealCardsResult =
   | { success: true; data: DealCardsSuccess }
   | {
@@ -30,11 +38,19 @@ export type DealCardsResult =
       validationErrors?: LobbyValidationError[];
     };
 
+/** Wiring dependencies for the deal-cards service. */
 export type DealCardsDependencies = {
   loadLobbyAggregate: LobbyAggregateLoader;
   lobbyHandler: TransactionalHandler<LobbyOperations>;
 };
 
+/**
+ * Builds the deal-cards service.
+ *
+ * Loads the lobby, checks the user's modify permission, validates the
+ * dealing rules, then deals cards transactionally and broadcasts a
+ * `cardsDealt` event.
+ */
 export const dealCardsService = (dependencies: DealCardsDependencies) => {
   return async (input: DealCardsInput): Promise<DealCardsResult> => {
     const lobbyState = await dependencies.loadLobbyAggregate(input.gameId, input.userId);
@@ -83,4 +99,5 @@ export const dealCardsService = (dependencies: DealCardsDependencies) => {
   };
 };
 
+/** Service-call signature for dealing cards. */
 export type DealCardsService = ReturnType<typeof dealCardsService>;

@@ -46,8 +46,20 @@ const createDealCardsValidationSchema = (context?: { redeal?: boolean }) => lobb
     currentRound: data.currentRound!,
   }));
 
+/**
+ * Branded lobby shape returned by `validate`.
+ *
+ * Guarantees a current round in SETUP state with at least two teams; when
+ * `redeal` is false, also requires that no cards have been dealt yet.
+ */
 export type DealCardsValidLobbyState = ValidatedLobbyState<ReturnType<typeof createDealCardsValidationSchema>>;
 
+/**
+ * Validates that the lobby is in a state where cards can be dealt.
+ *
+ * `context.redeal` skips the "cards not yet dealt" check, allowing the
+ * current board to be replaced.
+ */
 export function validate(
   data: LobbyAggregate,
   context?: { redeal?: boolean }
