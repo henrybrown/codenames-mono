@@ -60,6 +60,12 @@ export type GameplayFeature = {
   };
 };
 
+/**
+ * Wiring dependencies for the AI feature.
+ *
+ * Mixes infrastructure (Express app, DB, HTTP client, logger, middleware)
+ * with cross-feature contracts (`gameplay`) and runtime config (`llmConfig`).
+ */
 export type AIModuleDependencies = {
   app: Express;
   db: Kysely<DB>;
@@ -71,6 +77,14 @@ export type AIModuleDependencies = {
   gameplay: GameplayFeature;
 };
 
+/**
+ * Initializes the AI feature: builds the LLM client, the pipeline, the
+ * decision-loop player, and the move/status HTTP routes.
+ *
+ * Side effects: mounts routes onto `deps.app`, starts the player's event
+ * loop, and logs an initialization message. Returns handles to the player
+ * service and LLM client for callers that need them.
+ */
 export const initialize = (deps: AIModuleDependencies) => {
   const { app, db, httpClient, auth, httpLogger, appLogger, llmConfig, gameplay } = deps;
 
