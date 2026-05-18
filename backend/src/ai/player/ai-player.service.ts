@@ -24,6 +24,7 @@ import type { GameFinder } from "@backend/shared/data-access/repositories/games.
 import type { AppLogger } from "@backend/shared/logging";
 import { UnexpectedGameplayError } from "@backend/game/gameplay/errors/gameplay.errors";
 
+/** Wiring dependencies for the AI player decision loop. */
 export type AIPlayerDependencies = {
   pipeline: CodenamesPipeline;
   giveClue: GiveClueService;
@@ -76,6 +77,17 @@ const GUESS_THRESHOLDS = {
   subsequentGuess: 0.65,
 } as const;
 
+/**
+ * Builds the AI player service.
+ *
+ * Returns `{ initialize, checkAndActIfNeeded }`. `initialize` is a hook for
+ * registering event listeners (currently a no-op — moves are triggered
+ * explicitly). `checkAndActIfNeeded(gameId)` inspects the game state and,
+ * if it's an AI player's turn, runs the appropriate pipeline (spymaster or
+ * guesser) and submits the resulting action. Pipeline runs are tracked in
+ * the DB and broadcast via WebSocket; failures are logged and the run is
+ * marked FAILED rather than thrown.
+ */
 export const createAIPlayerService =
   (logger: AppLogger) => (dependencies: AIPlayerDependencies) => {
     const {
@@ -607,4 +619,5 @@ export const createAIPlayerService =
     };
   };
 
+/** Service contract for the AI player. */
 export type AIPlayerService = ReturnType<ReturnType<typeof createAIPlayerService>>;

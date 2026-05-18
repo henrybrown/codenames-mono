@@ -28,6 +28,13 @@ import type { AIPlayerService } from "./ai-player.service";
 export type { AIPlayerService } from "./ai-player.service";
 export { gameEventBus, emitServerGameEvent } from "./game-event-bus";
 
+/**
+ * Wiring dependencies for the AI player.
+ *
+ * Mixes gameplay services (clue / guess / end-turn) with pipeline-run
+ * repository bindings and a handful of game-info repositories the player
+ * uses to enrich its narrations.
+ */
 export interface PlayerDependencies {
   pipeline: CodenamesPipeline;
   giveClue: GiveClueService;
@@ -45,6 +52,13 @@ export interface PlayerDependencies {
   findGameByPublicId: GameFinder<string>;
 }
 
+/**
+ * Builds the AI player service.
+ *
+ * Currying mirrors the standard `createX(logger)(deps)` wiring pattern;
+ * the inner call returns the player handle (with `initialize` and
+ * `checkAndActIfNeeded`).
+ */
 export const createPlayer =
   (logger: AppLogger) =>
   (deps: PlayerDependencies): AIPlayerService =>

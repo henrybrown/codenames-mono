@@ -44,8 +44,15 @@ class GameEventBus extends EventEmitter {
 }
 
 /**
- * Singleton instance
+ * Process-wide singleton event bus.
+ *
+ * Single instance because event listeners are registered globally — adding
+ * multiple instances would silently fragment subscription.
  */
 export const gameEventBus = new GameEventBus();
 
+/**
+ * Pre-bound `emitGameEvent` for terse use from anywhere holding a reference
+ * to this module.
+ */
 export const emitServerGameEvent = gameEventBus.emitGameEvent.bind(gameEventBus);
