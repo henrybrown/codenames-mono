@@ -26,6 +26,14 @@ const getGameStateOrThrow =
   };
 
 
+/**
+ * Builds the lobby operations registry within a transaction.
+ *
+ * Each op is closed over `trx` so the entire lobby workflow runs against
+ * one connection. `loadLobbyAggregate` is the throwing variant — it
+ * raises `UnexpectedLobbyError` rather than returning null, since callers
+ * inside a transaction can't recover from a missing aggregate.
+ */
 export const lobbyOperations = (trx: TransactionContext) => ({
   loadLobbyAggregate: getGameStateOrThrow(trx),
   addPlayers: playersRepository.addPlayers(trx),
@@ -53,4 +61,5 @@ export const lobbyOperations = (trx: TransactionContext) => ({
   ),
 });
 
+/** All operations available within a lobby transaction. */
 export type LobbyOperations = ReturnType<typeof lobbyOperations>;

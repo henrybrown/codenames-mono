@@ -5,6 +5,7 @@ import {
 import type { AppLogger } from "@backend/shared/logging";
 import { UnexpectedLobbyError } from "./lobby.errors";
 
+/** Response shape returned by the lobby error handler. */
 export type { FeatureErrorApiResponse as LobbyErrorApiResponse };
 
 /**

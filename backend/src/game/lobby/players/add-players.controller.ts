@@ -7,10 +7,18 @@ import {
   AddPlayersResponse,
 } from "./add-players.validation";
 
+/** Wiring dependencies for the add-players controller. */
 export type Dependencies = {
   addPlayers: ReturnType<typeof addPlayersService>;
 };
 
+/**
+ * `POST /api/games/:gameId/players` — adds one or more players to a lobby.
+ *
+ * Accepts either a single player object or an array. 404 when the game
+ * isn't found, 400 for other expected failures. Responds 201 with the
+ * created player records and gameId.
+ */
 export const addPlayersController =
   ({ addPlayers }: Dependencies) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {

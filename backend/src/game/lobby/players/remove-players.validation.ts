@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+/** Request schema for the remove-player endpoint. */
 export const removePlayersRequestSchema = z.object({
   params: z.object({
     gameId: z.string().min(1, "Game ID is required"),
@@ -10,6 +11,7 @@ export const removePlayersRequestSchema = z.object({
   }),
 });
 
+/** Parsed shape of a validated remove-player request. */
 export type ValidatedRemovePlayersRequest = z.infer<
   typeof removePlayersRequestSchema
 >;
@@ -22,6 +24,7 @@ const playerResponseSchema = z.object({
   isActive: z.boolean(),
 });
 
+/** Strict response schema — extra keys fail validation. */
 export const removePlayersResponseSchema = z
   .object({
     success: z.boolean(),
@@ -32,4 +35,5 @@ export const removePlayersResponseSchema = z
   })
   .strict();
 
+/** Wire-format response shape for remove-player. */
 export type RemovePlayersResponse = z.infer<typeof removePlayersResponseSchema>;

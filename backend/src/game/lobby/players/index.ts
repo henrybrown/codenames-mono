@@ -10,11 +10,13 @@ import { modifyBatchPlayersController } from "./modify-batch-players.controller"
 import { removePlayersService } from "./remove-players.service";
 import { removePlayersController } from "./remove-players.controller";
 
+/** Wiring dependencies for the lobby players sub-feature. */
 export interface PlayersDependencies {
   loadLobbyAggregate: LobbyAggregateLoader;
   lobbyHandler: TransactionalHandler<LobbyOperations>;
 }
 
+/** Builds the players sub-feature — add, modify (single + batch), remove. */
 export const createPlayers = (deps: PlayersDependencies) => {
   const addService = addPlayersService({
     lobbyHandler: deps.lobbyHandler,

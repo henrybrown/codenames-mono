@@ -5,14 +5,16 @@ import { modifySinglePlayerRequestSchema } from "./modify-players.validation";
 import { modifyPlayersService } from "./modify-players.service";
 import { sendError, sendSuccess } from "@backend/shared/http-middleware/controller-helpers";
 
+/** Wiring dependencies for the single-player modify controller. */
 export interface Dependencies {
   modifyPlayersService: ReturnType<typeof modifyPlayersService>;
 }
 
 /**
- * Handler for `PATCH /games/:gameId/players/:playerId` — modify one
- * player. The body's `playerId` plus the path `playerId` are validated
- * together; the service accepts a one-element array.
+ * `PATCH /api/games/:gameId/players/:playerId` — modify one player.
+ *
+ * The body's `playerId` plus the path `playerId` are validated together;
+ * the request is forwarded to the service as a single-element batch.
  */
 export const modifySinglePlayerController = ({
   modifyPlayersService,

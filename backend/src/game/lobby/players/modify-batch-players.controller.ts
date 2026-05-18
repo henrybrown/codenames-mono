@@ -5,13 +5,14 @@ import { modifyBatchPlayersRequestSchema } from "./modify-players.validation";
 import { modifyPlayersService } from "./modify-players.service";
 import { sendError, sendSuccess } from "@backend/shared/http-middleware/controller-helpers";
 
+/** Wiring dependencies for the batch modify-players controller. */
 export interface Dependencies {
   modifyPlayersService: ReturnType<typeof modifyPlayersService>;
 }
 
 /**
- * Handler for `PATCH /games/:gameId/players` — modify a batch of
- * players in one call. Each body entry must carry its own `playerId`.
+ * `PATCH /api/games/:gameId/players` — modify multiple players in one
+ * call. Each body entry must carry its own `playerId`.
  */
 export const modifyBatchPlayersController = ({
   modifyPlayersService,

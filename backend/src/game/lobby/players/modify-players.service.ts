@@ -4,6 +4,7 @@ import type { LobbyOperations } from "../lobby-actions";
 import type { LobbyAggregateLoader } from "../state";
 import { getTeamNameToIdMap, getAvailableTeamNames } from "../state/helpers";
 
+/** Modified player projection returned by modify-players. */
 export type PlayerResult = {
   _id: number;
   publicId: string;
@@ -13,25 +14,41 @@ export type PlayerResult = {
   statusId: number;
 };
 
+/**
+ * One-or-more player updates.
+ *
+ * `playerId` is required; `playerName` and `teamName` are individually
+ * optional — providing only one updates only that field.
+ */
 export type PlayerUpdateData = {
   playerId: string;
   playerName?: string;
   teamName?: string;
 }[];
 
+/** Successful modify-players payload. */
 export type ModifyPlayersSuccess = {
   modifiedPlayers: PlayerResult[];
 };
 
+/** Tagged result for the modify-players service. */
 export type ModifyPlayersResult =
   | { success: true; data: ModifyPlayersSuccess }
   | { success: false; message: string; notFound?: boolean };
 
+/** Wiring dependencies for the modify-players service. */
 export type ServiceDependencies = {
   lobbyHandler: TransactionalHandler<LobbyOperations>;
   loadLobbyAggregate: LobbyAggregateLoader;
 };
 
+/**
+ * Builds the modify-players service.
+ *
+ * Validates that all players exist and (in multi-device mode) belong to
+ * the requesting user, then resolves team names to ids and applies the
+ * updates transactionally.
+ */
 export const modifyPlayersService = (dependencies: ServiceDependencies) => {
   const updatePlayers = async (
     publicGameId: string,

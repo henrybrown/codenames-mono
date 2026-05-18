@@ -23,8 +23,12 @@ import { setupOperations } from "./setup/setup-actions";
 import { setupErrorHandler } from "./setup/errors/setup-errors.middleware";
 
 /**
- * Initializes the lobby feature module with all routes and dependencies.
- * Also includes game creation (previously in setup/).
+ * Initializes the lobby feature — game creation, player management,
+ * round setup, and game start.
+ *
+ * Mounts the lobby and setup routers under `/api`, plus their respective
+ * error handlers. Each mutating endpoint is wrapped in
+ * `blockingGameAction` to serialize concurrent writes per game.
  */
 export const initialize = (
   app: Express,

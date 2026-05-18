@@ -6,10 +6,15 @@ import {
   removePlayersResponseSchema,
 } from "./remove-players.validation";
 
+/** Wiring dependencies for the remove-player controller. */
 export type Dependencies = {
   removePlayersService: ReturnType<typeof removePlayersService>;
 };
 
+/**
+ * `DELETE /api/games/:gameId/players/:playerId` — removes a player from
+ * a lobby. 404 on missing game/player, 400 for other expected failures.
+ */
 export const removePlayersController =
   ({ removePlayersService }: Dependencies) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {

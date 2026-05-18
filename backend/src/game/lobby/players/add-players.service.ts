@@ -5,6 +5,7 @@ import type { LobbyAggregateLoader } from "../state";
 import { getTeamNameToIdMap, getAvailableTeamNames } from "../state/helpers";
 import { GameEventsEmitter } from "@backend/shared/websocket";
 
+/** Created player projection returned by add-players. */
 export type PlayerResult = {
   publicId: string;
   playerName: string;
@@ -13,25 +14,37 @@ export type PlayerResult = {
   statusId: number;
 };
 
+/** Request payload — array of {playerName, teamName} pairs. */
 export type PlayerAddData = {
   playerName: string;
   teamName: string;
 }[];
 
+/** Successful add-players payload — the created records plus the game id. */
 export type AddPlayersSuccess = {
   players: PlayerResult[];
   gamePublicId: string;
 };
 
+/** Tagged result for the add-players service. */
 export type AddPlayersResult =
   | { success: true; data: AddPlayersSuccess }
   | { success: false; message: string; notFound?: boolean };
 
+/** Wiring dependencies for the add-players service. */
 export type ServiceDependencies = {
   lobbyHandler: TransactionalHandler<LobbyOperations>;
   loadLobbyAggregate: LobbyAggregateLoader;
 };
 
+/**
+ * Builds the add-players service.
+ *
+ * Validates the lobby state and team names, then persists the new players
+ * transactionally and broadcasts a `playerJoined` event for each. Multi-
+ * device games are restricted to one player per user and one player per
+ * call.
+ */
 export const addPlayersService = (dependencies: ServiceDependencies) => {
   const addPlayers = async (
     publicGameId: string,

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+/** Single player to add — strict (extra keys fail validation). */
 export const playerSchema = z
   .object({
     playerName: z.string().min(1).max(30),
@@ -7,6 +8,12 @@ export const playerSchema = z
   })
   .strict();
 
+/**
+ * Add-players request schema.
+ *
+ * Body accepts either a single player object or a non-empty array — the
+ * controller normalizes to an array before calling the service.
+ */
 export const addPlayersRequestSchema = z.object({
   params: z.object({
     gameId: z.string().min(1, "Game ID is required"),
@@ -20,6 +27,7 @@ export const addPlayersRequestSchema = z.object({
   ]),
 });
 
+/** Parsed shape of a validated add-players request. */
 export type ValidatedAddPlayersRequest = z.infer<
   typeof addPlayersRequestSchema
 >;
@@ -32,6 +40,7 @@ const playerResponseSchema = z.object({
   isActive: z.boolean(),
 });
 
+/** Strict response schema — extra keys fail before being sent on the wire. */
 export const addPlayersResponseSchema = z
   .object({
     success: z.boolean(),
@@ -42,4 +51,5 @@ export const addPlayersResponseSchema = z
   })
   .strict();
 
+/** Wire-format response shape for add-players. */
 export type AddPlayersResponse = z.infer<typeof addPlayersResponseSchema>;

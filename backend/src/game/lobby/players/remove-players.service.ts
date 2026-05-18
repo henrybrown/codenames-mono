@@ -3,6 +3,7 @@ import type { LobbyOperations } from "../lobby-actions";
 import type { LobbyAggregateLoader } from "../state";
 import { getPlayerByPublicId, isPlayerOwner } from "../state/helpers";
 
+/** Removed player projection returned by remove-players. */
 export type PlayerResult = {
   _id: number;
   publicId: string;
@@ -12,19 +13,29 @@ export type PlayerResult = {
   statusId: number;
 };
 
+/** Successful remove-players payload. */
 export type RemovePlayersSuccess = {
   removedPlayer: PlayerResult;
 };
 
+/** Tagged result for the remove-players service. */
 export type RemovePlayersResult =
   | { success: true; data: RemovePlayersSuccess }
   | { success: false; message: string; notFound?: boolean };
 
+/** Wiring dependencies for the remove-players service. */
 export type ServiceDependencies = {
   lobbyHandler: TransactionalHandler<LobbyOperations>;
   loadLobbyAggregate: LobbyAggregateLoader;
 };
 
+/**
+ * Builds the remove-players service.
+ *
+ * Validates that the game is still in lobby state, the target player
+ * exists, and the requester owns the player (via `isPlayerOwner`). The
+ * removal itself runs transactionally.
+ */
 export const removePlayersService = (dependencies: ServiceDependencies) => {
   const removePlayers = async (
     publicGameId: string,
