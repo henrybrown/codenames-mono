@@ -14,11 +14,15 @@ import type {
   Turn,
 } from "../types";
 
+/** Returns the current round, or `null` between rounds. */
 export const getLatestRound = (game: GameAggregate): Round | null =>
   game.currentRound || null;
 
 /**
- * @returns The current round or throws if it doesn't exist
+ * Same as `getLatestRound` but throws `UnexpectedGameplayError` when there
+ * isn't one.
+ *
+ * Use when the caller has already validated that a round must exist.
  */
 export const getLatestRoundOrThrow = (game: GameAggregate): Round => {
   const currentRound = getLatestRound(game);
@@ -28,15 +32,21 @@ export const getLatestRoundOrThrow = (game: GameAggregate): Round => {
   return currentRound;
 };
 
+/** Number of teams in the game (0 when teams haven't been seeded yet). */
 export const getTeamCount = (game: GameAggregate): number =>
   game.teams ? game.teams.length : 0;
 
+/** Number of rounds the game has had, including the current one. */
 export const getRoundCount = (game: GameAggregate): number => {
   const historicalCount = game.historicalRounds?.length || 0;
   const currentCount = game.currentRound ? 1 : 0;
   return historicalCount + currentCount;
 };
 
+/**
+ * Returns the round with the given sequence number, looking in the current
+ * round first then in historical rounds. Returns `null` if no match.
+ */
 export const findRoundByNumber = (
   game: GameAggregate,
   roundNumber: number,
@@ -55,6 +65,10 @@ export const findRoundByNumber = (
   return null;
 };
 
+/**
+ * Returns the winning team for a completed historical round, or `null` if
+ * the round isn't found or has no winner recorded.
+ */
 export const getRoundWinningTeam = (
   game: GameAggregate,
   roundNumber: number,
@@ -73,6 +87,7 @@ export const getRoundWinningTeam = (
   };
 };
 
+/** Returns the active turn in the current round, or `null` if none. */
 export const getCurrentTurn = (game: GameAggregate): Turn | null => {
   if (!game.currentRound?.turns) return null;
 
@@ -83,7 +98,10 @@ export const getCurrentTurn = (game: GameAggregate): Turn | null => {
 };
 
 /**
- * @returns The current turn or throws if it doesn't exist
+ * Same as `getCurrentTurn` but throws `UnexpectedGameplayError` when there
+ * isn't one.
+ *
+ * Use when the caller has already validated that an active turn must exist.
  */
 export const getCurrentTurnOrThrow = (game: GameAggregate): Turn => {
   const currentTurn = getCurrentTurn(game);
@@ -94,7 +112,10 @@ export const getCurrentTurnOrThrow = (game: GameAggregate): Turn => {
 };
 
 /**
- * @returns The other team ID (assumes 2-team game)
+ * Returns the id of the team that isn't `currentTeamId`.
+ *
+ * Assumes a two-team game; throws `UnexpectedGameplayError` if no opposing
+ * team is found.
  */
 export const getOtherTeamId = (
   game: GameAggregate,

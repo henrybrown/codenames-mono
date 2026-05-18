@@ -10,6 +10,16 @@
 import { PLAYER_ROLE } from "@codenames/shared/types";
 import type { Player, TurnPhase } from "../types";
 
+/**
+ * Derives which role is currently acting on a turn.
+ *
+ * Maps `(status, clue presence)` to a phase:
+ *   - COMPLETED          → `null`
+ *   - ACTIVE, no clue    → CODEMASTER phase, `playerName` set
+ *   - ACTIVE, has clue   → CODEBREAKER phase, `playerName` null
+ *
+ * Returns `null` if no player on the team holds the expected role.
+ */
 export function computeTurnPhase(
   turn: { status: string; _teamId: number; clue?: unknown },
   players: Pick<Player, "publicName" | "teamName" | "_teamId" | "role" | "isAi">[],

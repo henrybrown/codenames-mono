@@ -1,12 +1,7 @@
 /**
  * Pure helpers for finding a player record inside a loaded GameAggregate.
  *
- * Used by:
- *   - Controllers (post-middleware): to resolve playerContext for the
- *     action they're handling.
- *   - The AI player: to resolve its own player context without HTTP.
- *
- * No async, no DB access. All inputs are values; outputs are values.
+ * No async, no DB access — all inputs are values, all outputs are values.
  */
 
 import { type PlayerRole } from "@codenames/shared/types";
@@ -41,13 +36,10 @@ export const findPlayerByPublicId = (
   allGamePlayers(aggregate).find((p) => p.publicId === publicId) ?? null;
 
 /**
- * Find the player on the active turn's team with the given role.
+ * Find the player on the active turn's team who holds the given role.
  *
- * Used by single-device controllers, where the role comes from the
- * request body and we need to find the corresponding player on the
- * currently-active team.
- *
- * Returns null if there's no active turn or no matching player.
+ * Returns `null` when there's no active turn or no matching player on the
+ * active team — both treated as "no actor" rather than an error.
  */
 export const findPlayerByActiveRole = (
   aggregate: GameAggregate,

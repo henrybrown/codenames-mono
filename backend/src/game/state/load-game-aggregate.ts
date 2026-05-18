@@ -1,17 +1,12 @@
 /**
- * Load a complete GameAggregate from the database.
+ * Loads complete game state into a single `GameAggregate`.
  *
- * Pure data assembly — no auth, no request-time identity. The aggregate
- * type no longer carries a playerContext field; callers that need the
- * acting player resolve it separately via the access/helpers and pass
- * it explicitly into action services.
+ * Pure data assembly — no auth, no request-time identity. Callers that
+ * need the acting player resolve it separately and pass it explicitly
+ * into action services.
  *
- * Works with both regular db connections and transaction contexts.
- *
- * Used directly by:
- *   - the AI player (no userId concept)
- *   - transactional reloads inside actions (membership already verified)
- *   - feature wiring (gameplay, chat) — single entry point for loading
+ * Works with both regular db connections and transaction contexts so it
+ * can be reused inside transactional reloads.
  */
 
 import type {
@@ -32,8 +27,17 @@ import type { CardResult } from "@backend/shared/data-access/repositories/cards.
 
 import type { GameAggregate } from "./types";
 
+/** Loader function returning a fully-assembled aggregate, or null when no
+ *  game has that public id. */
 export type GameAggregateLoader = (gameId: string) => Promise<GameAggregate | null>;
 
+/**
+ * Builds an aggregate loader bound to a particular DB context.
+ *
+ * Each call fans out across the games, teams, players, rounds, cards, and
+ * turns repositories. Bind once per request / transaction and reuse the
+ * returned loader for any number of `gameId` lookups.
+ */
 export const createGameAggregateLoader = (
   dbContext: DbContext | TransactionContext,
 ): GameAggregateLoader => {

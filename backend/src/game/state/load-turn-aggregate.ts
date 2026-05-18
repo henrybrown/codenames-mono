@@ -4,6 +4,7 @@ import type {
 } from "@backend/shared/data-access/transaction-handler";
 import * as turnsRepository from "@backend/shared/data-access/repositories/turns.repository";
 
+/** Frontend-ready shape for a single guess on a turn. */
 export interface TurnGuess {
   cardWord: string;
   playerName: string;
@@ -11,12 +12,21 @@ export interface TurnGuess {
   createdAt: Date;
 }
 
+/** Frontend-ready shape for the clue on a turn. */
 export interface TurnClue {
   word: string;
   number: number;
   createdAt: Date;
 }
 
+/**
+ * Loaded turn state with derived presentation fields.
+ *
+ * `hasGuesses` / `lastGuess` / `prevGuesses` are computed from the underlying
+ * guesses array — `lastGuess` is the most recent, `prevGuesses` is everything
+ * before it. `_gameId` and `_roundId` are internal numeric ids used by the
+ * service layer; they're not exposed on the API response.
+ */
 export interface TurnData {
   publicId: string;
   teamName: string;
@@ -32,6 +42,8 @@ export interface TurnData {
   _roundId: number;
 }
 
+/** Loader function returning a fully-assembled turn, or null when the
+ *  public id is unknown. */
 export type TurnLoader = (publicId: string) => Promise<TurnData | null>;
 
 /**

@@ -1,6 +1,15 @@
+/**
+ * Zod schemas and inferred TypeScript types for the gameplay aggregate.
+ *
+ * The aggregate is the single source of truth for game state at the
+ * service layer — every gameplay action takes one of these as input.
+ * Action-specific schemas extend `gameplayBaseSchema` with refinements
+ * that narrow it down to a valid state for that action.
+ */
 import { z } from "zod";
 import { GAME_STATE, GAME_FORMAT, GAME_TYPE, ROUND_STATE, PLAYER_ROLE } from "@codenames/shared/types";
 
+/** Player row as it appears inside the aggregate. */
 export const playerSchema = z.object({
   _id: z.number().int().positive(),
   publicId: z.string(),
@@ -14,6 +23,7 @@ export const playerSchema = z.object({
   isAi: z.boolean(),
 });
 
+/** Team with its embedded player roster. */
 export const teamSchema = z.object({
   _id: z.number().int().positive(),
   _gameId: z.number().int().positive(),
@@ -21,6 +31,7 @@ export const teamSchema = z.object({
   players: z.array(playerSchema).optional().default([]),
 });
 
+/** Board card; `_teamId`/`teamName` are nullable for bystander and assassin cards. */
 export const cardSchema = z.object({
   _id: z.number().int().positive(),
   _roundId: z.number().int().positive(),
@@ -31,6 +42,7 @@ export const cardSchema = z.object({
   selected: z.boolean(),
 });
 
+/** A single guess on a turn, with denormalized card-word and player-name. */
 export const guessSchema = z.object({
   _id: z.number().int().positive(),
   _turnId: z.number().int().positive(),
@@ -42,6 +54,7 @@ export const guessSchema = z.object({
   createdAt: z.date(),
 });
 
+/** A clue given on a turn — the spymaster's word + target count. */
 export const clueSchema = z.object({
   _id: z.number().int().positive(),
   _turnId: z.number().int().positive(),
@@ -62,6 +75,7 @@ export const turnPhaseSchema = z.object({
   playerName: z.string().nullable(),
 });
 
+/** A single turn, including its (optional) clue and recorded guesses. */
 export const turnSchema = z.object({
   _id: z.number().int().positive(),
   publicId: z.string().uuid(),
@@ -77,6 +91,7 @@ export const turnSchema = z.object({
   active: turnPhaseSchema.nullable().optional(),
 });
 
+/** A round with its cards, turns, and player roster. */
 export const roundSchema = z.object({
   _id: z.number().int().positive(),
   number: z.number().int().positive(),
@@ -89,8 +104,15 @@ export const roundSchema = z.object({
   createdAt: z.date(),
 });
 
+/** Current-round schema — currently identical to `roundSchema`. */
 export const currentRoundSchema = roundSchema;
 
+/**
+ * Historical round summary — winner only, no cards or turns.
+ *
+ * Past rounds are stored in `historicalRounds` to keep the aggregate from
+ * ballooning; full detail is fetched on demand.
+ */
 export const historicalRoundSchema = z.object({
   _id: z.number().int().positive(),
   number: z.number().int().positive(),
@@ -100,6 +122,13 @@ export const historicalRoundSchema = z.object({
   createdAt: z.date(),
 });
 
+/**
+ * Base shape for a game aggregate.
+ *
+ * Action-specific schemas (e.g. `giveClueSchema`, `makeGuessSchema`) extend
+ * this with refinements that narrow the game/round/turn state to what the
+ * action requires.
+ */
 export const gameplayBaseSchema = z.object({
   _id: z.number().int().positive(),
   public_id: z.string(),
@@ -120,7 +149,10 @@ export const gameplayBaseSchema = z.object({
   updatedAt: z.date().optional().nullable(),
 });
 
+/** Inferred TS types for each schema above. */
 export type HistoricalRound = z.infer<typeof historicalRoundSchema>;
+/** Constraint type used by action-specific schemas to declare they're
+ *  refinements of the base aggregate shape. */
 export type GameplaySchema = z.ZodType<GameAggregate, any, GameAggregate>;
 
 export type Player = z.infer<typeof playerSchema>;
