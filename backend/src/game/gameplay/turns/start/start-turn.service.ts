@@ -1,14 +1,8 @@
 /**
- * Start Turn Service
+ * Service for starting the next turn after the previous one completes.
  *
- * Creates a new turn for the next team after the previous turn has ended.
- *
- * Owns the full workflow: load the aggregate, validate the round, resolve
- * the acting player (with single-device fallback), validate via the rules
- * schema, derive the next team, run the gameplay handler, emit the event.
- *
- * Rule checks live in `start-turn.rules.ts`. The service translates a
- * validation failure into `{ success: false }`.
+ * Rule checks live in `start-turn.rules.ts` and are run via the validation
+ * gate; a parse failure surfaces as `{ success: false }`.
  */
 
 import type { GameplayHandler } from "../../gameplay-actions";
@@ -26,6 +20,12 @@ import { GameEventsEmitter } from "@backend/shared/websocket";
 import { getOtherTeamId } from "@backend/game/state/helpers";
 import { validateStartTurn } from "./start-turn.rules";
 
+/**
+ * Input to the start-turn service.
+ *
+ * `playerId` is optional; absence triggers a fallback (multi-device:
+ * resolve by JWT user; single-device: first team's first player).
+ */
 export type StartTurnInput = {
   gameId: string;
   roundNumber: number;
@@ -33,6 +33,7 @@ export type StartTurnInput = {
   playerId?: string;
 };
 
+/** Tagged result for the start-turn service. */
 export type StartTurnResult =
   | { success: true; data: { turn: { id: string; teamName: string; status: string } } }
   | {
@@ -42,17 +43,20 @@ export type StartTurnResult =
       conflict?: boolean;
     };
 
+/** Service-call signature for starting a turn. */
 export type StartTurnService = (input: StartTurnInput) => Promise<StartTurnResult>;
 
+/** Wiring dependencies for the start-turn service. */
 export type StartTurnDependencies = {
   gameplayHandler: GameplayHandler;
   loadGameAggregate: GameAggregateLoader;
 };
 
 /**
- * Start-turn's player resolution differs from the in-turn services
- * (clue/guess/end-turn) because no turn is active yet — there's no role
- * to resolve in single-device. Policy:
+ * Resolves the acting player for a start-turn request.
+ *
+ * No turn is active when start-turn runs, so role-based resolution isn't
+ * available in single-device mode. Policy:
  *   - Multi-device: resolve by user from JWT.
  *   - Single-device + explicit playerId: resolve by publicId.
  *   - Single-device + no playerId: first team's first player.
@@ -81,6 +85,14 @@ const resolvePlayer = (
   return resolveActingPlayerForUser(aggregate, input.userId);
 };
 
+/**
+ * Builds the start-turn service.
+ *
+ * Loads the aggregate, validates the round, resolves the actor, runs the
+ * rules schema (which enforces "previous turn completed, no active turn"),
+ * derives the next team, creates the new turn, and emits the turn-started
+ * event with the next codemaster's public id.
+ */
 export const createStartTurnService =
   (logger: AppLogger) =>
   (deps: StartTurnDependencies): StartTurnService =>

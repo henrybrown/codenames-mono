@@ -9,11 +9,13 @@ import { createEndTurnController } from "./end-turn.controller";
 import { createEndTurnAction } from "./end-turn.action";
 import { validateEndTurn } from "./end-turn.rules";
 
+/** Wiring dependencies for the end-turn sub-feature. */
 export interface EndTurnDependencies {
   gameplayHandler: GameplayHandler;
   loadGameAggregate: GameAggregateLoader;
 }
 
+/** Builds the end-turn sub-feature (controller + service). */
 export const endTurn = (logger: AppLogger) => (deps: EndTurnDependencies) => {
   const service = createEndTurnService(logger)({
     gameplayHandler: deps.gameplayHandler,
@@ -45,8 +47,8 @@ export {
 } from "./end-turn.rules";
 
 /**
- * Binds the end-turn action to a transaction. Returns a function that
- * the gameplay ops registry can invoke.
+ * Binds the end-turn action against a transaction-scoped repository and
+ * validator. Returns the action closed over the transaction.
  */
 export const bindEndTurnAction = (trx: TransactionContext) =>
   createEndTurnAction({
@@ -54,4 +56,5 @@ export const bindEndTurnAction = (trx: TransactionContext) =>
     validateEndTurn,
   });
 
+/** Transaction-bound end-turn action. */
 export type BoundEndTurnAction = ReturnType<typeof bindEndTurnAction>;

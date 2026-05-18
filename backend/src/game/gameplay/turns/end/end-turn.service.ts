@@ -12,6 +12,12 @@ import {
 import { GameEventsEmitter } from "@backend/shared/websocket";
 import { getCurrentTurn } from "@backend/game/state/helpers";
 
+/**
+ * Input to the end-turn service.
+ *
+ * Exactly one of `role` (single-device) or `playerId` (multi-device) is
+ * expected; the service picks based on the loaded aggregate's game type.
+ */
 export type EndTurnInput = {
   gameId: string;
   roundNumber: number;
@@ -20,6 +26,11 @@ export type EndTurnInput = {
   playerId?: string;
 };
 
+/**
+ * Tagged result for the end-turn service.
+ *
+ * `notFound` and `conflict` are status hints for HTTP status mapping.
+ */
 export type EndTurnResult =
   | {
       success: true;
@@ -39,8 +50,10 @@ export type EndTurnResult =
       conflict?: boolean;
     };
 
+/** Service-call signature for ending a turn. */
 export type EndTurnService = (input: EndTurnInput) => Promise<EndTurnResult>;
 
+/** Wiring dependencies for the end-turn service. */
 export type EndTurnDependencies = {
   gameplayHandler: GameplayHandler;
   loadGameAggregate: GameAggregateLoader;
@@ -57,6 +70,14 @@ const resolvePlayer = (
   return resolveActingPlayerForUser(aggregate, input.userId);
 };
 
+/**
+ * Builds the end-turn service.
+ *
+ * Loads the aggregate, validates the round number, resolves the acting
+ * player by game type, ends the active turn, and emits the turn-ended
+ * event. Returns `{ success: false, ... }` for expected failures and
+ * throws on invariant violations.
+ */
 export const createEndTurnService =
   (logger: AppLogger) =>
   (deps: EndTurnDependencies): EndTurnService =>

@@ -9,11 +9,13 @@ import { createStartTurnController } from "./start-turn.controller";
 import { createStartTurnAction } from "./start-turn.action";
 import { validateStartTurn } from "./start-turn.rules";
 
+/** Wiring dependencies for the start-turn sub-feature. */
 export interface StartTurnDependencies {
   gameplayHandler: GameplayHandler;
   loadGameAggregate: GameAggregateLoader;
 }
 
+/** Builds the start-turn sub-feature (controller + service). */
 export const startTurn = (logger: AppLogger) => (deps: StartTurnDependencies) => {
   const service = createStartTurnService(logger)({
     gameplayHandler: deps.gameplayHandler,
@@ -45,8 +47,8 @@ export {
 } from "./start-turn.rules";
 
 /**
- * Binds the start-turn action to a transaction. Returns a function that
- * the gameplay ops registry can invoke.
+ * Binds the start-turn action against a transaction-scoped repository
+ * and validator. Returns the action closed over the transaction.
  */
 export const bindStartTurnAction = (trx: TransactionContext) =>
   createStartTurnAction({
@@ -54,4 +56,5 @@ export const bindStartTurnAction = (trx: TransactionContext) =>
     validateStartTurn,
   });
 
+/** Transaction-bound start-turn action. */
 export type BoundStartTurnAction = ReturnType<typeof bindStartTurnAction>;

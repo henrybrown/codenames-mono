@@ -1,10 +1,6 @@
 /**
- * Builds the complete API-shaped turn data for a turn response.
- *
- * Used by both give-clue and make-guess services to shape the
- * `turn` field of their success responses. Loads turn data via
- * the supplied loader, then enriches it with the computed
- * active-phase derived from the round's player roster.
+ * Shared turn-presentation helpers used by the gameplay services that
+ * need a fully-shaped turn in their response.
  *
  * Pure orchestration of loader + helpers; no DB access of its own.
  */
@@ -12,6 +8,11 @@ import type { TurnLoader } from "@backend/game/state/load-turn-aggregate";
 import { computeTurnPhase } from "@backend/game/state/helpers";
 import type { Player, TurnPhase } from "@backend/game/state/types";
 
+/**
+ * Full API-shaped turn payload returned on a successful give-clue or
+ * make-guess. Includes derived `hasGuesses` / `lastGuess` / `prevGuesses`
+ * fields and the active turn phase.
+ */
 export type CompleteTurnData = {
   id: string;
   teamName: string;

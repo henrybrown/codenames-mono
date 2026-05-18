@@ -26,10 +26,19 @@ const requestSchema = z.object({
   }),
 });
 
+/** Wiring dependencies for the end-turn controller. */
 export type EndTurnControllerDeps = {
   endTurn: EndTurnService;
 };
 
+/**
+ * `POST /api/games/:gameId/rounds/:roundNumber/end-turn` — codebreaker
+ * voluntarily ends the active turn.
+ *
+ * Body accepts `role` (single-device) or `playerId` (multi-device); both
+ * are optional and the service chooses based on the loaded aggregate's
+ * game type.
+ */
 export const createEndTurnController =
   (logger: AppLogger) =>
   (deps: EndTurnControllerDeps) =>

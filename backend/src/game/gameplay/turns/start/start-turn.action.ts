@@ -5,13 +5,18 @@ import type { validateStartTurn } from "./start-turn.rules";
 /**
  * Result of attempting to start a turn.
  *
- * `ok: false` is for expected business failures (round not in progress).
- * Genuine internal failures throw → 500 via middleware.
+ * `ok: false` is for expected business failures (round not in progress,
+ * etc.); invariant violations throw `UnexpectedGameplayError`.
  */
 export type StartTurnActionResult =
   | { ok: true; data: Awaited<ReturnType<TurnCreator>> }
   | { ok: false; message: string };
 
+/**
+ * Builds the start-turn action — validates the aggregate, then creates a
+ * new ACTIVE turn for the given team with zero guesses remaining (the
+ * clue stage hasn't started yet).
+ */
 export const createStartTurnAction = (deps: {
   createTurn: TurnCreator;
   validateStartTurn: typeof validateStartTurn;
@@ -32,4 +37,5 @@ export const createStartTurnAction = (deps: {
     return { ok: true, data: created };
   };
 };
+/** Bound start-turn action. */
 export type StartTurnAction = ReturnType<typeof createStartTurnAction>;

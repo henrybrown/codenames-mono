@@ -12,12 +12,14 @@ import { makeGuessController } from "./make-guess.controller";
 import { createMakeGuessAction } from "./make-guess.action";
 import { validateMakeGuess } from "./make-guess.rules";
 
+/** Wiring dependencies for the make-guess sub-feature. */
 export interface MakeGuessDependencies {
   gameplayHandler: GameplayHandler;
   loadTurn: TurnLoader;
   loadGameAggregate: GameAggregateLoader;
 }
 
+/** Builds the make-guess sub-feature (controller + service). */
 export const makeGuess = (logger: AppLogger) => (dependencies: MakeGuessDependencies) => {
   const service = makeGuessService(logger)({
     gameplayHandler: dependencies.gameplayHandler,
@@ -38,8 +40,9 @@ export const makeGuess = (logger: AppLogger) => (dependencies: MakeGuessDependen
 export default makeGuess;
 
 /**
- * Binds the make-guess action to a transaction. Returns a function that
- * the gameplay ops registry can invoke.
+ * Binds the make-guess action against a transaction-scoped set of
+ * repositories and validators. Returns the action closed over the
+ * transaction.
  */
 export const bindMakeGuessAction = (trx: TransactionContext) =>
   createMakeGuessAction({
@@ -50,4 +53,5 @@ export const bindMakeGuessAction = (trx: TransactionContext) =>
     validateMakeGuess,
   });
 
+/** Transaction-bound make-guess action. */
 export type BoundMakeGuessAction = ReturnType<typeof bindMakeGuessAction>;

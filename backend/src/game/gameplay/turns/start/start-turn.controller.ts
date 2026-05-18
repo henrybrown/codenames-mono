@@ -27,10 +27,19 @@ const requestSchema = z.object({
   }),
 });
 
+/** Wiring dependencies for the start-turn controller. */
 export type StartTurnControllerDeps = {
   startTurn: StartTurnService;
 };
 
+/**
+ * `POST /api/games/:gameId/rounds/:roundNumber/turns` — kicks off the
+ * next turn after the previous one completed.
+ *
+ * Body's `playerId` is optional in both modes: single-device falls back
+ * to first-team-first-player; multi-device resolves the actor from the
+ * JWT regardless and ignores the body field. Responds 201 on success.
+ */
 export const createStartTurnController =
   (logger: AppLogger) =>
   (deps: StartTurnControllerDeps) =>

@@ -26,10 +26,18 @@ const requestSchema = z.object({
   }),
 });
 
+/** Wiring dependencies for the make-guess controller. */
 export type MakeGuessControllerDeps = {
   makeGuess: MakeGuessService;
 };
 
+/**
+ * `POST /api/games/:gameId/rounds/:roundNumber/guesses` — codebreaker
+ * guesses a card.
+ *
+ * Body accepts `role` (single-device) or `playerId` (multi-device) for
+ * actor identification. Maps service failure flags to HTTP statuses.
+ */
 export const makeGuessController =
   (logger: AppLogger) =>
   (deps: MakeGuessControllerDeps) =>

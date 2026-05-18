@@ -36,8 +36,18 @@ const startTurnSchema = gameplayBaseSchema
     { message: "Previous turn not completed" },
   );
 
+/**
+ * Branded aggregate shape returned by `validateStartTurn`.
+ *
+ * Guarantees game and round are `IN_PROGRESS`, there are at least two
+ * teams, no active turn exists, and the most-recent turn is COMPLETED.
+ */
 export type StartTurnValidGameState = ValidatedGameState<typeof startTurnSchema>;
 
+/**
+ * Validates that the aggregate is in a state where a new turn can be
+ * started. Returns flattened errors when not.
+ */
 export const validateStartTurn = (
   data: GameAggregate,
 ): GameplayValidationResult<StartTurnValidGameState> => {

@@ -20,8 +20,18 @@ const endTurnSchema = gameplayBaseSchema.extend({
   }),
 });
 
+/**
+ * Branded aggregate shape returned by `validateEndTurn`.
+ *
+ * Guarantees game and current round are `IN_PROGRESS` and the round has
+ * at least one turn (i.e. there's something that can be ended).
+ */
 export type EndTurnValidGameState = ValidatedGameState<typeof endTurnSchema>;
 
+/**
+ * Validates that the aggregate is in a state where the current turn can
+ * be ended. Returns flattened errors when not.
+ */
 export const validateEndTurn = (
   data: GameAggregate,
 ): GameplayValidationResult<EndTurnValidGameState> => {

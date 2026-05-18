@@ -19,6 +19,12 @@ import {
 import { determineOutcomeStrategy } from "./outcome-strategy";
 import { UnexpectedGameplayError } from "../../errors/gameplay.errors";
 
+/**
+ * Input to the make-guess service.
+ *
+ * Exactly one of `role` (single-device) or `playerId` (multi-device) is
+ * expected; the service picks based on the loaded aggregate's game type.
+ */
 export type MakeGuessInput = {
   gameId: string;
   roundNumber: number;
@@ -28,6 +34,7 @@ export type MakeGuessInput = {
   playerId?: string;
 };
 
+/** Successful make-guess payload — the guess plus the full turn shape. */
 export type MakeGuessSuccess = {
   guess: {
     cardWord: string;
@@ -37,6 +44,7 @@ export type MakeGuessSuccess = {
   turn: CompleteTurnData;
 };
 
+/** Tagged result for the make-guess service. */
 export type MakeGuessResult =
   | { success: true; data: MakeGuessSuccess }
   | {
@@ -46,6 +54,7 @@ export type MakeGuessResult =
       conflict?: boolean;
     };
 
+/** Wiring dependencies for the make-guess service. */
 export type MakeGuessDependencies = {
   gameplayHandler: GameplayHandler;
   loadGameAggregate: GameAggregateLoader;
@@ -88,6 +97,14 @@ function buildMinimalCompletedTurnShape(guessTurn: {
   };
 }
 
+/**
+ * Builds the make-guess service.
+ *
+ * Loads the aggregate, validates the round, resolves the acting player,
+ * persists the guess, and then runs the post-guess cascade (continue /
+ * end-turn / end-round / end-game) inside the same transaction. Emits
+ * the appropriate WebSocket events on success.
+ */
 export const makeGuessService =
   (logger: AppLogger) =>
   (deps: MakeGuessDependencies) =>
@@ -242,4 +259,5 @@ export const makeGuessService =
     };
   };
 
+/** Service-call signature for making a guess. */
 export type MakeGuessService = ReturnType<ReturnType<typeof makeGuessService>>;

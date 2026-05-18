@@ -20,8 +20,7 @@ import type { ActingPlayer } from "../types";
  * Result of attempting a guess.
  *
  * `ok: false` is for expected business failures (invalid card, wrong
- * game state). Genuine internal failures throw UnexpectedGameplayError
- * → 500 via middleware.
+ * game state); invariant violations throw `UnexpectedGameplayError`.
  */
 export type MakeGuessActionResult =
   | {
@@ -77,6 +76,14 @@ function determineOutcome(card: any, guessingTeamId: number): TurnOutcome {
   }
 }
 
+/**
+ * Builds the make-guess action.
+ *
+ * Validates the aggregate + the target card, flips the card to selected,
+ * derives the outcome (correct team / other team / bystander / assassin),
+ * persists the guess, updates remaining guesses, and writes a SELECT
+ * event. Returns the new guess plus the updated turn.
+ */
 export const createMakeGuessAction = (deps: {
   updateCards: CardUpdater;
   createGuess: GuessCreator;
@@ -152,4 +159,5 @@ export const createMakeGuessAction = (deps: {
   };
 };
 
+/** Bound make-guess action. */
 export type MakeGuessAction = ReturnType<typeof createMakeGuessAction>;

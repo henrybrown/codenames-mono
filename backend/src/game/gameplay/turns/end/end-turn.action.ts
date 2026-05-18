@@ -5,13 +5,17 @@ import type { validateEndTurn } from "./end-turn.rules";
 /**
  * Result of attempting to end a turn.
  *
- * `ok: false` is for expected business failures (round not in progress).
- * Genuine internal failures throw → 500 via middleware.
+ * `ok: false` is for expected business failures (round not in progress,
+ * etc.); invariant violations throw `UnexpectedGameplayError`.
  */
 export type EndTurnActionResult =
   | { ok: true; data: Awaited<ReturnType<TurnStatusUpdater>> }
   | { ok: false; message: string };
 
+/**
+ * Builds the end-turn action — validates the aggregate, then marks the
+ * given turn COMPLETED.
+ */
 export const createEndTurnAction = (deps: {
   updateTurnStatus: TurnStatusUpdater;
   validateEndTurn: typeof validateEndTurn;
@@ -31,4 +35,5 @@ export const createEndTurnAction = (deps: {
     return { ok: true, data: updated };
   };
 };
+/** Bound end-turn action. */
 export type EndTurnAction = ReturnType<typeof createEndTurnAction>;

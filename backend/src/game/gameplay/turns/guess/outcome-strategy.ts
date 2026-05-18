@@ -32,6 +32,8 @@ export type OutcomeStrategy =
       gameWinningTeamId: number;
     };
 
+/** Input pair for `determineOutcomeStrategy`: the guess outcome plus the
+ *  aggregate as it stood *after* the guess was applied. */
 export type DetermineOutcomeInput = {
   outcome: TurnOutcome;
   postGuessState: GameAggregate;

@@ -57,10 +57,21 @@ const makeGuessActionSchema = gameplayBaseSchema.extend({
     path: ["currentRound", "turns"],
   });
 
+/**
+ * Branded aggregate shape returned by `validateMakeGuess`.
+ *
+ * Guarantees an active turn exists on an in-progress round with at least
+ * one card, a clue, and at least one guess remaining.
+ */
 export type MakeGuessValidGameState = ValidatedGameState<
   typeof makeGuessActionSchema
 >;
 
+/**
+ * Stateless turn-level check used by callers that already have a turn in
+ * hand and want a quick can-guess? answer without re-running the full
+ * schema validation.
+ */
 export function validateTurnForGuessing(
   turn: Turn | null
 ): { valid: boolean; error?: string } {
@@ -83,6 +94,11 @@ export function validateTurnForGuessing(
   return { valid: true };
 }
 
+/**
+ * Validates that the aggregate is in a state where the acting team can
+ * make a guess. Checks game/round status, active turn, clue presence,
+ * guesses remaining, and that the current turn belongs to `actingTeamId`.
+ */
 export const validateMakeGuess = (
   data: GameAggregate,
   actingTeamId: number,
