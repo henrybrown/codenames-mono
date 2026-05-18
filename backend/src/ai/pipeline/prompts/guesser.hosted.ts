@@ -7,6 +7,12 @@
 
 import type { RankingInput } from "../guesser";
 
+/**
+ * Builds the guesser prompt for hosted (frontier-class) models.
+ *
+ * `retryNote`, when present, is prepended as a correction instruction for
+ * the previous attempt's failure mode.
+ */
 export const buildGuesserPromptHosted = (
   input: RankingInput,
   retryNote?: string,

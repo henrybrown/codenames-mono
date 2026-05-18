@@ -23,11 +23,23 @@ export type {
 } from "./codenames-pipeline";
 export type { PromptStyle } from "./prompts";
 
+/**
+ * Wiring dependencies for the pipeline layer.
+ *
+ * `promptStyle` is a coarse classifier — local-class vs hosted-class — used
+ * to pick the prompt variant tuned for that model size.
+ */
 export interface PipelineDependencies {
   llm: LLMService;
   promptStyle: PromptStyle;
 }
 
+/**
+ * Builds the codenames pipeline.
+ *
+ * Returned handle exposes the spymaster and operative entry points; both
+ * are pure orchestration over the LLM client (no IO of their own).
+ */
 export const createPipeline =
   (logger: AppLogger) =>
   (deps: PipelineDependencies): CodenamesPipeline =>

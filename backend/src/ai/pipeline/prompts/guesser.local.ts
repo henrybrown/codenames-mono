@@ -7,6 +7,13 @@
 
 import type { RankingInput } from "../guesser";
 
+/**
+ * Builds the guesser prompt for local (small open-weight) models.
+ *
+ * Includes two worked examples to anchor the score scale and an explicit
+ * reminder that the clue itself isn't a board word. `retryNote` is shown
+ * as an IMPORTANT-prefixed instruction on subsequent attempts.
+ */
 export const buildGuesserPromptLocal = (
   input: RankingInput,
   retryNote?: string,

@@ -14,6 +14,13 @@
 
 import type { SpymasterInput } from "../spymaster";
 
+/**
+ * Builds the spymaster prompt for local (small open-weight) models.
+ *
+ * Kept short to preserve the model's attention budget; teaches the
+ * danger-word pattern through examples rather than rule prose. `retryNote`
+ * is shown as an IMPORTANT-prefixed preamble on subsequent attempts.
+ */
 export const buildSpymasterPromptLocal = (
   input: SpymasterInput,
   retryNote?: string,

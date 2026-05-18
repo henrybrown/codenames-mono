@@ -11,6 +11,13 @@ import type { LLMService } from "../models";
 import type { AppLogger } from "@backend/shared/logging";
 import { buildSpymasterPrompt, type PromptStyle } from "./prompts";
 
+/**
+ * Inputs the spymaster needs to generate a clue.
+ *
+ * `previousClues` lets the prompt explicitly bar repeat clues this round.
+ * `onPromptGenerated` is a side-channel for telemetry / debug logging of
+ * each prompt attempt (used to audit retries).
+ */
 export type SpymasterInput = {
   currentTeam: string;
   friendlyWords: string[];
@@ -21,6 +28,14 @@ export type SpymasterInput = {
   onPromptGenerated?: (prompt: string) => void | Promise<void>;
 };
 
+/**
+ * Validated spymaster output.
+ *
+ * `clue` is a single word, lowercase trimmed; `number` is the target card
+ * count and is guaranteed positive. The remaining fields are advisory data
+ * the model may volunteer; the application ignores them but they're kept
+ * for transparency in logs and UI.
+ */
 export type SpymasterOutput = {
   clue: string;
   number: number;
@@ -51,6 +66,15 @@ export const isWordFormOf = (clue: string, boardWords: string[]): boolean => {
   });
 };
 
+/**
+ * Runs the spymaster role to produce a validated clue.
+ *
+ * Retries up to three times when the model output fails validation (not a
+ * single word, on the board, a word-form of a board word, already used).
+ * Each retry feeds the previous rejection reason back into the prompt.
+ *
+ * Throws if all attempts exhaust without yielding a valid clue.
+ */
 export const runSpymasterPipeline = async (
   llm: LLMService,
   promptStyle: PromptStyle,

@@ -13,6 +13,14 @@
 
 import type { SpymasterInput } from "../spymaster";
 
+/**
+ * Builds the spymaster prompt for hosted (frontier-class) models.
+ *
+ * Uses explicit multi-criteria instructions and a single worked example;
+ * the output schema asks for danger-word reasoning before the clue so the
+ * clue is conditioned on it. `retryNote` is shown as a NOTE-prefixed
+ * preamble on subsequent attempts.
+ */
 export const buildSpymasterPromptHosted = (
   input: SpymasterInput,
   retryNote?: string,

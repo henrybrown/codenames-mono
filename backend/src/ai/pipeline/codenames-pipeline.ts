@@ -38,6 +38,13 @@ export type GuesserOutput = {
   ranked: RankedWord[];
 };
 
+/**
+ * Builds the codenames pipeline over an opaque LLM.
+ *
+ * Exposes spymaster (clue generation) and operative (word ranking) entry
+ * points. The operative short-circuits to an empty result when there are
+ * no remaining words to score, avoiding an unnecessary LLM call.
+ */
 export const createCodenamesPipeline = (
   llm: LLMService,
   promptStyle: PromptStyle,
@@ -77,4 +84,5 @@ export const createCodenamesPipeline = (
   };
 };
 
+/** Service contract for the codenames pipeline. */
 export type CodenamesPipeline = ReturnType<typeof createCodenamesPipeline>;

@@ -10,6 +10,7 @@ import type { LLMService } from "../models";
 import type { AppLogger } from "@backend/shared/logging";
 import { buildGuesserPrompt, type PromptStyle } from "./prompts";
 
+/** Inputs the ranker needs to score remaining words against a clue. */
 export type RankingInput = {
   currentTeam: string;
   clueWord: string;
@@ -18,16 +19,32 @@ export type RankingInput = {
   remainingWords: string[];
 };
 
+/**
+ * A single scored candidate.
+ *
+ * `score` is in `[0, 1]`; the ranker validates this range and rejects rows
+ * outside it. `reason` is a short model-supplied rationale.
+ */
 export type RankedWord = {
   word: string;
   score: number;
   reason: string;
 };
 
+/** Wire shape the model is expected to return. */
 export type RankingOutput = {
   ranked: RankedWord[];
 };
 
+/**
+ * Runs the ranker to score every remaining board word against a clue.
+ *
+ * Filters out hallucinated words (not in the input list), normalizes case
+ * back to the original board form, and sorts descending by score. Retries
+ * up to three times on parse failure or all-hallucinated responses,
+ * feeding the rejection reason back into the prompt. Throws if the
+ * attempts exhaust.
+ */
 export const runRanking = async (
   llm: LLMService,
   promptStyle: PromptStyle,
