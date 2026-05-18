@@ -5,6 +5,7 @@ import {
 import type { AppLogger } from "@backend/shared/logging";
 import { UnexpectedSetupError } from "./setup.errors";
 
+/** Response shape returned by the setup error handler. */
 export type { FeatureErrorApiResponse as SetupErrorApiResponse };
 
 /**

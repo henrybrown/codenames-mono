@@ -8,6 +8,7 @@ import { createAIBotsForTeams } from "./start-game-ai-helper";
 import type { UserCreator } from "@backend/shared/data-access/repositories/users.repository";
 import { UnexpectedLobbyError } from "../errors/lobby.errors";
 
+/** Successful start-game payload. */
 export type GameStartSuccess = {
   _id: number;
   success: true;
@@ -15,6 +16,7 @@ export type GameStartSuccess = {
   status: string;
 };
 
+/** Failure variant for start-game. */
 export type GameStartError = {
   success: false;
   message: string;
@@ -22,14 +24,23 @@ export type GameStartError = {
   conflict?: boolean;
 };
 
+/** Tagged result for the start-game service. */
 export type GameStartResult = GameStartSuccess | GameStartError;
 
+/** Wiring dependencies for the start-game service. */
 export type ServiceDependencies = {
   lobbyHandler: TransactionalHandler<LobbyOperations>;
   loadLobbyAggregate: LobbyAggregateLoader;
   createUser: UserCreator;
 };
 
+/**
+ * Builds the start-game service.
+ *
+ * Validates the player count requirements (≥4 players, ≥2 teams, ≥2 per
+ * team — skipped in AI mode), flips the game to IN_PROGRESS, optionally
+ * seeds AI bot players, then broadcasts `gameStarted`.
+ */
 export const startGameService = (dependencies: ServiceDependencies) => {
   const startGame = async (publicGameId: string): Promise<GameStartResult> => {
     const lobby = await dependencies.loadLobbyAggregate(publicGameId, 0);

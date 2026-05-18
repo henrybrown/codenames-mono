@@ -9,12 +9,20 @@ import type { TransactionalHandler } from "@backend/shared/data-access/transacti
 import type { LobbyOperations } from "../lobby-actions";
 import type { UserCreator } from "@backend/shared/data-access/repositories/users.repository";
 
+/** Inputs for the AI-bot seeding pass run at start-game in AI mode. */
 export type CreateAIBotsInput = {
   lobby: LobbyAggregate;
   lobbyHandler: TransactionalHandler<LobbyOperations>;
   createUser: UserCreator;
 };
 
+/**
+ * Creates AI users and player rows for any team short of two players.
+ *
+ * Idempotent on full teams (skipped when `2 - team.players.length <= 0`).
+ * Each bot gets a unique generated username and a display name keyed to
+ * its team. Throws if a team's id can't be resolved.
+ */
 export const createAIBotsForTeams = async (input: CreateAIBotsInput): Promise<void> => {
   const { lobby, lobbyHandler, createUser } = input;
 

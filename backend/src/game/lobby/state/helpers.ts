@@ -5,11 +5,7 @@ type LobbyPlayer = LobbyAggregate["teams"][0]["players"][0];
 /**
  * Pure helpers for working with a loaded LobbyAggregate.
  *
- * Used by lobby sub-features (players, rounds, start-game) to read
- * derived state and find specific players without sprinkling
- * lobby-shape knowledge across every service.
- *
- * No async, no DB access.
+ * No async, no DB access — all inputs are values, all outputs are values.
  */
 
 /** Total players across all teams in the lobby. */

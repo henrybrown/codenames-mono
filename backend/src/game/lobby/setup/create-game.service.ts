@@ -4,6 +4,7 @@ import { GameType, GameFormat, GAME_TYPE } from "@codenames/shared/types";
 import type { TransactionalHandler } from "@backend/shared/data-access/transaction-handler";
 import type { SetupOperations } from "./setup-actions";
 
+/** Successful create-game payload. */
 export type GameCreationResult = {
   _id: number;
   publicId: string;
@@ -16,10 +17,19 @@ export type GameCreationResult = {
   };
 };
 
+/** Wiring dependencies for the create-game service. */
 export type ServiceDependencies = {
   setupHandler: TransactionalHandler<SetupOperations>;
 };
 
+/**
+ * Builds the create-game service.
+ *
+ * Generates a shortid public id, opens a transaction, double-checks for
+ * a collision against the games table, then inserts the game row plus
+ * two teams ("Team Red", "Team Blue"). A collision throws
+ * `UnexpectedSetupError` — clients should retry the request.
+ */
 export const createGameService = (dependencies: ServiceDependencies) => {
   /**
    * Generates a public ID for the game.

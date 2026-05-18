@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { GAME_TYPE, GAME_FORMAT } from "@codenames/shared/types";
 
+/** Strict request schema — `aiMode` defaults to false. */
 export const createGameRequestSchema = z
   .object({
     gameType: z.enum([GAME_TYPE.SINGLE_DEVICE, GAME_TYPE.MULTI_DEVICE]),
@@ -13,8 +14,10 @@ export const createGameRequestSchema = z
   })
   .strict();
 
+/** Parsed shape of a validated create-game request. */
 export type CreateGameRequest = z.infer<typeof createGameRequestSchema>;
 
+/** Strict response schema for create-game. */
 export const createGameResponseSchema = z
   .object({
     success: z.boolean(),
@@ -33,4 +36,5 @@ export const createGameResponseSchema = z
   })
   .strict();
 
+/** Wire-format response shape for create-game. */
 export type CreateGameResponse = z.infer<typeof createGameResponseSchema>;

@@ -8,10 +8,17 @@ import {
 } from "./create.game.validation";
 import { requireUserId } from "@backend/shared/http-middleware/controller-helpers";
 
+/** Wiring dependencies for the create-game controller. */
 export type Dependencies = {
   createGame: ReturnType<typeof createGameService>;
 };
 
+/**
+ * `POST /api/games` — creates a new game in LOBBY state.
+ *
+ * Authenticated user becomes the lobby admin. Responds 201 with the
+ * created game's public id and metadata.
+ */
 export const createGameController =
   ({ createGame }: Dependencies) =>
   async (req: JWTRequest, res: Response, next: NextFunction): Promise<void> => {

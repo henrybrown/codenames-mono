@@ -1,6 +1,13 @@
+/**
+ * Zod schemas and inferred TypeScript types for the lobby aggregate.
+ *
+ * The lobby aggregate is the user-scoped view of a game in setup —
+ * everything needed to render the lobby UI for a specific viewer.
+ */
 import { z } from "zod";
 import { GAME_STATE, GAME_TYPE, GAME_FORMAT, ROUND_STATE, PLAYER_ROLE } from "@codenames/shared/types";
 
+/** Player row as it appears inside the lobby aggregate. */
 export const playerSchema = z.object({
   _id: z.number().int().positive(),
   publicId: z.string(),
@@ -13,6 +20,7 @@ export const playerSchema = z.object({
   role: z.string().default(PLAYER_ROLE.NONE),
 });
 
+/** Team with its embedded player roster. */
 export const teamSchema = z.object({
   _id: z.number().int().positive(),
   _gameId: z.number().int().positive(),
@@ -20,12 +28,14 @@ export const teamSchema = z.object({
   players: z.array(playerSchema).default([]),
 });
 
+/** Permission flags derived from `(game, userId)` — what the viewer can do. */
 export const userContextSchema = z.object({
   _userId: z.number().int().positive(),
   canModifyGame: z.boolean().default(true),
   isHost: z.boolean().default(false),
 });
 
+/** The viewer's own player record, when they have one in this game. */
 export const playerContextSchema = z.object({
   _userId: z.number().int().positive(),
   _id: z.number().int().positive(),
@@ -41,6 +51,7 @@ export const playerContextSchema = z.object({
   ]),
 });
 
+/** Board card; nullable team fields for bystander/assassin. */
 export const cardSchema = z.object({
   _id: z.number().int().positive(),
   _roundId: z.number().int().positive(),
@@ -51,6 +62,7 @@ export const cardSchema = z.object({
   selected: z.boolean(),
 });
 
+/** Current round summary as seen from the lobby UI. */
 export const roundSchema = z.object({
   _id: z.number().int().positive(),
   number: z.number().int().positive(),
@@ -64,6 +76,7 @@ export const roundSchema = z.object({
   createdAt: z.date(),
 });
 
+/** Past-round summary — winner only, no card detail. */
 export const historicalRoundSchema = z.object({
   _id: z.number().int().positive(),
   number: z.number().int().positive(),
@@ -77,6 +90,12 @@ export const historicalRoundSchema = z.object({
   createdAt: z.date(),
 });
 
+/**
+ * Base shape for a lobby aggregate.
+ *
+ * Sub-features extend this with refinements that narrow the lobby/round
+ * state to what their action requires.
+ */
 export const lobbyBaseSchema = z.object({
   _id: z.number().int().positive(),
   public_id: z.string(),
@@ -104,6 +123,7 @@ export const lobbyBaseSchema = z.object({
   updatedAt: z.date().optional().nullable(),
 });
 
+/** Inferred TS types for each lobby schema above. */
 export type Player = z.infer<typeof playerSchema>;
 export type Team = z.infer<typeof teamSchema>;
 export type UserContext = z.infer<typeof userContextSchema>;

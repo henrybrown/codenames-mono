@@ -26,11 +26,19 @@ import type { LobbyAggregate } from "./types";
  *
  * Works with both regular db connections and transaction contexts.
  */
+/** Loader function returning a user-scoped lobby aggregate. */
 export type LobbyAggregateLoader = (
   gameId: PublicId,
   userId: number,
 ) => Promise<LobbyAggregate | null>;
 
+/**
+ * Builds a lobby loader bound to a particular DB context.
+ *
+ * Unlike the gameplay aggregate loader, this one takes a `userId` and
+ * embeds derived `userContext` and `playerContext` fields — the lobby UI
+ * is always rendered for a specific viewer.
+ */
 export const createLobbyAggregateLoader = (
   dbContext: DbContext | TransactionContext,
 ): LobbyAggregateLoader => {

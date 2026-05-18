@@ -9,10 +9,16 @@ import {
 import { pickStatus } from "@backend/shared/http/result-status";
 import { sendError } from "@backend/shared/http-middleware/controller-helpers";
 
+/** Wiring dependencies for the start-game controller. */
 export type Dependencies = {
   startGame: ReturnType<typeof startGameService>;
 };
 
+/**
+ * `POST /api/games/:gameId/start` — transitions a LOBBY game into
+ * IN_PROGRESS, seeding AI players when in AI mode and creating the
+ * first round.
+ */
 export const startGameController =
   ({ startGame }: Dependencies) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
