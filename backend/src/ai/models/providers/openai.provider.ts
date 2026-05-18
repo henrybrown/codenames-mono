@@ -8,6 +8,13 @@ type OpenAIResponse = {
   choices?: OpenAIChoice[];
 };
 
+/**
+ * OpenAI Chat Completions provider.
+ *
+ * Reads `choices[0].message.content` — multi-choice sampling isn't used.
+ * `maxTokens` is forwarded as `max_tokens`; omitted when the request
+ * doesn't specify so the provider applies its own default.
+ */
 export const createOpenAIProvider = (config: ProviderConfig): LLMProviderClient => {
   const { apiKey, model, baseURL, httpClient } = config;
 

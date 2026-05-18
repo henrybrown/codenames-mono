@@ -11,6 +11,12 @@ const factories: Record<LLMProvider, (config: ProviderConfig) => LLMProviderClie
   ollama: createOllamaProvider,
 };
 
+/**
+ * Builds a provider client from the tagged provider name.
+ *
+ * Throws `Error` if the tag isn't in the supported set; the message lists
+ * the registered providers so caller logs are self-explanatory.
+ */
 export const createProvider = (provider: LLMProvider, config: ProviderConfig): LLMProviderClient => {
   const factory = factories[provider];
   if (!factory) {

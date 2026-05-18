@@ -16,11 +16,19 @@ export type { LLMConfig, LLMService } from "./llm.service";
 export type { LLMProvider } from "./providers";
 export type { HealthState, HealthPlacement } from "./ai-health";
 
+/** Wiring dependencies for the models infra layer. */
 export interface ModelsDependencies {
   config: LLMConfig;
   httpClient: HttpClient;
 }
 
+/**
+ * Builds the models infra layer for the AI feature.
+ *
+ * Currently produces a single LLM client. Returning an object (rather than
+ * the client directly) leaves room for additional infra (embeddings, cache,
+ * etc.) without breaking call sites.
+ */
 export const createModels = (logger: AppLogger) => (deps: ModelsDependencies) => {
   const llm = createLLMService(deps.config, deps.httpClient, logger);
   return {
@@ -28,4 +36,5 @@ export const createModels = (logger: AppLogger) => (deps: ModelsDependencies) =>
   };
 };
 
+/** Aggregate handle to everything the models layer produces. */
 export type Models = ReturnType<ReturnType<typeof createModels>>;

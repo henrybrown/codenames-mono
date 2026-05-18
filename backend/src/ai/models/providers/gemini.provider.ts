@@ -10,6 +10,13 @@ type GeminiResponse = {
   candidates?: GeminiCandidate[];
 };
 
+/**
+ * Google Generative Language (Gemini) provider.
+ *
+ * Reads the first candidate's first part as the response; multi-candidate
+ * sampling isn't used by this layer. Empty/missing parts yield an empty
+ * content string (not an error).
+ */
 export const createGeminiProvider = (config: ProviderConfig): LLMProviderClient => {
   const { apiKey, model, baseURL, httpClient } = config;
 

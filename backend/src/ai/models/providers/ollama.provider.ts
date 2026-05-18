@@ -4,6 +4,14 @@ type OllamaResponse = {
   message?: { content?: string };
 };
 
+/**
+ * Ollama chat-completions provider.
+ *
+ * Opts into native JSON mode when `format: "json"` is requested and disables
+ * provider-side reasoning chains (`think: false`) — reasoning-tuned models
+ * otherwise wrap their reply in `<think>...</think>` and never emit the
+ * payload.
+ */
 export const createOllamaProvider = (config: ProviderConfig): LLMProviderClient => {
   const { model, baseURL, httpClient } = config;
 

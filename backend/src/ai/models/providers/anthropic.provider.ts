@@ -6,6 +6,13 @@ type AnthropicResponse = {
   content?: AnthropicContentBlock[];
 };
 
+/**
+ * Anthropic Messages API provider.
+ *
+ * Concatenates the `text` blocks from the response into a single string;
+ * non-text blocks (e.g. tool use) are silently dropped. `maxTokens`
+ * defaults to 4096 if the request doesn't specify.
+ */
 export const createAnthropicProvider = (config: ProviderConfig): LLMProviderClient => {
   const { apiKey, model, baseURL, httpClient } = config;
 

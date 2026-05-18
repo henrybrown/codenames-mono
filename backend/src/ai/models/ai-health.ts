@@ -14,8 +14,19 @@ import type { AppLogger } from "@backend/shared/logging";
 import type { HttpClient } from "@backend/shared/http-client";
 import { HttpError } from "@backend/shared/http-client";
 
+/**
+ * Where the model is currently running.
+ *
+ * `unknown` means we haven't probed yet; `not-loaded` means the provider
+ * reported no resident model.
+ */
 export type HealthPlacement = "gpu" | "partial" | "cpu" | "not-loaded" | "unknown";
 
+/**
+ * Snapshot of the model's runtime placement.
+ *
+ * `lastCheckedAt` is null until the first successful probe completes.
+ */
 export interface HealthState {
   placement: HealthPlacement;
   gpuFraction: number; // 0..1
@@ -25,6 +36,13 @@ export interface HealthState {
   lastCheckedAt: number | null;
 }
 
+/**
+ * Configuration for the health monitor.
+ *
+ * `throttleMs` caps how often the inference server is queried; `gpuThreshold`
+ * is the minimum VRAM/total ratio that counts as full GPU placement
+ * (anything strictly below counts as partial offload).
+ */
 export interface AiHealthConfig {
   baseURL: string;
   model: string;
@@ -32,6 +50,12 @@ export interface AiHealthConfig {
   gpuThreshold: number;
 }
 
+/**
+ * Runtime health probe interface for a loaded LLM.
+ *
+ * `probe` refreshes state from the inference server (throttled internally);
+ * `getState` returns the most recent snapshot without performing IO.
+ */
 export interface AiHealthMonitor {
   probe: () => Promise<void>;
   getState: () => HealthState;
@@ -55,6 +79,13 @@ const modelsMatch = (entryModel: string, target: string): boolean => {
   return false;
 };
 
+/**
+ * Builds a throttled health monitor for a single Ollama-hosted model.
+ *
+ * Probes are silent when the configured `throttleMs` hasn't elapsed since
+ * the last call. Probe failures are swallowed at debug level — health
+ * checks must never propagate errors to the request path.
+ */
 export const createAiHealthMonitor = (
   config: AiHealthConfig,
   httpClient: HttpClient,

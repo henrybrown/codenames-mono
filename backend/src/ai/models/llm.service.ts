@@ -14,6 +14,13 @@ import type { AppLogger } from "@backend/shared/logging";
 import type { HttpClient } from "@backend/shared/http-client";
 import { createAiHealthMonitor, type AiHealthMonitor } from "./ai-health";
 
+/**
+ * Configuration for the LLM client.
+ *
+ * `temperature` and `maxTokens` are defaults that callers can override per
+ * request. `healthCheck` only takes effect for the `ollama` provider; for
+ * remote providers it's ignored (runtime placement isn't observable).
+ */
 export type LLMConfig = {
   providerName: LLMProvider;
   baseURL: string;
@@ -28,6 +35,13 @@ export type LLMConfig = {
   };
 };
 
+/**
+ * Per-request generation parameters.
+ *
+ * `format: "json"` opts into provider-native JSON mode where supported
+ * (currently Ollama). Other providers ignore the hint and rely on the
+ * prompt to request JSON.
+ */
 export type LLMGenerateOptions = {
   prompt: string;
   format?: "json";
@@ -35,6 +49,15 @@ export type LLMGenerateOptions = {
   maxTokens?: number;
 };
 
+/**
+ * Builds the universal LLM client.
+ *
+ * Exposes `generate` (returns raw text), `generateJSON` (strips common
+ * provider artifacts — markdown fences, `<think>` blocks — then parses),
+ * and health probe accessors that no-op for non-Ollama providers.
+ *
+ * Throws on transport, HTTP, or JSON-parse failures from `generateJSON`.
+ */
 export const createLLMService = (
   config: LLMConfig,
   httpClient: HttpClient,
@@ -170,4 +193,5 @@ export const createLLMService = (
   };
 };
 
+/** Service contract exposed by the LLM client. */
 export type LLMService = ReturnType<typeof createLLMService>;
