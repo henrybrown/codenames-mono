@@ -12,10 +12,16 @@ const getStatusParamsSchema = z.object({
   gameId: z.string().min(1, "Game ID is required"),
 });
 
+/** Wiring dependencies for the get-status controller. */
 export interface GetStatusControllerDeps {
   getStatus: ReturnType<typeof getStatusService>;
 }
 
+/**
+ * `GET /api/games/:gameId/ai/status` — returns the AI's current readiness:
+ * whether it can act, whether it's thinking, and (when local) inference
+ * engine health.
+ */
 export const getStatusController = (deps: GetStatusControllerDeps) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

@@ -12,10 +12,17 @@ const triggerMoveParamsSchema = z.object({
   gameId: z.string().min(1, "Game ID is required"),
 });
 
+/** Wiring dependencies for the trigger-move controller. */
 export interface TriggerMoveControllerDeps {
   triggerMove: TriggerMoveService;
 }
 
+/**
+ * `POST /api/games/:gameId/ai/move` — kicks off an AI move asynchronously.
+ *
+ * Returns 202 on success (the pipeline runs in the background); 404, 403,
+ * or 409 for the named result variants from the service.
+ */
 export const triggerMoveController = (deps: TriggerMoveControllerDeps) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

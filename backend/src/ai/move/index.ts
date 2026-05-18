@@ -11,6 +11,7 @@ import { triggerMoveController } from "./trigger-move.controller";
 import { getStatusService } from "./get-status.service";
 import { getStatusController } from "./get-status.controller";
 
+/** Wiring dependencies for the AI move sub-feature. */
 export interface AiMoveDependencies {
   aiPlayerService: AIPlayerService;
   loadGameAggregate: GameAggregateLoader;
@@ -18,6 +19,13 @@ export interface AiMoveDependencies {
   llm: LLMService;
 }
 
+/**
+ * Builds the AI move sub-feature — controllers + services for triggering
+ * a move and polling its status.
+ *
+ * Returns `{ controllers, services }` for the parent module to mount on
+ * its router and wire into cross-feature surfaces.
+ */
 export const aiMove = (logger: AppLogger) => (deps: AiMoveDependencies) => {
   const triggerService = triggerMoveService(logger)({
     aiPlayerService: deps.aiPlayerService,
