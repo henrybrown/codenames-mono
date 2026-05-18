@@ -12,6 +12,13 @@ type ControllerDependencies = {
   login: GuestLoginService;
 };
 
+/**
+ * `POST /api/auth/guests` — creates a guest user + session.
+ *
+ * Sets the JWT as an HTTP-only cookie (`authToken`) and also includes it in
+ * the response body. Cookie is configured `Secure` in production, `Lax`
+ * SameSite, and expires after 7 days.
+ */
 export const createGuestUserController =
   ({ createGuestUser, login }: ControllerDependencies) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {

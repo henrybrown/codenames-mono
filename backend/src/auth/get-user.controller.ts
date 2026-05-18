@@ -7,10 +7,17 @@ import {
   sendSuccess,
 } from "@backend/shared/http-middleware/controller-helpers";
 
+/** Wiring dependencies for the get-user controller. */
 export type Dependencies = {
   db: Kysely<DB>;
 };
 
+/**
+ * `GET /api/users/:username` — returns the authenticated user's own record.
+ *
+ * Returns 401 when no JWT identity is attached, 403 when the URL username
+ * doesn't match the JWT identity, 404 when the user row is missing.
+ */
 export const getUserController =
   ({ db }: Dependencies) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {

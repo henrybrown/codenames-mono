@@ -11,11 +11,19 @@ type ServiceDependencies = {
   createUser: UserCreator;
 };
 
+/** Newly created guest user. */
 export type GuestUser = {
   _id: number;
   username: string;
 };
 
+/**
+ * Builds a service that creates a guest user with a generated unique username.
+ *
+ * Retries up to 10 times if the random name collides with an existing
+ * row; throws `UnexpectedAuthError` if all attempts collide (effectively
+ * never in practice — 10⁷ combinations vs ~tens of thousands of users).
+ */
 export const createGuestUserService = ({
   findUser,
   createUser,

@@ -8,8 +8,15 @@ import { z } from "zod";
  */
 export const createGuestRequestSchema = z.object({}).strict();
 
+/** Parsed request body shape — empty object. */
 export type CreateGuestRequest = z.infer<typeof createGuestRequestSchema>;
 
+/**
+ * Strict response schema for guest creation.
+ *
+ * Rejects extra keys so accidental field leaks (e.g. internal user ids)
+ * fail the schema check before being sent on the wire.
+ */
 export const createGuestResponseSchema = z
   .object({
     success: z.boolean(),
@@ -27,4 +34,5 @@ export const createGuestResponseSchema = z
   })
   .strict();
 
+/** Wire-format response shape for guest creation. */
 export type CreateGuestResponse = z.infer<typeof createGuestResponseSchema>;

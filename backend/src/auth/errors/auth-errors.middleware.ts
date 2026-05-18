@@ -5,6 +5,7 @@ import {
 import type { AppLogger } from "@backend/shared/logging";
 import { UnexpectedAuthError } from "./auth.errors";
 
+/** Response shape returned by the auth error handler. */
 export type { FeatureErrorApiResponse as AuthErrorApiResponse };
 
 /**

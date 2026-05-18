@@ -14,15 +14,25 @@ type ServiceDependencies = {
   jwtOptions: SignOptions;
 };
 
+/** Successful login payload — name (echoed) and the signed JWT. */
 export type GuestLoginResult = {
   username: string;
   token: string;
 };
 
+/** Service contract for the guest login flow. */
 export type GuestLoginService = (
   username: Username,
 ) => Promise<GuestLoginResult>;
 
+/**
+ * Builds the guest login service.
+ *
+ * Looks the user up by username, signs a JWT carrying `userId` + `username`,
+ * and persists a session row. Throws `UnexpectedAuthError` if either lookup
+ * or session write returns nothing — both represent invariant violations
+ * (the caller should have just created the user).
+ */
 export const guestLoginService =
   ({
     findUser,
