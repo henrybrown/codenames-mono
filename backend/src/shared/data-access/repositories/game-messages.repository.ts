@@ -3,19 +3,26 @@ import { DB } from "../../db/db.types";
 import { z } from "zod";
 import { UnexpectedRepositoryError } from "./repository.errors";
 
+/** Message primary-key id (UUID). */
 export type MessageId = string;
+/** Game primary-key id. */
 export type GameId = number;
+/** Player primary-key id. */
 export type PlayerId = number;
+/** Team primary-key id. */
 export type TeamId = number;
 
+/** The three message-type tags. */
 export const MESSAGE_TYPE = {
   CHAT: "CHAT",
   AI_THINKING: "AI_THINKING",
   SYSTEM: "SYSTEM",
 } as const;
 
+/** Message-type discriminant. */
 export type MessageType = (typeof MESSAGE_TYPE)[keyof typeof MESSAGE_TYPE];
 
+/** Raw DB row shape for the game_messages table. */
 export type GameMessageData = {
   id: string;
   game_id: number;
@@ -27,6 +34,7 @@ export type GameMessageData = {
   created_at: Date;
 };
 
+/** Input for inserting a new message row. */
 export type CreateMessageInput = {
   gameId: number;
   playerId?: number | null;
@@ -36,6 +44,12 @@ export type CreateMessageInput = {
   content: string;
 };
 
+/**
+ * Filter parameters for the message log.
+ *
+ * `requestingTeamId` would scope team-only messages — currently the finder
+ * doesn't apply that filter; team-only enforcement happens at higher layers.
+ */
 export type MessageQueryParams = {
   gameId: number;
   since?: Date;
@@ -43,15 +57,19 @@ export type MessageQueryParams = {
   requestingTeamId?: number | null;
 };
 
+/** Signature for inserting a new message. */
 export type MessageCreator = (input: CreateMessageInput) => Promise<GameMessageData>;
+/** Signature for querying the message log. */
 export type MessageFinder = (params: MessageQueryParams) => Promise<GameMessageData[]>;
 
+/** Runtime guard for message-type strings coming back from the DB. */
 export const messageTypeSchema = z.enum([
   MESSAGE_TYPE.CHAT,
   MESSAGE_TYPE.AI_THINKING,
   MESSAGE_TYPE.SYSTEM,
 ]);
 
+/** Builds a creator that inserts a new game message row. */
 export const createMessage =
   (db: Kysely<DB>): MessageCreator =>
   async (input) => {
@@ -88,7 +106,8 @@ export const createMessage =
   };
 
 /**
- * Filters out team-only messages when requestingTeamId doesn't match
+ * Builds a finder returning a game's message log in ascending creation
+ * order. Defaults to a 100-row limit when not specified.
  */
 export const findMessagesByGame =
   (db: Kysely<DB>): MessageFinder =>

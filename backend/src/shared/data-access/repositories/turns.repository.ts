@@ -4,13 +4,20 @@ import { CODEBREAKER_OUTCOME, TurnOutcome } from "@codenames/shared/types";
 import { z } from "zod";
 import { UnexpectedRepositoryError } from "./repository.errors";
 
+/** Turn primary-key id. */
 export type TurnId = number;
+/** Public-facing turn UUID. */
 export type PublicId = string;
+/** Round primary-key id. */
 export type RoundId = number;
+/** Team primary-key id. */
 export type TeamId = number;
+/** Player primary-key id. */
 export type PlayerId = number;
+/** Card primary-key id. */
 export type CardId = number;
 
+/** Runtime guard for the nullable outcome string column. */
 export const outcomeSchema = z
   .enum([
     CODEBREAKER_OUTCOME.ASSASSIN_CARD,
@@ -20,6 +27,7 @@ export const outcomeSchema = z
   ])
   .nullable();
 
+/** Service-layer projection of a clue row. */
 export type ClueResult = {
   _id: number;
   _turnId: number;
@@ -28,6 +36,7 @@ export type ClueResult = {
   createdAt: Date;
 };
 
+/** Service-layer projection of a guess row enriched with card word + player name. */
 export type GuessResult = {
   _id: number;
   _turnId: number;
@@ -39,6 +48,7 @@ export type GuessResult = {
   createdAt: Date;
 };
 
+/** Service-layer projection of a turn row joined with its clue and guesses. */
 export type TurnResult = {
   _id: number;
   publicId: string; // ENHANCED: Added public ID
@@ -54,11 +64,13 @@ export type TurnResult = {
   guesses: GuessResult[];
 };
 
+/** Input for inserting a clue row. */
 export type ClueInput = {
   word: string;
   targetCardCount: number;
 };
 
+/** Input for inserting a guess row. */
 export type GuessInput = {
   turnId: number;
   playerId: number;
@@ -66,34 +78,42 @@ export type GuessInput = {
   outcome: string;
 };
 
+/** Input for inserting a new turn (ACTIVE, with given guesses-remaining). */
 export type TurnInput = {
   roundId: number;
   teamId: number;
   guessesRemaining: number;
 };
 
+/** Lookup-many signature returning all turns in a round. */
 export type TurnsFinder<T extends RoundId> = (
   identifier: T,
 ) => Promise<TurnResult[]>;
 
+/** Lookup-one signature keyed on either turn id or public id. */
 export type TurnFinder<T extends TurnId | PublicId> = (
   identifier: T,
 ) => Promise<TurnResult | null>;
 
+/** Signature for inserting a clue. */
 export type ClueCreator = (
   turnId: TurnId,
   clue: ClueInput,
 ) => Promise<ClueResult>;
 
+/** Signature for inserting a guess. */
 export type GuessCreator = (input: GuessInput) => Promise<GuessResult>;
 
+/** Signature for inserting a turn in ACTIVE state. */
 export type TurnCreator = (input: TurnInput) => Promise<TurnResult>;
 
+/** Signature for updating a turn's `guesses_remaining` count. */
 export type TurnGuessUpdater = (
   turnId: TurnId,
   guessesRemaining: number,
 ) => Promise<TurnResult>;
 
+/** Signature for updating a turn's status; sets `completed_at` when COMPLETED. */
 export type TurnStatusUpdater = (
   turnId: TurnId,
   status: string,
@@ -186,6 +206,7 @@ const getTurnBaseData = (db: Kysely<DB>) =>
       "turns.completed_at as completedAt",
     ]);
 
+/** Builds a creator that inserts a new clue row on the given turn. */
 export const createClue =
   (db: Kysely<DB>): ClueCreator =>
   async (turnId, { word, targetCardCount }) => {
@@ -216,6 +237,7 @@ export const createClue =
     }
   };
 
+/** Builds a creator that inserts a guess and returns it enriched with card word + player name. */
 export const createGuess =
   (db: Kysely<DB>): GuessCreator =>
   async ({ turnId, playerId, cardId, outcome }) => {
@@ -270,6 +292,7 @@ export const createGuess =
     }
   };
 
+/** Builds a creator that inserts a turn in ACTIVE state. */
 export const createTurn =
   (db: Kysely<DB>): TurnCreator =>
   async ({ roundId, teamId, guessesRemaining }) => {
@@ -329,6 +352,7 @@ export const createTurn =
     }
   };
 
+/** Builds an updater that sets the remaining-guesses counter on a turn. */
 export const updateTurnGuesses =
   (db: Kysely<DB>): TurnGuessUpdater =>
   async (turnId, guessesRemaining) => {
@@ -360,6 +384,7 @@ export const updateTurnGuesses =
     }
   };
 
+/** Builds an updater that flips a turn's status (sets `completed_at` when COMPLETED). */
 export const updateTurnStatus =
   (db: Kysely<DB>): TurnStatusUpdater =>
   async (turnId, status) => {
@@ -394,6 +419,7 @@ export const updateTurnStatus =
     }
   };
 
+/** Builds a finder returning all turns for a round, in creation order. */
 export const getTurnsByRoundId =
   (db: Kysely<DB>): TurnsFinder<RoundId> =>
   async (roundId) => {
@@ -415,6 +441,7 @@ export const getTurnsByRoundId =
     }));
   };
 
+/** Builds a finder that looks up a single turn by public id. */
 export const getTurnByPublicId =
   (db: Kysely<DB>): TurnFinder<PublicId> =>
   async (publicId: string) => {
@@ -432,6 +459,7 @@ export const getTurnByPublicId =
     };
   };
 
+/** Builds a finder that looks up a single turn by internal id. */
 export const getTurnById =
   (db: Kysely<DB>): TurnFinder<TurnId> =>
   async (turnId) => {

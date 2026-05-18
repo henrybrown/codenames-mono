@@ -4,12 +4,18 @@ import { UnexpectedRepositoryError } from "./repository.errors";
 
 import { PlayerRole, PLAYER_ROLE } from "@codenames/shared/types";
 
+/** Player primary-key id. */
 export type PlayerId = number;
+/** Public-facing player UUID. */
 export type PublicPlayerId = string;
+/** Round primary-key id. */
 export type RoundId = number;
+/** Team primary-key id. */
 export type TeamId = number;
+/** Role primary-key id from the `player_roles` lookup table. */
 export type RoleId = number;
 
+/** Raw DB row shape for player_round_roles. */
 export type PlayerRoundRoleData = {
   _player_id: number;
   _round_id: number;
@@ -17,6 +23,7 @@ export type PlayerRoundRoleData = {
   assigned_at: Date;
 };
 
+/** Input for assigning a role to a player on a round. */
 export type PlayerRoleInput = {
   playerId: number;
   roundId: number;
@@ -24,6 +31,7 @@ export type PlayerRoleInput = {
   teamId: number;
 };
 
+/** Service-layer projection of a role assignment row. */
 export type RoleAssignmentResult = {
   _playerId: number;
   _roundId: number;
@@ -31,10 +39,12 @@ export type RoleAssignmentResult = {
   role: PlayerRole;
 };
 
+/** Lookup-by-round signature returning all role assignments. */
 export type RoleAssignmentsFinder = (
   roundId: RoundId,
 ) => Promise<RoleAssignmentResult[]>;
 
+/** Signature for assigning one or more role rows. */
 export type RoleAssignmentCreator = (
   input: PlayerRoleInput | PlayerRoleInput[],
 ) => Promise<RoleAssignmentResult[]>;
@@ -42,6 +52,7 @@ export type RoleAssignmentCreator = (
 /** Returns a map of role name → internal role id. */
 export type RoleIdsByNameFinder = () => Promise<Record<PlayerRole, number>>;
 
+/** Builds a finder returning all role assignments for a round. */
 export const getRoundRoleAssignments =
   (db: Kysely<DB>): RoleAssignmentsFinder =>
   async (roundId) => {
@@ -77,6 +88,7 @@ export const getRoundRoleAssignments =
     }
   };
 
+/** Builds a creator that inserts one or more role-assignment rows. */
 export const assignPlayerRoles =
   (db: Kysely<DB>): RoleAssignmentCreator =>
   async (input) => {

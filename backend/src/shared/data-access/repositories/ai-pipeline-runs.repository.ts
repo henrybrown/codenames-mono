@@ -3,26 +3,34 @@ import { DB } from "../../db/db.types";
 import { z } from "zod";
 import { UnexpectedRepositoryError } from "./repository.errors";
 
+/** Pipeline-run primary-key id (UUID). */
 export type RunId = string;
+/** Game primary-key id. */
 export type GameId = number;
+/** Player primary-key id. */
 export type PlayerId = number;
 
+/** AI pipeline kinds tracked in `ai_pipeline_runs`. */
 export const PIPELINE_TYPE = {
   SPYMASTER: "SPYMASTER",
   GUESSER: "GUESSER",
 } as const;
 
+/** Pipeline-type discriminant. */
 export type PipelineType = (typeof PIPELINE_TYPE)[keyof typeof PIPELINE_TYPE];
 
+/** Lifecycle states for a pipeline run. */
 export const PIPELINE_STATUS = {
   RUNNING: "RUNNING",
   COMPLETE: "COMPLETE",
   FAILED: "FAILED",
 } as const;
 
+/** Pipeline-status discriminant. */
 export type PipelineStatus =
   (typeof PIPELINE_STATUS)[keyof typeof PIPELINE_STATUS];
 
+/** Stored spymaster response shape (parsed from the JSONB column). */
 export interface SpymasterResponse {
   clue: {
     word: string;
@@ -31,11 +39,13 @@ export interface SpymasterResponse {
   reasoning?: string;
 }
 
+/** Stored prefilter response shape (parsed from the JSONB column). */
 export interface PrefilterResponse {
   candidateWords: string[];
   reasoning?: string;
 }
 
+/** Stored ranker response shape (parsed from the JSONB column). */
 export interface RankerResponse {
   rankedWords: Array<{
     word: string;
@@ -44,6 +54,7 @@ export interface RankerResponse {
   }>;
 }
 
+/** Service-layer projection of an `ai_pipeline_runs` row. */
 export type PipelineRunData = {
   id: string;
   game_id: number;
@@ -58,38 +69,53 @@ export type PipelineRunData = {
   completed_at: Date | null;
 };
 
+/** Input for inserting a new pipeline-run row in RUNNING state. */
 export type CreatePipelineRunInput = {
   gameId: number;
   playerId: number;
   pipelineType: PipelineType;
 };
 
+/** Lookup-one signature keyed on run id. */
 export type RunFinder = (runId: RunId) => Promise<PipelineRunData | null>;
+/** Lookup-one signature returning the latest RUNNING pipeline for a game. */
 export type RunFinderByGame = (gameId: GameId) => Promise<PipelineRunData | null>;
+/** Signature for inserting a new pipeline-run row. */
 export type RunCreator = (input: CreatePipelineRunInput) => Promise<PipelineRunData>;
+/**
+ * Signature for transitioning a pipeline run.
+ *
+ * Sets `completed_at` automatically when the new status is terminal
+ * (COMPLETE or FAILED). `error` is recorded as-is when provided.
+ */
 export type RunStatusUpdater = (
   runId: RunId,
   status: PipelineStatus,
   error?: string,
 ) => Promise<void>;
+/** Signature for writing one of the stage-response JSON columns. */
 export type RunResponseUpdater = <T extends keyof Pick<PipelineRunData, 'spymaster_response' | 'prefilter_response' | 'ranker_response'>>(
   runId: RunId,
   stage: T,
   response: PipelineRunData[T],
 ) => Promise<void>;
+/** Signature for appending a new prompt to the audit trail on a run. */
 export type PromptAppender = (runId: RunId, newPrompt: string) => Promise<void>;
 
+/** Runtime guard for `pipeline_type` strings coming back from the DB. */
 export const pipelineTypeSchema = z.enum([
   PIPELINE_TYPE.SPYMASTER,
   PIPELINE_TYPE.GUESSER,
 ]);
 
+/** Runtime guard for `status` strings coming back from the DB. */
 export const pipelineStatusSchema = z.enum([
   PIPELINE_STATUS.RUNNING,
   PIPELINE_STATUS.COMPLETE,
   PIPELINE_STATUS.FAILED,
 ]);
 
+/** Builds a finder that looks up a pipeline run by id. */
 export const findRunById =
   (db: Kysely<DB>): RunFinder =>
   async (runId) => {
@@ -116,6 +142,7 @@ export const findRunById =
       : null;
   };
 
+/** Builds a finder returning the most recent RUNNING pipeline for a game (or null). */
 export const findRunningByGameId =
   (db: Kysely<DB>): RunFinderByGame =>
   async (gameId) => {
@@ -144,6 +171,7 @@ export const findRunningByGameId =
       : null;
   };
 
+/** Builds a creator that inserts a new pipeline-run row in RUNNING state. */
 export const createRun =
   (db: Kysely<DB>): RunCreator =>
   async (input) => {
@@ -180,6 +208,7 @@ export const createRun =
     }
   };
 
+/** Builds an updater that transitions a pipeline run's status (and stamps completion). */
 export const updateRunStatus =
   (db: Kysely<DB>): RunStatusUpdater =>
   async (runId, status, error) => {
@@ -211,6 +240,7 @@ export const updateRunStatus =
     }
   };
 
+/** Builds an updater that stores the spymaster stage response on a run. */
 export const updateSpymasterResponse =
   (db: Kysely<DB>) =>
   async (runId: RunId, response: SpymasterResponse): Promise<void> => {
@@ -228,6 +258,7 @@ export const updateSpymasterResponse =
     }
   };
 
+/** Builds an updater that stores the prefilter stage response on a run. */
 export const updatePrefilterResponse =
   (db: Kysely<DB>) =>
   async (runId: RunId, response: PrefilterResponse): Promise<void> => {
@@ -245,6 +276,7 @@ export const updatePrefilterResponse =
     }
   };
 
+/** Builds an updater that stores the ranker stage response on a run. */
 export const updateRankerResponse =
   (db: Kysely<DB>) =>
   async (runId: RunId, response: RankerResponse): Promise<void> => {
@@ -262,6 +294,12 @@ export const updateRankerResponse =
     }
   };
 
+/**
+ * Builds an appender that adds a new prompt to the run's audit trail.
+ *
+ * Prompts are joined by a `--- NEXT PROMPT ---` separator so each
+ * retry's input is recoverable in logs without separate rows per attempt.
+ */
 export const appendPrompt =
   (db: Kysely<DB>): PromptAppender =>
   async (runId, newPrompt) => {

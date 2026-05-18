@@ -2,6 +2,7 @@ import { Kysely } from "kysely";
 import { DB } from "../../db/db.types";
 import { UnexpectedRepositoryError } from "./repository.errors";
 
+/** DB row shape for the game_events table, snake_case as stored. */
 export interface GameEventRow {
   id: number;
   public_id: string;
@@ -14,6 +15,7 @@ export interface GameEventRow {
   created_at: Date;
 }
 
+/** Input for inserting a game event; `metadata` is JSON-encoded on write. */
 export interface CreateEventInput {
   gameId: number;
   eventType: string;
@@ -23,6 +25,11 @@ export interface CreateEventInput {
   metadata?: Record<string, any>;
 }
 
+/**
+ * Builds a creator that appends a row to the game-events log.
+ *
+ * Generates a public id at insert time using `evt_${epoch}_${random}`.
+ */
 export const createEvent =
   (db: Kysely<DB>) =>
   async (event: CreateEventInput): Promise<GameEventRow> => {
@@ -62,6 +69,11 @@ export const createEvent =
     }
   };
 
+/**
+ * Builds a finder returning all events for a game in chronological order.
+ *
+ * Secondary sort on `id` keeps same-millisecond events stable.
+ */
 export const getEventsByGameId =
   (db: Kysely<DB>) =>
   async (gameId: number): Promise<GameEventRow[]> => {
