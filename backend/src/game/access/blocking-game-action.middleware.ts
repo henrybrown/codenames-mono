@@ -80,8 +80,11 @@ export const blockingGameAction = (actionName: string) => {
 };
 
 /**
- * Check if a game currently has an active lock.
- * Useful for AI pipeline pre-checks before attempting a move.
+ * Returns `true` when a mutating action is currently in flight for the
+ * given game.
+ *
+ * Useful as a non-blocking pre-check before kicking off work that would
+ * otherwise hit a 409 from the middleware.
  */
 export const isGameLocked = (gameId: string): boolean => {
   return activeLocks.has(gameId);
@@ -102,4 +105,5 @@ export const getGameLockInfo = (
   };
 };
 
+/** Express request handler returned by `blockingGameAction`. */
 export type BlockingGameActionMiddleware = ReturnType<typeof blockingGameAction>;

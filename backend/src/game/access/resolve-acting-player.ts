@@ -22,19 +22,32 @@ import {
   findPlayerByUserId,
 } from "@backend/game/state/helpers";
 
-/** Single-device by role: who currently holds this role on the active turn? */
+/**
+ * Resolves the player on the active turn whose role matches the supplied one.
+ *
+ * Returns `null` if no turn is active or no player on the active turn holds
+ * the role; the absence is a domain condition, not an error.
+ */
 export const resolveActingPlayerForRole = (
   aggregate: GameAggregate,
   role: PlayerRole,
 ): GamePlayer | null => findPlayerByActiveRole(aggregate, role);
 
-/** Multi-device: the user making the request is the actor. */
+/**
+ * Resolves the player record belonging to the given user.
+ *
+ * Returns `null` when the user has no player in this game.
+ */
 export const resolveActingPlayerForUser = (
   aggregate: GameAggregate,
   userId: number,
 ): GamePlayer | null => findPlayerByUserId(aggregate, userId);
 
-/** Single-device explicit override (used by start-turn when no turn is active). */
+/**
+ * Resolves a player by their public UUID, regardless of turn state.
+ *
+ * Returns `null` when no player in the aggregate has that public id.
+ */
 export const resolveActingPlayerByPublicId = (
   aggregate: GameAggregate,
   publicId: string,

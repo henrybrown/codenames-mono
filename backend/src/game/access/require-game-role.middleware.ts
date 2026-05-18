@@ -1,23 +1,3 @@
-/**
- * Express middleware: gates a route on the user's role in the game.
- *
- * Behaviour:
- *   1. Validates auth + game existence (404 if game not found).
- *   2. Single-device games: passes through. The role is body-supplied
- *      for single-device, and controllers do their own role-from-body
- *      validation. We've confirmed the game exists; that's enough.
- *   3. Multi-device games: looks up the user's player (single repo call
- *      via findPlayerByGameAndUser); rejects with 403 unless the player's
- *      role is in `allowed`.
- *
- * Mutates nothing on req. Controllers do their own loading.
- *
- * Usage:
- *   const gameRole = requireGameRole({ getGameByPublicId, getPlayerByGameAndUser });
- *   router.post(".../clues",   gameRole("CODEMASTER"),   blockingGameAction("..."), ctrl);
- *   router.post(".../guesses", gameRole("CODEBREAKER"),  blockingGameAction("..."), ctrl);
- */
-
 import type { Response, NextFunction } from "express";
 import type { Request } from "express-jwt";
 import type {
@@ -27,11 +7,23 @@ import type {
 import type { PlayerFinderByGameAndUser } from "@backend/shared/data-access/repositories/players.repository";
 import { GAME_TYPE, type PlayerRole } from "@codenames/shared/types";
 
+/** Repository bindings needed by the role gate. */
 export type RequireGameRoleDeps = {
   getGameByPublicId: GameFinder<GamePublicId>;
   getPlayerByGameAndUser: PlayerFinderByGameAndUser;
 };
 
+/**
+ * Builds the role-gating middleware factory.
+ *
+ * Returns a function that takes one role (or a list of allowed roles) and
+ * yields the actual middleware. The middleware returns 400 on missing
+ * gameId/userId, 404 on missing game, 403 when the user isn't a player or
+ * their role isn't in `allowed`. Single-device games short-circuit to
+ * `next()` after the existence check — controllers enforce role-from-body.
+ *
+ * Doesn't mutate `req`; route handlers do their own loading.
+ */
 export const requireGameRole =
   (deps: RequireGameRoleDeps) =>
   (allowed: PlayerRole | PlayerRole[]) =>

@@ -1,13 +1,9 @@
 /**
  * Express middleware: gates a route on game membership only.
  *
- * Same first three steps as requireGameRole, but no role check —
- * any player in the game passes. Used by chat (any role can chat)
- * and by routes that need member-presence without role specifics.
- *
- * Single-device games: passes through (any authenticated user holding
- * the device represents the lobby owner; further validation is the
- * controller's job).
+ * No role check — any player in the game passes. Single-device games are
+ * passed through unconditionally (the device holder is treated as the
+ * lobby owner; further validation belongs to the route handler).
  */
 
 import type { Response, NextFunction } from "express";
@@ -19,11 +15,19 @@ import type {
 import type { PlayerFinderByGameAndUser } from "@backend/shared/data-access/repositories/players.repository";
 import { GAME_TYPE } from "@codenames/shared/types";
 
+/** Repository bindings needed by the game-member gate. */
 export type RequireGamePlayerDeps = {
   getGameByPublicId: GameFinder<GamePublicId>;
   getPlayerByGameAndUser: PlayerFinderByGameAndUser;
 };
 
+/**
+ * Builds the game-membership middleware.
+ *
+ * Returns 400 on missing gameId/userId, 404 on missing game, 403 when the
+ * user isn't a player. Single-device games short-circuit to `next()` after
+ * the existence check.
+ */
 export const requireGamePlayer =
   (deps: RequireGamePlayerDeps) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
