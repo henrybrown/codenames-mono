@@ -17,6 +17,14 @@ import { createQueries } from "./queries";
 import { createTurns } from "./turns";
 import { gameplayErrorHandler } from "./errors/gameplay-errors.middleware";
 
+/**
+ * Initializes the gameplay feature.
+ *
+ * Mounts the read routes (game, players, events, turn — no role gate) and
+ * the write routes (clue, guess, end-turn, start-turn — role-gated and
+ * concurrency-blocked). Returns the gameplay services and aggregate loader
+ * for cross-feature consumers.
+ */
 export const initialize = (
   app: Express,
   db: Kysely<DB>,

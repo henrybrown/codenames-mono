@@ -16,6 +16,7 @@ import { getEventsController } from "./get-events.controller";
 import { getTurnService } from "./get-turn.service";
 import { controller as getTurnControllerFactory } from "./get-turn.controller";
 
+/** Wiring dependencies for the gameplay queries sub-feature. */
 export interface QueriesDependencies {
   loadGameAggregate: GameAggregateLoader;
   loadTurn: TurnLoader;
@@ -24,6 +25,10 @@ export interface QueriesDependencies {
   db: DbContext;
 }
 
+/**
+ * Builds the gameplay read endpoints — game state, players, events, and
+ * single-turn lookup.
+ */
 export const createQueries = (logger: AppLogger) => (deps: QueriesDependencies) => {
   const getGameService = getGameStateService(
     logger.for({ service: "get-game" }).create(),

@@ -2,8 +2,10 @@ import type { GameAggregateLoader } from "@backend/game/state/load-game-aggregat
 import { isUserPlayerInGame } from "@backend/game/access";
 import { PlayerRole, PLAYER_ROLE } from "@codenames/shared/types";
 
+/** A player is ACTIVE when it's their turn to act, otherwise WAITING. */
 export type PlayerStatus = "ACTIVE" | "WAITING";
 
+/** Player projection exposed by the get-players API. */
 export type PublicPlayerInfo = {
   publicId: string;
   name: string;
@@ -12,16 +14,19 @@ export type PublicPlayerInfo = {
   status: PlayerStatus;
 };
 
+/** Tagged result for the get-players service. */
 export type GetPlayersResult =
   | { status: "found"; data: PublicPlayerInfo[] }
   | { status: "game-not-found" }
   | { status: "user-not-in-game" };
 
+/** Service-call signature for fetching the player roster. */
 export type GetPlayersService = (
   gameId: string,
   userId: number,
 ) => Promise<GetPlayersResult>;
 
+/** Wiring dependencies for the get-players service. */
 export type GetPlayersServiceDependencies = {
   loadGameAggregate: GameAggregateLoader;
 };
@@ -53,6 +58,12 @@ const determinePlayerStatus = (
   return isRightTeam && isRightRole ? "ACTIVE" : "WAITING";
 };
 
+/**
+ * Builds the get-players service.
+ *
+ * Loads the game, verifies user membership, then projects each player
+ * with their derived ACTIVE/WAITING status based on whose turn it is.
+ */
 export const createGetPlayersService = (
   deps: GetPlayersServiceDependencies,
 ): GetPlayersService => {

@@ -10,6 +10,13 @@ import {
 } from "@backend/game/access";
 import type { AppLogger } from "@backend/shared/logging";
 
+/**
+ * Input for resolving the requesting player's view of a game.
+ *
+ * `role` is used in single-device mode; `playerId` in multi-device mode;
+ * neither falls back to the user's own player. The controller enforces
+ * mutual exclusion between `role` and `playerId`.
+ */
 export type GetGameStateInput = {
   gameId: string;
   userId: number;
@@ -17,10 +24,18 @@ export type GetGameStateInput = {
   role: "CODEMASTER" | "CODEBREAKER" | null;
 };
 
+/** Tagged result for the get-game service. */
 export type GetGameStateResult =
   | { success: true; data: PublicGameStateResponse }
   | { success: false; message: string; notFound?: boolean };
 
+/**
+ * Wire shape of the public game-state response.
+ *
+ * Card details (`teamName`, `cardType`) are masked for codebreakers on
+ * unselected cards in active rounds; codemasters and completed rounds
+ * see everything.
+ */
 export type PublicGameStateResponse = {
   publicId: string;
   status: string;
@@ -70,10 +85,18 @@ export type PublicGameStateResponse = {
   } | null;
 };
 
+/** Wiring dependencies for the get-game service. */
 export type GetGameStateDependencies = {
   loadGameAggregate: GameAggregateLoader;
 };
 
+/**
+ * Builds the get-game service.
+ *
+ * Resolves a player context from one of three signals (role / publicId /
+ * userId fallback), then projects the aggregate into the public response
+ * shape with cards masked according to the resolved role.
+ */
 export const getGameStateService = (logger: AppLogger) => (deps: GetGameStateDependencies) => {
   return async (input: GetGameStateInput): Promise<GetGameStateResult> => {
     const aggregate = await deps.loadGameAggregate(input.gameId);

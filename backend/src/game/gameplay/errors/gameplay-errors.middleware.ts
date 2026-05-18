@@ -5,6 +5,7 @@ import {
 import type { AppLogger } from "@backend/shared/logging";
 import { UnexpectedGameplayError } from "./gameplay.errors";
 
+/** Response shape returned by the gameplay error handler. */
 export type { FeatureErrorApiResponse as GameplayErrorApiResponse };
 
 /**

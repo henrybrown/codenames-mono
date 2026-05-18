@@ -98,11 +98,22 @@ const buildOps = (
   };
 };
 
+/**
+ * Operation registry exposed inside a gameplay transaction.
+ *
+ * Each op is a `Result`-returning async function — successful ops return
+ * `{ ok: true, ... }`, expected business failures return
+ * `{ ok: false, message }`. Invariant violations throw.
+ */
 export type GameplayOperations = ReturnType<typeof buildOps>;
 
 /**
- * Handler type: takes initial game state + acting player + operation
- * function, runs in a transaction.
+ * Handler signature for executing operations inside a game transaction.
+ *
+ * Takes the initial game state and acting player, opens a transaction,
+ * builds the ops registry, and invokes `operation` with it. The return
+ * type is whatever `operation` returns, so callers can shape their own
+ * results from inside the transaction.
  */
 export type GameplayHandler = <R>(
   initialState: GameAggregate,
@@ -110,6 +121,14 @@ export type GameplayHandler = <R>(
   operation: (ops: GameplayOperations) => Promise<R>,
 ) => Promise<R>;
 
+/**
+ * Builds the gameplay handler factory.
+ *
+ * Returns `{ handler }` where `handler` opens a transaction and runs a
+ * gameplay operation against the ops registry. The single-handler shape
+ * leaves room for future siblings (e.g. read-only handlers) without
+ * widening the call surface.
+ */
 export const gameplayActions = (dbContext: Kysely<DB>) => {
   const handler: GameplayHandler = async (initialState, player, operation) => {
     return dbContext.transaction().execute(async (trx) => {

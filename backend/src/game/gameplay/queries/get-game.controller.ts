@@ -5,6 +5,13 @@ import { pickStatus } from "@backend/shared/http/result-status";
 import { PLAYER_ROLE } from "@codenames/shared/types";
 import { z } from "zod";
 
+/**
+ * Request schema for the get-game endpoint.
+ *
+ * `playerId` and `role` are mutually exclusive — providing both fails
+ * validation. Neither is required; the response defaults to
+ * "current user's player" when both are absent.
+ */
 export const gameStateRequestSchema = z.object({
   params: z.object({
     gameId: z.string().min(1, "Game ID is required"),
@@ -21,12 +28,20 @@ export const gameStateRequestSchema = z.object({
   }),
 });
 
+/** Parsed shape of a validated get-game request. */
 export type ValidatedGameStateRequest = z.infer<typeof gameStateRequestSchema>;
 
+/** Wiring dependencies for the get-game controller. */
 export type Dependencies = {
   getGameState: ReturnType<ReturnType<typeof getGameStateService>>;
 };
 
+/**
+ * `GET /api/games/:gameId` — returns the public game state, with cards
+ * masked or unmasked based on the requesting player's role.
+ *
+ * Maps service failure flags (`notFound`, `conflict`) to HTTP status codes.
+ */
 export const getGameStateController =
   ({ getGameState }: Dependencies) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {

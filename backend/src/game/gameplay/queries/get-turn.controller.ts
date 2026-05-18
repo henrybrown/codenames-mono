@@ -23,6 +23,13 @@ interface GetTurnApiResponse {
   };
 }
 
+/**
+ * `GET /api/turns/:turnId` — returns a single turn plus all sibling turns
+ * in the same round.
+ *
+ * 400 on a non-UUID `turnId`, 404 when the turn is missing, 403 when an
+ * `UnauthorizedTurnAccessError` bubbles up from the service.
+ */
 export const controller =
   (logger: AppLogger) =>
   (getTurnService: GetTurnService) =>

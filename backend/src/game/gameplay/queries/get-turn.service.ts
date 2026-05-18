@@ -4,6 +4,12 @@ import { PlayerFinderAll, RoundId as PlayerRoundId } from "@backend/shared/data-
 import { TurnPhase, Player } from "@backend/game/state/types";
 import { computeTurnPhase } from "@backend/game/state/helpers";
 
+/**
+ * API-facing turn shape — no internal numeric ids.
+ *
+ * `hasGuesses`, `lastGuess`, and `prevGuesses` are derived presentation
+ * fields (the underlying turn carries a single `guesses` array).
+ */
 export interface ApiTurnData {
   id: string;
   teamName: string;
@@ -32,11 +38,13 @@ export interface ApiTurnData {
   active: TurnPhase | null;
 }
 
+/** Full get-turn payload: the requested turn plus all sibling turns. */
 export interface GetTurnResponse {
   turn: ApiTurnData;
   historicTurns: ApiTurnData[];
 }
 
+/** Service-call signature for fetching a single turn by public id. */
 export type GetTurnService = (
   publicTurnId: string,
 ) => Promise<GetTurnResponse | null>;
@@ -88,12 +96,20 @@ const transformProviderTurnToApi = (turnData: TurnData, active: TurnPhase | null
   active,
 });
 
+/** Wiring dependencies for the get-turn service. */
 export interface GetTurnServiceDeps {
   loadTurn: TurnLoader;
   getTurnsByRoundId: TurnsFinder<RoundId>;
   findPlayersByRoundId: PlayerFinderAll<PlayerRoundId>;
 }
 
+/**
+ * Builds the get-turn service.
+ *
+ * Returns `null` when the public turn id is unknown. On hit, also fetches
+ * the sibling turns in the same round so the response can show full
+ * round history without a separate request.
+ */
 export const getTurnService =
   ({ loadTurn, getTurnsByRoundId, findPlayersByRoundId }: GetTurnServiceDeps): GetTurnService =>
   async (publicTurnId) => {

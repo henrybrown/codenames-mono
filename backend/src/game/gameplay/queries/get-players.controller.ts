@@ -8,12 +8,21 @@ const getPlayersParamsSchema = z.object({
   gameId: z.string().min(1, "Game ID is required"),
 });
 
+/** Wiring dependencies for the get-players controller. */
 export type GetPlayersDependencies = {
   getPlayersService: GetPlayersService;
 };
 
+/** Express handler signature for the get-players endpoint. */
 export type GetPlayersController = (req: Request, res: Response) => Promise<void>;
 
+/**
+ * `GET /api/games/:gameId/players` — returns the roster with each player's
+ * current status (ACTIVE / WAITING).
+ *
+ * 401 when no JWT identity is attached, 404 when the game is missing, 403
+ * when the user isn't a player.
+ */
 export const createGetPlayersController = (logger: AppLogger) => (
   deps: GetPlayersDependencies,
 ): GetPlayersController => {

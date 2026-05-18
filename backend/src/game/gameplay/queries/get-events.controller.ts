@@ -7,10 +7,18 @@ const getEventsParamsSchema = z.object({
   gameId: z.string().min(1, "Game ID is required"),
 });
 
+/** Wiring dependencies for the get-events controller. */
 export interface GetEventsControllerDeps {
   getEvents: GetEventsService;
 }
 
+/**
+ * `GET /api/games/:gameId/events` — returns the chronological event log
+ * (selects, turn transitions, etc.) for a game.
+ *
+ * 401 on missing auth, 404 on missing game, 403 when the user isn't a
+ * player.
+ */
 export const getEventsController = (deps: GetEventsControllerDeps) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

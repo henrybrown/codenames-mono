@@ -5,10 +5,13 @@ import { createEndGameAction } from "./end-game.action";
 export { createEndGameAction, type EndGameAction } from "./end-game.action";
 
 /**
- * Binds the end-game action to a transaction. Returns a function that
- * the gameplay ops registry can invoke.
+ * Binds the end-game action against a transaction-scoped repository.
+ *
+ * Returns the action closed over the transaction; the gameplay ops
+ * registry picks it up from there.
  */
 export const bindEndGameAction = (trx: TransactionContext) =>
   createEndGameAction(gameRepository.updateGameStatus(trx));
 
+/** Transaction-bound end-game action. */
 export type BoundEndGameAction = ReturnType<typeof bindEndGameAction>;
