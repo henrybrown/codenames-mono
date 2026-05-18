@@ -4,27 +4,34 @@ import { ROUND_STATE, RoundState } from "@codenames/shared/types";
 import { z } from "zod";
 import { UnexpectedRepositoryError } from "./repository.errors";
 
+/** Round primary-key id. */
 export type RoundId = number;
 
+/** Game primary-key id. */
 export type GameId = number;
 
+/** Team primary-key id. */
 export type TeamId = number;
 
+/** Input for inserting a new round. */
 export type RoundInput = {
   gameId: number;
   roundNumber: number;
 };
 
+/** Input for updating round status by status-name enum. */
 export type RoundStatusUpdateInput = {
   roundId: number;
   status: RoundState;
 };
 
+/** Input for setting a round's winning team. */
 export type RoundWinnerUpdateInput = {
   roundId: number;
   winningTeamId: TeamId | null;
 };
 
+/** Service-layer projection of a round row joined with status + winning team. */
 export type RoundResult = {
   _id: number;
   _gameId: number;
@@ -35,35 +42,42 @@ export type RoundResult = {
   createdAt: Date;
 };
 
+/** Lookup-many signature returning all rounds for a game. */
 export type RoundFinderAll<T extends GameId> = (
   identifier: T,
 ) => Promise<RoundResult[]>;
 
+/** Lookup-one signature keyed on either round id or game id (latest). */
 export type RoundFinder<T extends RoundId | GameId> = (
   identifier: T,
 ) => Promise<RoundResult | null>;
 
+/** Signature for inserting a new round in SETUP state. */
 export type RoundCreator = ({
   gameId,
   roundNumber,
 }: RoundInput) => Promise<RoundResult>;
 
+/** Signature for updating a round's status by enum name. */
 export type RoundStatusUpdater = ({
   roundId,
   status,
 }: RoundStatusUpdateInput) => Promise<RoundResult>;
 
+/** Signature for setting a round's winning team. */
 export type RoundWinnerUpdater = ({
   roundId,
   winningTeamId,
 }: RoundWinnerUpdateInput) => Promise<RoundResult>;
 
+/** Runtime guard for round-status strings coming from joined queries. */
 export const roundStatusSchema = z.enum([
   ROUND_STATE.SETUP,
   ROUND_STATE.IN_PROGRESS,
   ROUND_STATE.COMPLETED,
 ]);
 
+/** Builds a finder returning all rounds for a game in ascending round-number order. */
 export const getRoundsByGameId =
   (db: Kysely<DB>): RoundFinderAll<GameId> =>
   async (gameId) => {
@@ -95,6 +109,7 @@ export const getRoundsByGameId =
     }));
   };
 
+/** Builds a finder that looks up a single round by its id. */
 export const getRoundById =
   (db: Kysely<DB>): RoundFinder<RoundId> =>
   async (roundId) => {
@@ -127,6 +142,7 @@ export const getRoundById =
       : null;
   };
 
+/** Builds a finder returning the latest (highest-numbered) round for a game. */
 export const getLatestRound =
   (db: Kysely<DB>): RoundFinder<GameId> =>
   async (gameId) => {
@@ -161,6 +177,12 @@ export const getLatestRound =
       : null;
   };
 
+/**
+ * Builds a creator that inserts a new round in SETUP state.
+ *
+ * Resolves the SETUP status_id from the lookup table first so callers
+ * don't need to know its primary key.
+ */
 export const createNewRound =
   (db: Kysely<DB>): RoundCreator =>
   async ({ gameId, roundNumber }) => {
@@ -215,6 +237,7 @@ export const createNewRound =
     }
   };
 
+/** Builds an updater that flips a round's status to the named state. */
 export const updateRoundStatus =
   (db: Kysely<DB>): RoundStatusUpdater =>
   async ({ roundId, status }) => {
@@ -278,6 +301,7 @@ export const updateRoundStatus =
     }
   };
 
+/** Builds an updater that sets the winning team on a round. */
 export const updateRoundWinner =
   (db: Kysely<DB>): RoundWinnerUpdater =>
   async ({ roundId, winningTeamId }) => {

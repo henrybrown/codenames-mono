@@ -1,37 +1,46 @@
 import { Kysely } from "kysely";
 import { DB } from "../../db/db.types";
 
+/** Team primary-key id. */
 export type TeamId = number;
 
+/** Game primary-key id. */
 export type GameId = number;
 
+/** Input for creating one or more teams under a single game. */
 export type TeamsInput = {
   gameId: number;
   teamNames: string[];
 };
 
+/** Service-layer projection of a teams row. */
 export type TeamResult = {
   _id: number;
   _gameId: number;
   teamName: string;
 };
 
+/** Lookup-by-game signature returning all teams for a game. */
 export type TeamsFinder<T extends GameId> = (
   identifier: T,
 ) => Promise<TeamResult[]>;
 
+/** Signature for bulk-creating teams. */
 export type TeamsCreator = (input: TeamsInput) => Promise<TeamResult[]>;
 
+/** Signature for fetching a team-name → team-id map for a subset of teams. */
 export type TeamNameMapper = (
   gameId: GameId,
   teamNames: string[],
 ) => Promise<Map<string, TeamId>>;
 
+/** Lookup-by-name within a game; returns id only or null. */
 export type TeamByNameFinder = (
   gameId: GameId,
   teamName: string,
 ) => Promise<{ _id: TeamId } | null>;
 
+/** Builds a creator that inserts multiple team rows in one call. */
 export const createTeams =
   (db: Kysely<DB>): TeamsCreator =>
   async ({ gameId, teamNames }) => {
@@ -55,6 +64,7 @@ export const createTeams =
       : [];
   };
 
+/** Builds a finder that returns all teams for a game. */
 export const getTeamsByGameId =
   (db: Kysely<DB>): TeamsFinder<GameId> =>
   async (gameId) => {
@@ -73,6 +83,7 @@ export const getTeamsByGameId =
       : [];
   };
 
+/** Builds a finder that returns a name → id map for the named subset of teams. */
 export const getTeamNameToIdMap =
   (db: Kysely<DB>): TeamNameMapper =>
   async (gameId, teamNames) => {
@@ -91,6 +102,7 @@ export const getTeamNameToIdMap =
     return teamMap;
   };
 
+/** Builds a finder that looks up a team by name within a game. */
 export const findTeamByName =
   (db: Kysely<DB>): TeamByNameFinder =>
   async (gameId, teamName) => {

@@ -5,6 +5,7 @@ import { z } from "zod";
 import winston from "winston";
 import util from "util";
 
+/** Winston format used by the bootstrap-time env loader log lines. */
 export const consoleFormat = winston.format.printf(
   ({ level, message, timestamp, meta, ...rest }) => {
     const prefix = `[env] `;
@@ -35,6 +36,13 @@ const envLoadLogger = winston.createLogger({
   ],
 });
 
+/**
+ * Loads `.env` from the current working directory and validates the
+ * shape against `EnvSchema`. Logs a development-mode summary on success.
+ *
+ * Throws `Error` if no `.env` is present, or the Zod error directly when
+ * validation fails. Either condition is fatal — the app shouldn't boot.
+ */
 export const loadEnvFromPackageDir = () => {
   const envPath = path.resolve(process.cwd(), ".env");
 

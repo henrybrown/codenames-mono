@@ -5,13 +5,26 @@ import { PLAYER_ROLE, PlayerRole } from "@codenames/shared/types";
 import { randomUUID } from "crypto";
 import type { DbContext, TransactionContext } from "../transaction-handler";
 
+/** Player primary-key id. */
 export type PlayerId = number;
+/** Public-facing player UUID. */
 export type PublicPlayerId = string;
+/** User primary-key id. */
 export type UserId = number;
+/** Game primary-key id. */
 export type GameId = number;
+/** Team primary-key id. */
 export type TeamId = number;
+/** Round primary-key id. */
 export type RoundId = number;
 
+/**
+ * Service-layer projection of a player row.
+ *
+ * Joined with `teams.team_name` and (when available) the latest round's
+ * `player_roles.role_name`. `username` is only populated by finders that
+ * join `users`.
+ */
 export type PlayerResult = {
   _id: number;
   publicId: string;
@@ -26,6 +39,7 @@ export type PlayerResult = {
   username?: string; // Include when user context needed
 };
 
+/** Input for a single role assignment row in `player_round_roles`. */
 export type PlayerRoleInput = {
   playerId: number;
   roundId: number;
@@ -33,12 +47,14 @@ export type PlayerRoleInput = {
   teamId: number;
 };
 
+/** Service-layer projection of a created role-assignment row. */
 export type RoleAssignmentResult = {
   _playerId: number;
   _roundId: number;
   role: PlayerRole;
 };
 
+/** Input for inserting a new player row. */
 export type PlayerInput = {
   userId: number;
   gameId: number;
@@ -48,6 +64,7 @@ export type PlayerInput = {
   isAi?: boolean;
 };
 
+/** Input for updating a single player; identified by public id + game id. */
 export type ModifyPlayerInput = {
   gameId: number;
   publicPlayerId: string;
@@ -56,40 +73,49 @@ export type ModifyPlayerInput = {
   userId?: number;
 };
 
+/** Lookup-many signature keyed on either game id or round id. */
 export type PlayerFinderAll<T extends GameId | RoundId> = (
   identifier: T,
 ) => Promise<PlayerResult[]>;
 
+/** Lookup-one signature keyed on the player's public id. */
 export type PlayerFinderByPublicId = (
   publicId: PublicPlayerId,
 ) => Promise<PlayerResult | null>;
 
+/** Lookup-one signature keyed on (gameId, userId). */
 export type PlayerFinderByGameAndUser = (
   gameId: GameId,
   userId: UserId,
 ) => Promise<PlayerResult | null>;
 
+/** Lookup signature returning all of a user's player rows in a game. */
 export type PlayerContextFinder = (
   gameId: GameId,
   userId: UserId,
   roundId: RoundId | null,
 ) => Promise<PlayerResult[] | null>;
 
+/** Lookup signature returning player ids that ever held a given role. */
 export type RoleHistoryFinder = (
   gameId: GameId,
   role: PlayerRole,
 ) => Promise<number[]>;
 
+/** Signature for inserting one or more role-assignment rows. */
 export type RoleAssignmentCreator = (
   input: PlayerRoleInput | PlayerRoleInput[],
 ) => Promise<RoleAssignmentResult[]>;
 
+/** Signature for bulk-inserting player rows. */
 export type PlayersCreator = (
   playersData: PlayerInput[],
 ) => Promise<PlayerResult[]>;
 
+/** Signature for deleting a player and returning their final row state. */
 export type PlayerRemover = (playerId: PlayerId) => Promise<PlayerResult>;
 
+/** Signature for bulk-updating players. */
 export type PlayersUpdater = (
   playersData: ModifyPlayerInput[],
 ) => Promise<PlayerResult[]>;
@@ -128,6 +154,7 @@ function parseRoleName(roleName: string | null): PlayerRole {
   }
 }
 
+/** Builds a finder returning all players for a game, with their latest round role. */
 export const findPlayersByGameId =
   (db: DbContext | TransactionContext): PlayerFinderAll<GameId> =>
   async (gameId) => {
@@ -171,6 +198,7 @@ export const findPlayersByGameId =
     }));
   };
 
+/** Builds a finder returning all players who had a role in a specific round. */
 export const findPlayersByRoundId =
   (db: DbContext | TransactionContext): PlayerFinderAll<RoundId> =>
   async (roundId) => {
@@ -208,6 +236,7 @@ export const findPlayersByRoundId =
     }));
   };
 
+/** Builds a finder that looks up a single player by their public id. */
 export const findPlayerByPublicId =
   (db: DbContext | TransactionContext): PlayerFinderByPublicId =>
   async (publicId) => {
@@ -305,6 +334,12 @@ export const findPlayerByGameAndUser =
       : null;
   };
 
+/**
+ * Builds a finder returning all of a user's player rows in a game.
+ *
+ * Joins against a specific `roundId` (when provided) to scope role data;
+ * returns `null` if the user has no players in the game.
+ */
 export const getPlayerContext =
   (db: DbContext | TransactionContext): PlayerContextFinder =>
   async (gameId, userId, roundId) => {
@@ -348,7 +383,11 @@ export const getPlayerContext =
   };
 
 /**
- * Finds player ids for a given role within a game.. returns player Ids for all rounds
+ * Builds a finder returning the deduplicated set of player ids that have
+ * ever held a given role across any round of the game.
+ *
+ * Used to bias future role assignments away from players who've already
+ * had a turn at that role.
  */
 export const getRoleHistory =
   (db: DbContext | TransactionContext): RoleHistoryFinder =>
@@ -369,6 +408,12 @@ export const getRoleHistory =
     return [...new Set(history.map((r) => r.player_id))];
   };
 
+/**
+ * Builds a creator that inserts one or more role-assignment rows.
+ *
+ * Accepts a single input or an array. After insert, fetches the team id
+ * for each player so the returned result is fully populated.
+ */
 export const assignPlayerRoles =
   (db: DbContext | TransactionContext): RoleAssignmentCreator =>
   async (input) => {
@@ -411,6 +456,7 @@ export const assignPlayerRoles =
     return playerResults;
   };
 
+/** Builds a creator that bulk-inserts player rows. Each gets a fresh UUID public id. */
 export const addPlayers =
   (db: DbContext | TransactionContext): PlayersCreator =>
   async (playersData) => {
@@ -447,6 +493,7 @@ export const addPlayers =
     }));
   };
 
+/** Builds a remover that deletes a player and returns their final row state. */
 export const removePlayer =
   (db: DbContext | TransactionContext): PlayerRemover =>
   async (playerId) => {
@@ -470,6 +517,13 @@ export const removePlayer =
     };
   };
 
+/**
+ * Builds an updater that applies partial updates to a set of players.
+ *
+ * Only fields with defined values are written; rows with no provided
+ * updates are skipped. Returns the post-update row set for all targeted
+ * players (whether changed or not).
+ */
 export const modifyPlayers =
   (db: DbContext | TransactionContext): PlayersUpdater =>
   async (playersData) => {

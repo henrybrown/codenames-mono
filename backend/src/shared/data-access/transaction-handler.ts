@@ -1,8 +1,10 @@
 import type { Kysely, Transaction } from "kysely";
 import type { DB } from "../db/db.types";
 
+/** A live Kysely connection scoped to the app DB. */
 export type DbContext = Kysely<DB>;
 
+/** A Kysely transaction scoped to the app DB. */
 export type TransactionContext = Transaction<DB>;
 
 /**
@@ -43,6 +45,7 @@ export const createTransactionalHandler = <TOperations>(
   };
 };
 
+/** Signature for a handler returned by `createTransactionalHandler`. */
 export type TransactionalHandler<TOperations> = <TResult>(
   operation: (ops: TOperations) => Promise<TResult>,
 ) => Promise<TResult>;

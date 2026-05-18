@@ -10,9 +10,12 @@ import {
 } from "@codenames/shared/types";
 import { z } from "zod";
 
+/** External (URL-safe) game identifier. */
 export type PublicId = string;
+/** Internal numeric primary key. */
 export type InternalId = number;
 
+/** Service-layer projection of a games row joined with its status. */
 export type GameData = {
   _id: number;
   created_at: Date;
@@ -25,6 +28,7 @@ export type GameData = {
   host_user_id: number;
 };
 
+/** Input for creating a new game row. */
 export type GameInput = {
   publicId: string;
   gameType: GameType;
@@ -33,22 +37,26 @@ export type GameInput = {
   hostUserId: number;
 };
 
+/** Trim of `GameData` returned from creates — only ids and timestamps. */
 export type GameResult = {
   _id: number;
   created_at: Date;
   updated_at?: Date | null;
 };
 
+/** Lookup-by-key signature; key is either an internal id or public id. */
 export type GameFinder<T extends InternalId | PublicId> = (
   identifier: T,
 ) => Promise<GameData | null>;
 
+/** Signature for creating a new game row. */
 export type GameCreator = ({
   publicId,
   gameType,
   gameFormat,
 }: GameInput) => Promise<GameResult>;
 
+/** Signature for updating a game's status by status-name enum. */
 export type GameStatusUpdater = (
   gameId: InternalId,
   statusName: GameState,
@@ -58,17 +66,20 @@ export type GameStatusUpdater = (
  * Zod schemas needed due to generated postgrest enum types returning "string" from Kysely query.
  * Other column primative types are typesafe through types generated through kysely-codegen.
  */
+/** Runtime guard that narrows `game_type` from Kysely's generic string. */
 export const gameTypeSchema = z.enum([
   GAME_TYPE.SINGLE_DEVICE,
   GAME_TYPE.MULTI_DEVICE,
 ]);
 
+/** Runtime guard that narrows `game_format` from Kysely's generic string. */
 export const gameFormatSchema = z.enum([
   GAME_FORMAT.QUICK,
   GAME_FORMAT.BEST_OF_THREE,
   GAME_FORMAT.ROUND_ROBIN,
 ]);
 
+/** Runtime guard that narrows the joined `game_status.status_name` string. */
 export const gameStateSchema = z.enum([
   GAME_STATE.LOBBY,
   GAME_STATE.PAUSED,
@@ -77,6 +88,7 @@ export const gameStateSchema = z.enum([
   GAME_STATE.ABANDONED,
 ]);
 
+/** Builds a finder that looks up games by their public id. */
 export const findGameByPublicId =
   (db: Kysely<DB>): GameFinder<PublicId> =>
   async (publicId) => {
@@ -112,6 +124,7 @@ export const findGameByPublicId =
       : null;
   };
 
+/** Builds a finder that looks up games by their internal id. */
 export const findGameById =
   (db: Kysely<DB>): GameFinder<InternalId> =>
   async (gameId) => {
@@ -147,6 +160,7 @@ export const findGameById =
       : null;
   };
 
+/** Builds a creator that inserts a new game row in LOBBY state. */
 export const createGame =
   (db: Kysely<DB>): GameCreator =>
   async (gameInput) => {
@@ -173,6 +187,12 @@ export const createGame =
     };
   };
 
+/**
+ * Builds an updater that flips a game's status.
+ *
+ * Looks up the status_id by name first, so the call site uses the enum
+ * rather than knowing the lookup-table primary keys.
+ */
 export const updateGameStatus =
   (db: Kysely<DB>): GameStatusUpdater =>
   async (gameId, statusName) => {

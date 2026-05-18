@@ -2,16 +2,21 @@ import { Kysely } from "kysely";
 import { DB } from "../../db/db.types";
 import { UnexpectedRepositoryError } from "./repository.errors";
 
+/** User primary-key id. */
 export type UserId = number;
+/** Session primary-key id. */
 export type SessionId = number;
+/** Opaque JWT or session token string. */
 export type Token = string;
 
+/** Input for creating a session. `expiresAt` defaults to +7 days. */
 export type SessionInput = {
   userId: number;
   token: string;
   expiresAt?: Date;
 };
 
+/** Service-layer projection of a session row enriched with the username. */
 export type SessionResult = {
   _id: number;
   _userId: number;
@@ -21,16 +26,29 @@ export type SessionResult = {
   createdAt: Date;
 };
 
+/** Lookup-by-token signature. */
 export type SessionFinder<T extends Token> = (
   identifier: T,
 ) => Promise<SessionResult | null>;
 
+/** Lookup-by-user signature returning all live sessions. */
 export type UserSessionFinder = (userId: UserId) => Promise<SessionResult[]>;
 
+/** Signature for inserting a new session. */
 export type SessionCreator = (input: SessionInput) => Promise<SessionResult>;
 
+/** Signature for invalidating a session by token. */
 export type SessionInvalidator = (token: Token) => Promise<boolean>;
 
+/**
+ * Builds a session creator.
+ *
+ * Currently stateless — returns a synthesised result rather than writing
+ * to a `sessions` table (the codebase verifies tokens via JWT signature
+ * alone). The DB lookup is only used to enrich the returned record with
+ * the username. Falling back to a persisted sessions table later means
+ * uncommenting the insert/select block in this file.
+ */
 export const storeSession =
   (db: Kysely<DB>): SessionCreator =>
   async ({ userId, token, expiresAt }) => {
@@ -82,6 +100,10 @@ export const storeSession =
     }
   };
 
+/**
+ * Builds a session finder. Stateless implementation returns `null` —
+ * token verification happens at the JWT layer, not against a DB row.
+ */
 export const findSessionByToken =
   (db: Kysely<DB>): SessionFinder<Token> =>
   async (token) => {
@@ -108,6 +130,11 @@ export const findSessionByToken =
     return null;
   };
 
+/**
+ * Builds a session invalidator. Stateless implementation is a no-op
+ * (returns true); a future persisted-sessions table would delete the
+ * matching row.
+ */
 export const invalidateSession =
   (db: Kysely<DB>): SessionInvalidator =>
   async (token) => {
@@ -127,6 +154,11 @@ export const invalidateSession =
     }
   };
 
+/**
+ * Builds a bulk session invalidator for a user. Stateless implementation
+ * is a no-op (returns true); a future persisted-sessions table would
+ * delete all rows for the user.
+ */
 export const invalidateUserSessions =
   (db: Kysely<DB>) =>
   async (userId: number): Promise<boolean> => {
