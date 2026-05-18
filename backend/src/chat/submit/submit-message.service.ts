@@ -5,22 +5,43 @@ import { findPlayerByUserId } from "@backend/game/access";
 import type { GameMessage } from "../game-message";
 import { toGameMessage } from "../game-message";
 
+/** Wiring dependencies for the submit-message service. */
 export interface SubmitMessageServiceDeps {
   createGameMessage: (input: CreateMessageInput) => Promise<GameMessageData>;
   loadGameAggregate: GameAggregateLoader;
 }
 
+/**
+ * Validated input for posting a chat message.
+ *
+ * `content` is trimmed before persistence and capped at 1000 characters
+ * (rejected with `invalid-input` if exceeded). `teamOnly` scopes the
+ * resulting WebSocket event to the author's team.
+ */
 export interface SubmitMessageInput {
   content: string;
   teamOnly: boolean;
 }
 
+/**
+ * Tagged result variants for the submit-message service.
+ *
+ * On `success`, `audienceTeamId` is set when `teamOnly` was true (used to
+ * scope the WebSocket broadcast).
+ */
 export type SubmitMessageResult =
   | { status: "success"; message: GameMessage; audienceTeamId: number | undefined }
   | { status: "game-not-found"; gameId: string }
   | { status: "unauthorized"; gameId: string; userId: number }
   | { status: "invalid-input"; error: string };
 
+/**
+ * Builds the submit-message service.
+ *
+ * Validates content length, loads the game, confirms the user is a player,
+ * persists a CHAT message, and returns the API-shaped result enriched with
+ * the audience-team id for the broadcast.
+ */
 export const submitMessageService = (deps: SubmitMessageServiceDeps) =>
   async (
     gameId: string,

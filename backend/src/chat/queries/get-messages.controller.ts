@@ -17,10 +17,19 @@ const getMessagesQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(1000).optional(),
 });
 
+/** Wiring dependencies for the get-messages controller. */
 export interface GetMessagesControllerDeps {
   getMessages: ReturnType<typeof getMessagesService>;
 }
 
+/**
+ * `GET /api/games/:gameId/messages` — returns the message log for a game.
+ *
+ * Accepts optional `since` (ISO timestamp; only messages after) and `limit`
+ * (1–1000) query params. Returns 404 when the user isn't a player in the
+ * game, 403 when they're a player but lack access (currently unused but
+ * surfaced for future scoping).
+ */
 export const getMessagesController =
   (deps: GetMessagesControllerDeps) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {

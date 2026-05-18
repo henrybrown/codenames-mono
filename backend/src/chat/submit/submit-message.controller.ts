@@ -19,10 +19,18 @@ const submitMessageBodySchema = z.object({
   teamOnly: z.boolean().default(false),
 });
 
+/** Wiring dependencies for the submit-message controller. */
 export interface SubmitMessageControllerDeps {
   submitMessage: ReturnType<typeof submitMessageService>;
 }
 
+/**
+ * `POST /api/games/:gameId/messages` — posts a chat message.
+ *
+ * Body: `{ content: string, teamOnly?: boolean }`. Emits a WebSocket
+ * `gameMessageCreated` event on success, scoping it to the author's team
+ * when `teamOnly` was set.
+ */
 export const submitMessageController = (deps: SubmitMessageControllerDeps) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

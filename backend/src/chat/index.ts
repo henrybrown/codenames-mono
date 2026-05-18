@@ -48,6 +48,7 @@ export type GameplayFeature = {
   };
 };
 
+/** Wiring dependencies for the chat module. */
 export type ChatModuleDependencies = {
   app: Express;
   db: Kysely<DB>;
@@ -57,6 +58,14 @@ export type ChatModuleDependencies = {
   gameplay: GameplayFeature;
 };
 
+/**
+ * Initializes the chat feature — registers the read and submit routes and
+ * mounts them under `/api/games/:gameId/messages`.
+ *
+ * Side effects: mounts the chat router (with auth + game-membership
+ * middleware) onto `deps.app` and logs an initialization message. Returns
+ * the controllers and services for callers that need direct access.
+ */
 export const initialize = (deps: ChatModuleDependencies) => {
   const { app, db, auth, httpLogger, appLogger, gameplay } = deps;
 

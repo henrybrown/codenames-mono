@@ -8,11 +8,18 @@ import type {
 import { getMessagesService } from "./get-messages.service";
 import { getMessagesController } from "./get-messages.controller";
 
+/** Wiring dependencies for the get-messages sub-feature. */
 export interface GetMessagesDependencies {
   loadGameAggregate: GameAggregateLoader;
   findMessagesByGame: (params: MessageQueryParams) => Promise<GameMessageData[]>;
 }
 
+/**
+ * Builds the get-messages sub-feature.
+ *
+ * Returns `{ controllers, services }` so the parent chat module can mount
+ * the route and expose the service to any cross-feature callers.
+ */
 export const createGetMessages =
   (logger: AppLogger) => (deps: GetMessagesDependencies) => {
     const service = getMessagesService({
@@ -30,4 +37,5 @@ export const createGetMessages =
     };
   };
 
+/** Public handle returned by `createGetMessages`. */
 export type GetMessagesFeature = ReturnType<ReturnType<typeof createGetMessages>>;

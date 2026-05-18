@@ -8,11 +8,18 @@ import type {
 import { submitMessageService } from "./submit-message.service";
 import { submitMessageController } from "./submit-message.controller";
 
+/** Wiring dependencies for the submit-message sub-feature. */
 export interface SubmitMessageDependencies {
   loadGameAggregate: GameAggregateLoader;
   createGameMessage: (input: CreateMessageInput) => Promise<GameMessageData>;
 }
 
+/**
+ * Builds the submit-message sub-feature.
+ *
+ * Returns `{ controllers, services }` for the parent chat module to mount
+ * the route and surface the service.
+ */
 export const createSubmitMessage =
   (logger: AppLogger) => (deps: SubmitMessageDependencies) => {
     const service = submitMessageService({
@@ -30,4 +37,5 @@ export const createSubmitMessage =
     };
   };
 
+/** Public handle returned by `createSubmitMessage`. */
 export type SubmitMessageFeature = ReturnType<ReturnType<typeof createSubmitMessage>>;

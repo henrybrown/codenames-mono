@@ -7,21 +7,33 @@ import { findPlayerByUserId } from "@backend/game/access";
 import type { GameMessage, MessageAuthorInfo } from "../game-message";
 import { toGameMessage } from "../game-message";
 
+/** Wiring dependencies for the get-messages service. */
 export interface GetMessagesServiceDeps {
   findMessagesByGame: (params: MessageQueryParams) => Promise<GameMessageData[]>;
   loadGameAggregate: GameAggregateLoader;
 }
 
+/** Query parameters for filtering the message log. */
 export interface GetMessagesQuery {
   since?: string; // ISO timestamp
   limit?: number;
 }
 
+/** Tagged result variants for the get-messages service. */
 export type GetMessagesResult =
   | { status: "success"; messages: GameMessage[] }
   | { status: "game-not-found"; gameId: string }
   | { status: "unauthorized"; gameId: string; userId: number };
 
+/**
+ * Builds the get-messages service.
+ *
+ * Loads the game, verifies the user is a player, then queries messages
+ * scoped to the user's team (team-only messages for other teams aren't
+ * returned). Enriches each row with player public-id / name / team name
+ * from the aggregate so the API response carries display data the DB row
+ * alone doesn't have.
+ */
 export const getMessagesService =
   (deps: GetMessagesServiceDeps) =>
   async (
