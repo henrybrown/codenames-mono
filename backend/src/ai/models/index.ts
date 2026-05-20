@@ -14,7 +14,7 @@ import type { LLMConfig } from "./llm.service";
 
 export type { LLMConfig, LLMService } from "./llm.service";
 export type { LLMProvider } from "./providers";
-export type { HealthState, HealthPlacement } from "./ai-health";
+export type { HealthState, HealthPlacement } from "./local-ai-health";
 
 /** Wiring dependencies for the models infra layer. */
 export interface ModelsDependencies {

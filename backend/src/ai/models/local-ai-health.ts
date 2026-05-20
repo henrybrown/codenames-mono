@@ -1,15 +1,3 @@
-/**
- * AI runtime health monitor
- *
- * Provider-agnostic surface for "is the configured model running on GPU,
- * partial CPU offload, or 100% CPU?" Currently the only provider that
- * exposes this is Ollama (via `GET /api/ps`); remote providers don't
- * surface runtime placement, so the monitor is only instantiated for
- * Ollama. Logs transitions and keeps reminding when in a degraded state.
- * Throttled so it can be triggered freely from the status endpoint
- * without hammering the inference server.
- */
-
 import type { AppLogger } from "@backend/shared/logging";
 import type { HttpClient } from "@backend/shared/http-client";
 import { HttpError } from "@backend/shared/http-client";

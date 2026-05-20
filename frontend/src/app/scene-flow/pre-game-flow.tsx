@@ -12,6 +12,8 @@ import styles from "./pre-game-flow.module.css";
  *
  * Pure plumbing — each scene owns its own API calls and side effects.
  * This component only handles step sequencing, transitions, and navigation.
+ * 
+ * Motion.div allows animations between each scene.
  */
 
 type Step = "auth" | "setup" | "lobby";
